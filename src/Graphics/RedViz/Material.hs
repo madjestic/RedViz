@@ -26,11 +26,14 @@ import Graphics.RedViz.Texture as T hiding (name, _name)
 
 data Material
   =  Material
-     {
+     { -- | Material name.
        _name       :: String
-     , _vertShader :: FilePath   -- path to vertex shader program
-     , _fragShader :: FilePath   -- path to fragment shader program
-     , _textures   :: [Texture] -- paths to texture bindings
+       -- | Path to vertex shader program.
+     , _vertShader :: FilePath
+       -- | Path to fragment shader program.
+     , _fragShader :: FilePath
+       -- | Paths to texture bindings and other 'Texture' data.
+     , _textures   :: [Texture]  
      } deriving Show
 $(makeLenses ''Material)
 deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''Material
@@ -43,6 +46,7 @@ defaultMat
     "shader.frag"
     [defaultTexture]
 
+-- | Read a Material json-formatted file from disk.
 read :: FilePath -> IO Material
 read jsonFile =
   do
@@ -65,6 +69,7 @@ read jsonFile =
             Right pt -> Just pt
             _ -> Nothing
 
+-- | Write a Material json-formatted file to disk.
 write :: Material -> FilePath -> IO ()
 write mat fileOut =
   do

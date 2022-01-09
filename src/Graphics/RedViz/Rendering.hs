@@ -254,9 +254,9 @@ bindUniforms txs unis hmap =
         foc = u_cam_f' -- focal length
         proj =
           LP.infinitePerspective
-          (2.0 * atan ( apt/2.0 / foc )) -- | FOV
-          (resX/resY)                      -- | Aspect
-          0.01                           -- | Near
+          (2.0 * atan ( apt/2.0 / foc )) -- FOV
+          (resX/resY)                    -- Aspect
+          0.01                           -- Near
 
     persp             <- GL.newMatrix RowMajor $ toList' proj   :: IO (GLmatrix GLfloat)
     location3         <- get (uniformLocation program0 "persp")
@@ -279,20 +279,20 @@ bindUniforms txs unis hmap =
     location7 <- get (uniformLocation program0 "sunP")
     uniform location7 $= sunP
 
-    -- | Allocate Textures
+    --- | Allocate Textures
 
     -- putStrLn $ "bindUniforms.txNames : "  ++ show txNames
     -- putStrLn $ "bindUniforms.txuids   : " ++ show txuids
     mapM_ (allocateTextures program0 hmap) txs
     --mapM_ (allocateTextures program0 (DT.trace ("bindUniforms.hmap : " ++ show hmap) hmap)) txs
 
-    -- | Unload buffers
+    --- | Unload buffers
     --bindVertexArrayObject         $= Nothing
     --bindBuffer ElementArrayBuffer $= Nothing
       where
         Uniforms u_mat' u_prog' u_mouse' u_time' u_res' u_cam' u_cam_a' u_cam_f' u_xform' = unis
         toList' = fmap realToFrac.concat.(fmap toList.toList) :: V4 (V4 Double) -> [GLfloat]
-        xform'  = -- | = Object Position - Camera Position
+        xform'  = --- | = Object Position - Camera Position
           transpose $
           fromV3M44
           ( u_xform' ^._xyz )
@@ -322,24 +322,23 @@ fromV3V4 v3 = V4 (v3 ^. _x) (v3 ^. _y) (v3 ^. _z)
 nameFromPath :: FilePath -> String
 nameFromPath f = head (splitOn "." $ splitOn "/" f!!1)
 
-       -- | Indices -> Stride -> ListOfFloats -> Material -> Descriptor
 initVAO :: ([Int], Int, [Float]) -> IO Descriptor
 initVAO (idx', st', vs') =
   do
     let
       idx = unsafeCoerce <$> idx' :: [GLuint]
       vs  = unsafeCoerce <$> vs'  :: [GLfloat]
-    -- | VAO
+    --- | VAO
     vao <- genObjectName
     bindVertexArrayObject $= Just vao
-    -- | VBO
+    --- | VBO
     vertexBuffer <- genObjectName
     bindBuffer ArrayBuffer $= Just vertexBuffer
     withArray vs $ \ptr ->
       do
         let sizev = fromIntegral (length vs * sizeOf (head vs))
         bufferData ArrayBuffer $= (sizev, ptr, StaticDraw)
-    -- | EBO
+    --- | EBO
     elementBuffer <- genObjectName
     bindBuffer ElementArrayBuffer $= Just elementBuffer
     let numIndices = length idx
@@ -348,23 +347,23 @@ initVAO (idx', st', vs') =
         let indicesSize = fromIntegral (numIndices * sizeOf (head idx))
         bufferData ElementArrayBuffer $= (indicesSize, ptr, StaticDraw)
 
-        -- | Bind the pointer to the vertex attribute data
+        --- | Bind the pointer to the vertex attribute data
         let floatSize  = (fromIntegral $ sizeOf (0.0::GLfloat)) :: GLsizei
             stride     = fromIntegral st' * floatSize
 
-        -- | Alpha
+        --- | Alpha
         vertexAttribPointer (AttribLocation 0) $= (ToFloat, VertexArrayDescriptor 1 Float stride ((plusPtr nullPtr . fromIntegral) (0 * floatSize)))
         vertexAttribArray   (AttribLocation 0) $= Enabled
-        -- | Colors
+        --- | Colors
         vertexAttribPointer (AttribLocation 1) $= (ToFloat, VertexArrayDescriptor 3 Float stride ((plusPtr nullPtr . fromIntegral) (1 * floatSize)))
         vertexAttribArray   (AttribLocation 1) $= Enabled
-        -- | Normals
+        --- | Normals
         vertexAttribPointer (AttribLocation 2) $= (ToFloat, VertexArrayDescriptor 3 Float stride ((plusPtr nullPtr . fromIntegral) (4 * floatSize)))
         vertexAttribArray   (AttribLocation 2) $= Enabled
-        -- | UVW
+        --- | UVW
         vertexAttribPointer (AttribLocation 3) $= (ToFloat, VertexArrayDescriptor 3 Float stride ((plusPtr nullPtr . fromIntegral) (7 * floatSize)))
         vertexAttribArray   (AttribLocation 3) $= Enabled
-        -- | Positions
+        --- | Positions
         vertexAttribPointer (AttribLocation 4) $= (ToFloat, VertexArrayDescriptor 3 Float stride ((plusPtr nullPtr . fromIntegral) (10 * floatSize)))
         vertexAttribArray   (AttribLocation 4) $= Enabled
 

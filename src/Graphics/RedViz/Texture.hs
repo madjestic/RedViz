@@ -19,9 +19,11 @@ import Graphics.RedViz.Utils (encodeStringUUID)
 
 data Texture
   =  Texture
-     {
+     { -- | Binding name in a shader.
        _name :: String
+       -- | A filepath to an image file location on disk, relative to project root.
      , _path :: FilePath -- TODO: replace with Maybe FilePath or Either (FilePath or Generated, maybe a formula?)
+       -- | A unique object (texture) ID.
      , _uuid :: UUID
      } deriving Show
 $(makeLenses ''Texture)
@@ -33,6 +35,7 @@ instance Eq Texture where
 instance Ord Texture where
   compare t0 t1  = compare (view uuid t0) (view uuid t1)
 
+-- | A default Texture type constructor.
 defaultTexture :: Texture
 defaultTexture
   = Texture
