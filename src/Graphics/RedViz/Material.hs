@@ -1,3 +1,18 @@
+--------------------------------------------------------------------------------
+-- |
+-- Module      :  Material
+-- Copyright   :  (c) Vladimir Lopatin 2022
+-- License     :  BSD3
+--
+-- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
+-- Stability   :  provisional
+-- Portability :  portable
+--
+-- Utilities for handling Materials.
+--
+--------------------------------------------------------------------------------
+
+
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}

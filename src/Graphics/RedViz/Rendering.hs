@@ -1,3 +1,18 @@
+--------------------------------------------------------------------------------
+-- |
+-- Module      :  Rendering
+-- Copyright   :  (c) Vladimir Lopatin 2022
+-- License     :  BSD3
+--
+-- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
+-- Stability   :  provisional
+-- Portability :  portable
+--
+-- Utilities for handling OpenGL buffers and rendering.
+--
+--------------------------------------------------------------------------------
+
+
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE InstanceSigs #-}

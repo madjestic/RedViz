@@ -1,3 +1,18 @@
+--------------------------------------------------------------------------------
+-- |
+-- Module      :  Utils
+-- Copyright   :  (c) Vladimir Lopatin 2022
+-- License     :  BSD3
+--
+-- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
+-- Stability   :  provisional
+-- Portability :  portable
+--
+-- Utilities and helper functions for varios aspects of graphics pipeline.
+--
+--------------------------------------------------------------------------------
+
+
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
