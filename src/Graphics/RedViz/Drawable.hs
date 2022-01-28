@@ -2,7 +2,7 @@
 -- |
 -- Module      :  Drawable
 -- Copyright   :  (c) Vladimir Lopatin 2022
--- License     :  BSD3
+-- License     :  BSD-3-Clause
 --
 -- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
 -- Stability   :  provisional
@@ -14,7 +14,12 @@
 
 
 {-# LANGUAGE TemplateHaskell #-}
-module Graphics.RedViz.Drawable where
+module Graphics.RedViz.Drawable
+  ( uniforms
+  , u_xform
+  , Drawable (..)
+  , Uniforms (..)
+  ) where
 
 import Graphics.RedViz.Material
 import Graphics.RedViz.Descriptor

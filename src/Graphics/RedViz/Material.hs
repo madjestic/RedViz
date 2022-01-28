@@ -2,7 +2,7 @@
 -- |
 -- Module      :  Material
 -- Copyright   :  (c) Vladimir Lopatin 2022
--- License     :  BSD3
+-- License     :  BSD-3-Clause
 --
 -- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
 -- Stability   :  provisional
@@ -14,7 +14,6 @@
 
 
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE NamedFieldPuns #-}
