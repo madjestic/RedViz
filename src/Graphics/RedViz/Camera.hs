@@ -32,7 +32,6 @@ import Linear.V3
 
 import Graphics.RedViz.Controllable
 import Graphics.RedViz.Keyboard
-import Graphics.RedViz.Utils
 
 -- import Debug.Trace as DT
 

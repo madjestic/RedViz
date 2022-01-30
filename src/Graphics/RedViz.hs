@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP    #-}
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  RedViz
@@ -13,32 +12,38 @@
 --
 --------------------------------------------------------------------------------
 
+{-# LANGUAGE CPP    #-}
+
 module Graphics.RedViz
-  ( module Graphics.RedViz.Descriptor
-  , module Graphics.RedViz.Drawable   
-  , module Graphics.RedViz.LoadShaders
-  , module Graphics.RedViz.Material   
-  , module Graphics.RedViz.Rendering  
-  , module Graphics.RedViz.Texture    
-  , module Graphics.RedViz.Utils
-  , module Graphics.RedViz.Camera
+
+  (
+    module Graphics.RedViz.Camera
   , module Graphics.RedViz.Controllable
+  , module Graphics.RedViz.Descriptor
   , module Graphics.RedViz.Keyboard
+  , module Graphics.RedViz.LoadShaders
+  , module Graphics.RedViz.Mouse
+  , module Graphics.RedViz.PGeo
   , module Graphics.RedViz.Project.Project
   , module Graphics.RedViz.Project.Model
   , module Graphics.RedViz.Project.Utils
+  , module Graphics.RedViz.Rendering  
+  , module Graphics.RedViz.Utils
+  , module Graphics.RedViz.VAO
+  , module Graphics.RedViz.FromVector  
   ) where
 
-import Graphics.RedViz.Descriptor
-import qualified Graphics.RedViz.Drawable
-import Graphics.RedViz.LoadShaders
-import qualified Graphics.RedViz.Material
-import Graphics.RedViz.Rendering
-import qualified Graphics.RedViz.Texture
-import Graphics.RedViz.Utils
-import Graphics.RedViz.Camera
-import Graphics.RedViz.Controllable
-import Graphics.RedViz.Keyboard
+import           Graphics.RedViz.Camera
+import           Graphics.RedViz.Controllable
+import           Graphics.RedViz.Descriptor
+import           Graphics.RedViz.Keyboard
+import           Graphics.RedViz.LoadShaders
+import           Graphics.RedViz.Mouse
+import           Graphics.RedViz.PGeo
 import qualified Graphics.RedViz.Project.Project
-import Graphics.RedViz.Project.Model
-import Graphics.RedViz.Project.Utils
+import           Graphics.RedViz.Project.Model
+import           Graphics.RedViz.Project.Utils
+import           Graphics.RedViz.Rendering
+import           Graphics.RedViz.Utils
+import           Graphics.RedViz.VAO
+import           Graphics.RedViz.FromVector  

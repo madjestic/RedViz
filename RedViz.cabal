@@ -29,10 +29,13 @@ library
                        Graphics.RedViz.Project.Model
                        Graphics.RedViz.Project.Project
                        Graphics.RedViz.Project.Utils
-                       
+                       Graphics.RedViz.PGeo
+                       Graphics.RedViz.VAO
+                       Graphics.RedViz.FromVector
                        
   -- other-modules:
   -- other-extensions:
+  ghc-options:   -O2 -threaded -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans
   build-depends:       base                
                      , aeson               
                      , aeson-pretty        
@@ -43,6 +46,7 @@ library
                      , lens                
                      , linear              
                      , locators            
+                     , massiv          
                      , OpenGL              
                      , random              
                      , scientific          
@@ -50,9 +54,10 @@ library
                      , sdl2                
                      , sort
                      , split
+                     , store
                      , text                
                      , uuid                
-                     , vector              
+                     , vector
                      
   hs-source-dirs:      src
   default-language:    Haskell2010

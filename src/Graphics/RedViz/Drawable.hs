@@ -14,6 +14,7 @@
 
 
 {-# LANGUAGE TemplateHaskell #-}
+
 module Graphics.RedViz.Drawable
   ( uniforms
   , u_xform
