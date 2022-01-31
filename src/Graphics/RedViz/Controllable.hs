@@ -38,8 +38,8 @@ import Linear.Matrix
 import Linear.V3
 import Control.Lens hiding (transform)
 
-import Graphics.RedViz.Keyboard
-import Graphics.RedViz.Mouse
+import Graphics.RedViz.Input.Keyboard
+import Graphics.RedViz.Input.Mouse
 import Graphics.RedViz.Utils ()
 
 -- import Debug.Trace as DT

@@ -24,8 +24,11 @@ library
                        Graphics.RedViz.Utils
                        Graphics.RedViz.Camera
                        Graphics.RedViz.Controllable
-                       Graphics.RedViz.Keyboard
-                       Graphics.RedViz.Mouse
+                       Graphics.RedViz.Input
+                       Graphics.RedViz.Input.Keyboard
+                       Graphics.RedViz.Input.Mouse
+                       Graphics.RedViz.Input.FRP.Yampa
+                       Graphics.RedViz.Input.FRP.Yampa.AppInput
                        Graphics.RedViz.Project.Model
                        Graphics.RedViz.Project.Project
                        Graphics.RedViz.Project.Utils
@@ -38,7 +41,8 @@ library
   ghc-options:   -O2 -threaded -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans
   build-depends:       base                
                      , aeson               
-                     , aeson-pretty        
+                     , aeson-pretty
+                     , bearriver           
                      , bytestring           
                      , containers          
                      , GLUtil              

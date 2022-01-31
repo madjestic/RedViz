@@ -15,7 +15,7 @@
 
 {-# LANGUAGE TemplateHaskell, Arrows #-}
 
-module Graphics.RedViz.Mouse
+module Graphics.RedViz.Input.Mouse
   ( Mouse (..)
   , pos
   , rpos

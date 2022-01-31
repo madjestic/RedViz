@@ -12,7 +12,7 @@
 --
 --------------------------------------------------------------------------------
 
-module Graphics.RedViz.Keyboard
+module Graphics.RedViz.Input.Keyboard
   ( Keyboard (..)
   , Keys (..)
   ) where
