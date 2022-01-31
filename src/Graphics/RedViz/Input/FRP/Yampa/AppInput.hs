@@ -154,6 +154,13 @@ keyInput code mode =
       | code == SDL.ScancodeRCtrl
       = if | mode == "Pressed" -> inpKeyRCtrlPressed
            | otherwise         -> inpKeyRCtrlReleased
+      | otherwise
+      = if | mode == "Pressed" -> inpAnyKeyPressed
+           | otherwise         -> inpAnyKeyReleased
+      -- | code == SDL.ScancodeUnknown = undefined
+    -- inpKeyMode _ _ = undefined
+      -- | code == SDL.ScancodeUnknown = inpKeyRCtrlPressed
+-- keyInput _ _ = never >>^ tagWith ()
 
 data AppInput =
      AppInput
@@ -227,7 +234,10 @@ data AppInput =
      , inpKeyRShiftReleased  :: Maybe SDL.Scancode     
      -- RCtrl
      , inpKeyRCtrlPressed   :: Maybe SDL.Scancode
-     , inpKeyRCtrlReleased  :: Maybe SDL.Scancode     
+     , inpKeyRCtrlReleased  :: Maybe SDL.Scancode
+     -- Catch All
+     , inpAnyKeyPressed     :: Maybe SDL.Scancode
+     , inpAnyKeyReleased    :: Maybe SDL.Scancode
      }
 
 type WinInput = Event SDL.EventPayload    
@@ -305,7 +315,10 @@ initAppInput =
      , inpKeyRShiftReleased  = Nothing     
      -- RCtrl
      , inpKeyRCtrlPressed   = Nothing
-     , inpKeyRCtrlReleased  = Nothing          
+     , inpKeyRCtrlReleased  = Nothing
+     -- Any Other Key
+     , inpAnyKeyPressed     = Nothing
+     , inpAnyKeyReleased     = Nothing
      }
 
 -- | Filter and transform SDL events into events which are relevant to our
