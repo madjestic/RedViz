@@ -248,6 +248,7 @@ initAppInput =
      { inpMousePos          = (0.0, 0.0)
      , inpMouseRelPos       = (0.0, 0.0)
      , inpMouseLeft         = Nothing
+     , inpMouseMiddle       = Nothing
      , inpMouseRight        = Nothing
      , inpMouseMoving       = Nothing
      , inpMouseStopped      = True

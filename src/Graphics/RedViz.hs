@@ -20,9 +20,9 @@ module Graphics.RedViz
     module Graphics.RedViz.Camera
   , module Graphics.RedViz.Controllable
   , module Graphics.RedViz.Descriptor
-  , module Graphics.RedViz.Keyboard
+  , module Graphics.RedViz.Input.Keyboard
+  , module Graphics.RedViz.Input.Mouse
   , module Graphics.RedViz.LoadShaders
-  , module Graphics.RedViz.Mouse
   , module Graphics.RedViz.PGeo
   , module Graphics.RedViz.Project.Project
   , module Graphics.RedViz.Project.Model
@@ -36,9 +36,9 @@ module Graphics.RedViz
 import           Graphics.RedViz.Camera
 import           Graphics.RedViz.Controllable
 import           Graphics.RedViz.Descriptor
-import           Graphics.RedViz.Keyboard
+import           Graphics.RedViz.Input.Keyboard
+import           Graphics.RedViz.Input.Mouse
 import           Graphics.RedViz.LoadShaders
-import           Graphics.RedViz.Mouse
 import           Graphics.RedViz.PGeo
 import qualified Graphics.RedViz.Project.Project
 import           Graphics.RedViz.Project.Model

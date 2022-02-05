@@ -37,7 +37,7 @@ import Data.Aeson.Encode.Pretty
 import Data.ByteString.Lazy as B hiding (drop, pack)
 import Data.Maybe                       (fromMaybe)
 import Data.Sort                        (sortOn)                              
-import Data.Text                 hiding (drop)
+import Data.Text ( Text, pack )
 import Data.UUID
 
 import Graphics.RedViz.Project.Model
@@ -201,7 +201,6 @@ read filePath =
       resy'
       camMode'
       models'
-      --(sortOn (view uuid ) preObjs')
       (sortOn (view uuid ) preObjs')
       (sortOn (view uuid ) bgrObjs')
       fonts'
