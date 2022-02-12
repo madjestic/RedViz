@@ -160,7 +160,7 @@ defaultProject =
   ,(Model   "models/fnt_quote.bgeo")  
   ]
   [(ProjectCamera
-    "PlayerCamera" -- | Player Camera
+    "PlayerCamera"
     50.0
     100.0
     [1, 0, 0, 0,

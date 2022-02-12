@@ -90,7 +90,7 @@ keyInput code mode =
   (inpKeyMode ^>> edgeJust) >>^ filterE (code ==) >>^ tagWith ()
   where
     inpKeyMode
-      -- | code == code = inpMousePos -- TODO: attempting to add mouse input sensing
+      -- code == code = inpMousePos -- TODO: attempting to add mouse input sensing
       | code == SDL.ScancodeSpace
       = if | mode == "Pressed" -> inpKeySpacePressed
            | otherwise         -> inpKeySpaceReleased           
@@ -157,10 +157,6 @@ keyInput code mode =
       | otherwise
       = if | mode == "Pressed" -> inpAnyKeyPressed
            | otherwise         -> inpAnyKeyReleased
-      -- | code == SDL.ScancodeUnknown = undefined
-    -- inpKeyMode _ _ = undefined
-      -- | code == SDL.ScancodeUnknown = inpKeyRCtrlPressed
--- keyInput _ _ = never >>^ tagWith ()
 
 data AppInput =
      AppInput

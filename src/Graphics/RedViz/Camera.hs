@@ -41,9 +41,9 @@ data Camera =
      , _apt        :: Double
      , _foc        :: Double 
      , _controller :: Controllable
-     , _mouseS     :: V3 Double -- | mouse    "sensitivity"
-     , _keyboardRS :: V3 Double -- | keyboard "rotation sensitivity"
-     , _keyboardTS :: V3 Double -- | keyboard "translation sensitivity"
+     , _mouseS     :: V3 Double -- mouse    "sensitivity"
+     , _keyboardRS :: V3 Double -- keyboard "rotation sensitivity"
+     , _keyboardTS :: V3 Double -- keyboard "translation sensitivity"
      } deriving Show
 
 $(makeLenses ''Camera)
@@ -51,7 +51,7 @@ $(makeLenses ''Camera)
 defaultCam :: Camera
 defaultCam =
   Camera
-  "PlayerCamera" -- | Player Camera
+  "PlayerCamera" -- Player Camera
   50.0
   100.0
   defaultCamController

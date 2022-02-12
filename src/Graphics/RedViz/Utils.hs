@@ -97,7 +97,7 @@ toIdxVAO' vao = (idx, idxVAO)
 -- |  nil - non-indexed list
 matchLists :: [(Int, [GLfloat])] -> [(Int, [GLfloat])] -> [(Int, [GLfloat])]
 matchLists il nil' =
-  fmap (mFunc il) nil' -- | mFunc - matching function
+  fmap (mFunc il) nil' -- mFunc - matching function
   where
     -- | il      - indexed list
     -- | nile    - non indexed list element
@@ -107,9 +107,9 @@ matchLists il nil' =
     mFunc _ (iy, cy) =
       (\case
           Just idx -> il' ! idx
-          Nothing  -> (-iy, cy) ) nili -- | if a unique index idx found - flip the sign
-                                            -- | the idea idx to separate normal indexes
-                                            -- | and unique indexes -> [idx:uidx] later
+          Nothing  -> (-iy, cy) ) nili      -- if a unique index idx found - flip the sign
+                                            -- the idea idx to separate normal indexes
+                                            -- and unique indexes -> [idx:uidx] later
       where
         nili = elemIndex cy (DV.toList cxs')
         -- cxs  = DV.map (\(i,s) -> s) il' -- :: [[GLfloat]]
