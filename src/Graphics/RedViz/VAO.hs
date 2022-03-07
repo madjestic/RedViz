@@ -16,11 +16,16 @@ module Graphics.RedViz.VAO
   (
     VAO
   , toVAO
+  , VAO'
+  , VAO''
+  , toVAO'
+  , toVAO''
   ) where
 
--- import Data.Vector as V
 import Data.Massiv.Array as A
 import GHC.Float
+
+import Graphics.RedViz.Utils
 
 -- import Debug.Trace   as DT
 
@@ -58,3 +63,14 @@ toVAO idxs as cds ns ts ps = vaos
       fmap (\row -> backpermute' (Sz (Prelude.length (idxs !! row) :. 13)) (\(i :. j) -> ((indices !> row) ! i) :. j) mat) [0 .. div (elemsCount indices) (elemsCount (indices !> 0))-1]
     --vaos = (DT.trace ("cListOpt" ++ show cListOpt) $ cListOpt)
     vaos = cListOpt
+
+type VAO' = [([Int], Int, [Float])]
+
+type VAO'' = ([Int], Int, [Float])
+
+toVAO' :: [[Int]] -> [Int] -> [[Float]] -> VAO'
+toVAO' is_ st_ vs_ = (,,) <$.> is_ <*.> st_ <*.> vs_
+
+toVAO'' :: [Int] -> Int -> [Float] -> VAO''
+toVAO'' = (,,)
+

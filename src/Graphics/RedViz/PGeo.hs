@@ -13,7 +13,6 @@
 --------------------------------------------------------------------------------
 
 {-# LANGUAGE OverloadedStrings #-}
---{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE NamedFieldPuns #-}
@@ -22,14 +21,27 @@
 module Graphics.RedViz.PGeo
   ( PGeo(..)
   , VGeo(..)
+  , SVGeo(..)
+  , sis 
+  , sst 
+  , svs 
+  , smp 
+  , sms 
+  , svl
+  , sxf 
   , Vec3
   , readPGeo
   , readVGeo
   , readBGeo
   , fromPGeo
   , fromPGeo'
+  , fromVGeo'
+  , fromVGeo''
+  , fromSVGeo
+  , VAO
   ) where
 
+import Control.Lens
 import Data.Aeson
 import Data.Aeson.TH
 import Data.Maybe                             (fromMaybe)
@@ -70,6 +82,24 @@ data PGeo
   deriving Show
 deriveJSON defaultOptions ''PGeo
 
+data SVGeo -- VGeo Singleton
+  =  SVGeo
+     {
+       _sis  :: [Int]    -- indices
+     , _sst  :: Int      -- stride
+     , _svs  :: [Float]  -- all attrs as a flat list
+     , _smp  :: FilePath -- material
+     , _sms  :: Float    -- mass
+     , _svl  :: [Float]  -- velocity
+     , _sxf  :: [Float]  -- preTransform
+     } deriving Show
+$(makeLenses ''SVGeo)
+
+fromVGeo'' :: VGeo -> [SVGeo]
+fromVGeo'' (VGeo is' st' vs' mts' ms' vls' xf') = svgeo :: [SVGeo]
+  where
+    svgeo = SVGeo <$.> is' <*.> st' <*.> vs' <*.> mts' <*.> ms' <*.> vls' <*.> xf'
+
 data VGeo
   =  VGeo
      {
@@ -78,10 +108,15 @@ data VGeo
      , vs  :: [[Float]]  -- all attrs as a flat list
      , mts :: [FilePath] -- materials
      , ms  :: [Float]    -- masses
-     , vls :: [[Float]]     -- velocities
+     , vls :: [[Float]]  -- velocities
      , xf  :: [[Float]]  -- preTransforms
-     }
-  deriving Show
+     } deriving Show
+
+fromVGeo' :: VGeo -> VAO'
+fromVGeo' (VGeo is' st' vs' _ _ _ _) = toVAO' is' st' vs'
+
+fromSVGeo :: SVGeo -> VAO''
+fromSVGeo (SVGeo is' st' vs' _ _ _ _) = toVAO'' is' st' vs'
 
 readBGeo :: FilePath -> IO VGeo
 readBGeo file = 

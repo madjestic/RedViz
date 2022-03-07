@@ -41,7 +41,6 @@ import Data.Text ( Text, pack )
 import Data.UUID
 
 import Graphics.RedViz.Project.Model
--- import Graphics.RedViz.Camera
 
 -- import Debug.Trace as DT
 
@@ -49,6 +48,7 @@ data PreObject
   =  PreObject
      {
        _pname       :: String
+     , _ptype       :: String
      , _uuid        :: UUID
      , _modelIDXs   :: [Int]
      , _solvers     :: [String]
@@ -101,6 +101,7 @@ defaultProject =
   [ (Model   "models/box.bgeo")]
   [ (PreObject
     "Box"
+    ""
     nil
     [0]
     ["rotate", "translate"]

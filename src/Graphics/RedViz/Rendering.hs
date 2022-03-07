@@ -12,11 +12,7 @@
 --
 --------------------------------------------------------------------------------
 
-
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE InstanceSigs #-}
-{-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE CPP    #-}
 
@@ -25,6 +21,7 @@ module Graphics.RedViz.Rendering
   , closeWindow
   , render
   , renderString  
+  , toDescriptor
   , initVAO
   , bindUniforms
   , bindTexture
@@ -57,6 +54,7 @@ import Graphics.RedViz.Descriptor
 import Graphics.RedViz.Material          as M
 import Graphics.RedViz.Texture           as T
 import Graphics.RedViz.Drawable
+import Graphics.RedViz.VAO (VAO'')
 
 -- import Debug.Trace as DT
 
@@ -336,6 +334,9 @@ fromV3V4 v3 = V4 (v3 ^. _x) (v3 ^. _y) (v3 ^. _z)
 
 nameFromPath :: FilePath -> String
 nameFromPath f = head (splitOn "." $ splitOn "/" f!!1)
+
+toDescriptor :: VAO'' -> IO Descriptor
+toDescriptor = initVAO
 
 initVAO :: ([Int], Int, [Float]) -> IO Descriptor
 initVAO (idx', st', vs') =
