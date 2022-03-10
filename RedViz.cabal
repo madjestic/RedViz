@@ -27,6 +27,9 @@ library
                        Graphics.RedViz.Input
                        Graphics.RedViz.Input.Keyboard
                        Graphics.RedViz.Input.Mouse
+                       Graphics.RedViz.Input.FRP.Yampa.Update
+                       Graphics.RedViz.Input.FRP.Yampa.Update.Mouse
+                       Graphics.RedViz.Input.FRP.Yampa.Update.Keyboard
                        Graphics.RedViz.Input.FRP.Yampa
                        Graphics.RedViz.Input.FRP.Yampa.AppInput
                        Graphics.RedViz.Project.Model
@@ -38,8 +41,8 @@ library
                        
   -- other-modules:
   -- other-extensions:
-  --ghc-options:   -O2 -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans
-  ghc-options:   -O2
+  ghc-options:   -O2 -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans
+  --ghc-options:   -O2
   build-depends:       base                ^>= 4.14.3.0
                      , aeson               
                      , aeson-pretty

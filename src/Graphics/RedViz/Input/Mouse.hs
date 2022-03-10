@@ -39,4 +39,3 @@ data Mouse
   } deriving Show
 
 $(makeLenses ''Mouse)
-

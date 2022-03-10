@@ -34,9 +34,7 @@ module Graphics.RedViz.PGeo
   , readVGeo
   , readBGeo
   , fromPGeo
-  , fromPGeo'
-  , fromVGeo'
-  , fromVGeo''
+  , fromVGeo
   , fromSVGeo
   , VAO
   ) where
@@ -95,8 +93,8 @@ data SVGeo -- VGeo Singleton
      } deriving Show
 $(makeLenses ''SVGeo)
 
-fromVGeo'' :: VGeo -> [SVGeo]
-fromVGeo'' (VGeo is' st' vs' mts' ms' vls' xf') = svgeo :: [SVGeo]
+fromVGeo :: VGeo -> [SVGeo]
+fromVGeo (VGeo is' st' vs' mts' ms' vls' xf') = svgeo :: [SVGeo]
   where
     svgeo = SVGeo <$.> is' <*.> st' <*.> vs' <*.> mts' <*.> ms' <*.> vls' <*.> xf'
 
@@ -111,9 +109,6 @@ data VGeo
      , vls :: [[Float]]  -- velocities
      , xf  :: [[Float]]  -- preTransforms
      } deriving Show
-
-fromVGeo' :: VGeo -> VAO'
-fromVGeo' (VGeo is' st' vs' _ _ _ _) = toVAO' is' st' vs'
 
 fromSVGeo :: SVGeo -> VAO''
 fromSVGeo (SVGeo is' st' vs' _ _ _ _) = toVAO'' is' st' vs'
@@ -166,19 +161,10 @@ readPGeo jsonFile =
             _ -> Nothing
 
 fromPGeo :: PGeo -> VGeo
-fromPGeo (PGeo idx' as' cs' ns' uvw' ps' mts' mass' vels' xf') = (VGeo idxs st vaos mts' mass' vels xf')
+fromPGeo (PGeo idx' as' cs' ns' uvw' ps' mts' mass' vels' xf') = VGeo idxs st vaos mts' mass' vels xf'
   where
     stride = 13 -- TODO: make it more elegant, right now VBO's are hard-coded to be have stride = 13...
-    vao = (toVAO idx' as' cs' ns' uvw' ps')
+    vao = toVAO idx' as' cs' ns' uvw' ps'
     (idxs, vaos) = unzip $ fmap toIdxVAO vao -- that already outputs [[]], but vao, I think,is still a single element list?
-    st           = take (length vaos) $ repeat stride
-    vels         = fmap (\(x,y,z)   -> fmap realToFrac [x,y,z]) vels'
-
-fromPGeo' :: PGeo -> VGeo
-fromPGeo' (PGeo idx' as' cs' ns' uvw' ps' mts' mass' vels' xf') = (VGeo idxs st vaos mts' mass' vels xf')
-  where
-    stride = 13 -- TODO: make it more elegant, right now VBO's are hard-coded to be have stride = 13...
-    vao = (toVAO idx' as' cs' ns' uvw' ps')
-    (idxs, vaos) = unzip $ fmap toIdxVAO' vao -- that already outputs [[]], but vao, I think,is still a single element list?
-    st           = take (length vaos) $ repeat stride
+    st           = replicate (length vaos) stride
     vels         = fmap (\(x,y,z)   -> fmap realToFrac [x,y,z]) vels'
