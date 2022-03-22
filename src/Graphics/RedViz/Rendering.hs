@@ -55,8 +55,9 @@ import Graphics.RedViz.Material          as M
 import Graphics.RedViz.Texture           as T
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.VAO (VAO'')
+import Graphics.RedViz.Widget (Format (..), hoffset, voffset, alignment, Alignment(..), soffset, ssize)
 
--- import Debug.Trace as DT
+--import Debug.Trace as DT
 
 debug :: Bool
 #ifdef DEBUG
@@ -115,31 +116,42 @@ closeWindow window =
     SDL.destroyWindow window
     SDL.quit
 
-renderString :: (Drawable -> IO ()) -> [Drawable] -> String -> IO ()
-renderString cmds fntsDrs str =
-    --mapM_ cmds $ format $ drawableString fntsDrs "Hello, World!"--str
-  mapM_ cmds $ format $ drawableString fntsDrs str
+renderString :: (Drawable -> IO ()) -> [Drawable] -> Format -> String -> IO ()
+renderString cmds fntsDrs fmt str =
+  mapM_ cmds $ format fmt $ drawableString fntsDrs str
 
 -- | given a string of drawables, return a formatted string (e.g. add offsets for drawable chars)
-format :: [Drawable] -> [Drawable]
-format drs = drw
+format :: Format -> [Drawable] -> [Drawable]
+format fmt drs = drw
   where
-    drw = fmap formatting (zip drs [0..])
+    drw = fmap (formatting fmt) (zip drs [0..])
 
-formatting :: (Drawable, Int) -> Drawable
-formatting (drw, offset) = drw'
+formatting :: Format -> (Drawable, Int) -> Drawable
+formatting fmt (drw, offset) = drw'
   where
     -- uns  = view uniforms drw
     rot0 = view _m33 (view (uniforms . u_xform) drw)
     tr0  = view translation (view (uniforms . u_xform) drw)
-    s1   = 0.085  -- scale Offset
-    s2   = 1.0    -- scale Size
-    h    = -0.4   -- horizontal offset
-    v    = 1.1    -- vertical   offset
+    s1   = fmt ^. soffset -- 0.085  -- scale Offset
+    s2   = identity !!* fmt ^. ssize :: V3 (V3 Double)-- fmt ^. ssize   -- 1.0    -- scale Size
+    (h, v) =
+      case fmt ^. alignment of
+      --case (DT.trace ("formatting.fmt : " ++ show fmt) fmt) ^. alignment of
+        TL -> (-1.0, 1.0)
+        TC -> ( 0.0, 1.0)
+        TR -> ( 1.0, 1.0)
+        CL -> (-1.0, 0.0)
+        CC -> ( 0.0, 0.0)
+        CR -> ( 1.0, 0.0)
+        BL -> (-1.0,-1.0)
+        BC -> (-1.0, 0.0)
+        BR -> (-1.0, 1.0)
+    h'    = fmt ^. hoffset -- -0.4   -- horizontal offset
+    v'    = fmt ^. voffset -- 1.1    -- vertical   offset <-- Problem is in fmt?
     offsetM44 =
       mkTransformationMat
       (rot0 * s2)
-      (tr0 ^+^ V3 (h + fromIntegral offset*s1) v 0)
+      (tr0 ^+^ V3 ((h + h') + fromIntegral offset*s1) (v + v') 0)
     drw' = set (uniforms . u_xform) offsetM44 drw
 
 -- | Alphabet of drawables -> String -> String of drawables

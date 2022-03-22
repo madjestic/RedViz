@@ -28,9 +28,19 @@ module Graphics.RedViz.Project.Project
   , Graphics.RedViz.Project.Project.read
   , write
   , defaultProject
+  , GUI' (..)
+  , gui
+  , Widget' (..)
+  , widgets
+  , Format' (..)
+  , alignment
+  , voffset  
+  , hoffset  
+  , soffset  
+  , ssize      
   ) where
 
-import Control.Lens
+import Control.Lens hiding (Empty)
 import Data.Aeson
 import Data.Aeson.TH
 import Data.Aeson.Encode.Pretty
@@ -71,6 +81,40 @@ data ProjectCamera
 $(makeLenses ''ProjectCamera)
 deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''ProjectCamera
 
+data Format'
+  =  Format'
+     { _alignment :: String
+     , _voffset   :: Double
+     , _hoffset   :: Double
+     , _soffset   :: Double -- scale Offset
+     , _ssize     :: Double -- scale Size
+     } deriving Show
+deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''Format'
+$(makeLenses ''Format')
+
+data Widget'
+  =  TextField'
+     { _active :: Bool
+     , _text   :: [String]
+     , _format :: Format' }
+  |  FPS'
+     { _active :: Bool
+     , _format :: Format' }
+deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''Widget'
+
+instance Show Widget' where
+  show (TextField' b f t) = show "TextField" ++ show(b, f, t)
+  show (FPS' b f)         = show "FPS" ++ show (b, f)
+
+data GUI'
+  =  GUI'
+     {
+       _widgets :: [Widget']
+     , _fonts   :: [Model]
+     } deriving Show
+$(makeLenses ''GUI')
+deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''GUI'
+
 data Project
   =  Project
      {
@@ -81,15 +125,86 @@ data Project
      , _models     :: [Model] -- is that used?
      , _objects    :: [PreObject]
      , _background :: [PreObject]
-     , _fonts      :: [Model]
+     , _gui        :: GUI'
      , _cameras    :: [ProjectCamera]
      } deriving Show
 $(makeLenses ''Project)
 deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''Project
 
+emptyGUI :: GUI'
+emptyGUI = GUI' [] []
+
 emptyProject :: Project
 emptyProject =
-  Project "foobar" (-1) (-1) "AbsoluteLocation" [] [] [] [] []
+  Project "foobar" (-1) (-1) "AbsoluteLocation" [] [] [] emptyGUI []
+
+defaultFonts :: [Model]
+defaultFonts =
+  [
+    (Model   "models/fnt_0.bgeo")
+  , (Model   "models/fnt_1.bgeo")
+  , (Model   "models/fnt_2.bgeo")
+  , (Model   "models/fnt_3.bgeo")
+  , (Model   "models/fnt_4.bgeo")
+  , (Model   "models/fnt_5.bgeo")
+  , (Model   "models/fnt_6.bgeo")
+  , (Model   "models/fnt_7.bgeo")
+  , (Model   "models/fnt_8.bgeo")
+  , (Model   "models/fnt_9.bgeo")
+  , (Model   "models/fnt_a.bgeo")
+  , (Model   "models/fnt_b.bgeo")
+  , (Model   "models/fnt_c.bgeo")
+  , (Model   "models/fnt_d.bgeo")
+  , (Model   "models/fnt_e.bgeo")
+  , (Model   "models/fnt_f.bgeo")
+  , (Model   "models/fnt_g.bgeo")
+  , (Model   "models/fnt_h.bgeo")
+  , (Model   "models/fnt_i.bgeo")
+  , (Model   "models/fnt_j.bgeo")
+  , (Model   "models/fnt_k.bgeo")
+  , (Model   "models/fnt_l.bgeo")
+  , (Model   "models/fnt_m.bgeo")
+  , (Model   "models/fnt_n.bgeo")
+  , (Model   "models/fnt_o.bgeo")
+  , (Model   "models/fnt_p.bgeo")
+  , (Model   "models/fnt_q.bgeo")
+  , (Model   "models/fnt_r.bgeo")
+  , (Model   "models/fnt_s.bgeo")
+  , (Model   "models/fnt_t.bgeo")
+  , (Model   "models/fnt_u.bgeo")
+  , (Model   "models/fnt_v.bgeo")
+  , (Model   "models/fnt_w.bgeo")
+  , (Model   "models/fnt_x.bgeo")
+  , (Model   "models/fnt_y.bgeo")
+  , (Model   "models/fnt_z.bgeo")
+  , (Model   "models/fnt_plus.bgeo")
+  , (Model   "models/fnt_minus.bgeo")
+  , (Model   "models/fnt_equal.bgeo")
+  , (Model   "models/fnt_GT.bgeo")
+  , (Model   "models/fnt_comma.bgeo")
+  , (Model   "models/fnt_dot.bgeo")
+  , (Model   "models/fnt_question.bgeo")
+  , (Model   "models/fnt_exclam.bgeo")
+  , (Model   "models/fnt_space.bgeo")
+  , (Model   "models/fnt_asterics.bgeo")
+  , (Model   "models/fnt_slash.bgeo")
+  , (Model   "models/fnt_semicolon.bgeo")
+  , (Model   "models/fnt_quote.bgeo")  
+  ]
+
+defaultFormat' :: Format'
+defaultFormat' =  Format' "CC" (-0.4) 0.0 0.085 1.0
+
+defaultGUI' :: GUI'
+defaultGUI' =
+  GUI'
+  [ TextField' True ["Hello, World!"] defaultFormat'
+  , FPS' True defaultFormat' ]
+  defaultFonts
+
+-- defaultWidget' :: Widget'
+-- defaultWidget' =
+--   TextField ["Hello, World!"]
 
 defaultProject :: Project
 defaultProject =
@@ -110,56 +225,7 @@ defaultProject =
     )
   ]
   []
-  [(Model   "models/fnt_0.bgeo")
-  ,(Model   "models/fnt_1.bgeo")
-  ,(Model   "models/fnt_2.bgeo")
-  ,(Model   "models/fnt_3.bgeo")
-  ,(Model   "models/fnt_4.bgeo")
-  ,(Model   "models/fnt_5.bgeo")
-  ,(Model   "models/fnt_6.bgeo")
-  ,(Model   "models/fnt_7.bgeo")
-  ,(Model   "models/fnt_8.bgeo")
-  ,(Model   "models/fnt_9.bgeo")
-  ,(Model   "models/fnt_a.bgeo")
-  ,(Model   "models/fnt_b.bgeo")
-  ,(Model   "models/fnt_c.bgeo")
-  ,(Model   "models/fnt_d.bgeo")
-  ,(Model   "models/fnt_e.bgeo")
-  ,(Model   "models/fnt_f.bgeo")
-  ,(Model   "models/fnt_g.bgeo")
-  ,(Model   "models/fnt_h.bgeo")
-  ,(Model   "models/fnt_i.bgeo")
-  ,(Model   "models/fnt_j.bgeo")
-  ,(Model   "models/fnt_k.bgeo")
-  ,(Model   "models/fnt_l.bgeo")
-  ,(Model   "models/fnt_m.bgeo")
-  ,(Model   "models/fnt_n.bgeo")
-  ,(Model   "models/fnt_o.bgeo")
-  ,(Model   "models/fnt_p.bgeo")
-  ,(Model   "models/fnt_q.bgeo")
-  ,(Model   "models/fnt_r.bgeo")
-  ,(Model   "models/fnt_s.bgeo")
-  ,(Model   "models/fnt_t.bgeo")
-  ,(Model   "models/fnt_u.bgeo")
-  ,(Model   "models/fnt_v.bgeo")
-  ,(Model   "models/fnt_w.bgeo")
-  ,(Model   "models/fnt_x.bgeo")
-  ,(Model   "models/fnt_y.bgeo")
-  ,(Model   "models/fnt_z.bgeo")
-  ,(Model   "models/fnt_plus.bgeo")
-  ,(Model   "models/fnt_minus.bgeo")
-  ,(Model   "models/fnt_equal.bgeo")
-  ,(Model   "models/fnt_GT.bgeo")
-  ,(Model   "models/fnt_comma.bgeo")
-  ,(Model   "models/fnt_dot.bgeo")
-  ,(Model   "models/fnt_question.bgeo")
-  ,(Model   "models/fnt_exclam.bgeo")
-  ,(Model   "models/fnt_space.bgeo")
-  ,(Model   "models/fnt_asterics.bgeo")
-  ,(Model   "models/fnt_slash.bgeo")
-  ,(Model   "models/fnt_semicolon.bgeo")
-  ,(Model   "models/fnt_quote.bgeo")  
-  ]
+  defaultGUI'
   [(ProjectCamera
     "PlayerCamera"
     50.0
@@ -193,7 +259,8 @@ read filePath =
         models'   = (_models   . fromEitherDecode) d
         preObjs'  = (_objects  . fromEitherDecode) d
         bgrObjs'  = (_background . fromEitherDecode) d
-        fonts'    = (_fonts    . fromEitherDecode) d
+        gui'      = (_gui      . fromEitherDecode) d
+--        fonts'    = (_fonts    . fromEitherDecode) d
         cameras'  = (_cameras  . fromEitherDecode) d
     return $
       Project
@@ -204,7 +271,8 @@ read filePath =
       models'
       (sortOn (view uuid ) preObjs')
       (sortOn (view uuid ) bgrObjs')
-      fonts'
+      gui'
+--      fonts'
       cameras'
       
       where

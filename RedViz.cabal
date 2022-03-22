@@ -35,6 +35,7 @@ library
                        Graphics.RedViz.Project.Model
                        Graphics.RedViz.Project.Project
                        Graphics.RedViz.Project.Utils
+                       Graphics.RedViz.Widget
                        Graphics.RedViz.PGeo
                        Graphics.RedViz.VAO
                        Graphics.RedViz.FromVector
