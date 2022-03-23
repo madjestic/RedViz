@@ -24,6 +24,7 @@ module Graphics.RedViz.Project.Project
   , solvers
   , solverAttrs
   , fonts
+  , defaultFonts
   , cameras
   , Graphics.RedViz.Project.Project.read
   , write

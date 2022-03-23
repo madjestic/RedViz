@@ -23,15 +23,15 @@ data Alignment =
 data Format -- move to Format.hs?
   =  Format
      { _alignment :: Alignment
-     , _hoffset   :: Double
      , _voffset   :: Double
+     , _hoffset   :: Double
      , _soffset   :: Double -- scale Offset
      , _ssize     :: Double -- scale Size
      } deriving Show
 $(makeLenses ''Format)
 
 defaultFormat :: Format
-defaultFormat = Format CC (-0.4) 0.0 0.085 1.0
+defaultFormat = Format CC 0.0 (-0.4) 0.085 1.0
 
 data Widget
   =  TextField
