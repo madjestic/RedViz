@@ -9,6 +9,7 @@ module Graphics.RedViz.Widget
   , alignment
   , soffset
   , ssize
+  , text
   , defaultFormat
   ) where
 
