@@ -20,25 +20,21 @@ module Graphics.RedViz.Project.Project
   , PreObject (..)
   , pname
   , modelIDXs
-  , uuid 
+  , uuid
+  , presolvers
+  , presolverAttrs
   , solvers
   , solverAttrs
   , fonts
+  , icons
   , defaultFonts
+  , defaultIcons
   , cameras
   , Graphics.RedViz.Project.Project.read
   , write
   , defaultProject
   , GUI' (..)
   , gui
-  , Widget' (..)
-  , widgets
-  , Format' (..)
-  , alignment
-  , voffset  
-  , hoffset  
-  , soffset  
-  , ssize      
   ) where
 
 import Control.Lens hiding (Empty)
@@ -58,12 +54,14 @@ import Graphics.RedViz.Project.Model
 data PreObject
   =  PreObject
      {
-       _pname       :: String
-     , _ptype       :: String
-     , _uuid        :: UUID
-     , _modelIDXs   :: [Int]
-     , _solvers     :: [String]
-     , _solverAttrs :: [[Double]]
+       _pname          :: String
+     , _ptype          :: String
+     , _uuid           :: UUID
+     , _modelIDXs      :: [Int]
+     , _presolvers     :: [String]
+     , _presolverAttrs :: [[Double]]
+     , _solvers        :: [String]
+     , _solverAttrs    :: [[Double]]
      } deriving Show
 
 $(makeLenses ''PreObject)
@@ -82,36 +80,12 @@ data ProjectCamera
 $(makeLenses ''ProjectCamera)
 deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''ProjectCamera
 
-data Format'
-  =  Format'
-     { _alignment :: String
-     , _voffset   :: Double
-     , _hoffset   :: Double
-     , _soffset   :: Double -- scale Offset
-     , _ssize     :: Double -- scale Size
-     } deriving Show
-deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''Format'
-$(makeLenses ''Format')
-
-data Widget'
-  =  TextField'
-     { _active :: Bool
-     , _text   :: [String]
-     , _format :: Format' }
-  |  FPS'
-     { _active :: Bool
-     , _format :: Format' }
-deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''Widget'
-
-instance Show Widget' where
-  show (TextField' b f t) = show "TextField" ++ show(b, f, t)
-  show (FPS' b f)         = show "FPS" ++ show (b, f)
-
 data GUI'
   =  GUI'
      {
-       _widgets :: [Widget']
-     , _fonts   :: [Model]
+--       _widgets :: [Widget']
+       _fonts   :: [Model]
+     , _icons    :: [Model]
      } deriving Show
 $(makeLenses ''GUI')
 deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''GUI'
@@ -123,7 +97,7 @@ data Project
      , _resx       :: Int
      , _resy       :: Int
      , _camMode    :: String
-     , _models     :: [Model] -- is that used?
+     , _models     :: [Model]
      , _objects    :: [PreObject]
      , _background :: [PreObject]
      , _gui        :: GUI'
@@ -190,18 +164,52 @@ defaultFonts =
   , (Model   "models/fnt_asterics.bgeo")
   , (Model   "models/fnt_slash.bgeo")
   , (Model   "models/fnt_semicolon.bgeo")
-  , (Model   "models/fnt_quote.bgeo")  
+  , (Model   "models/fnt_quote.bgeo")
+  , (Model   "models/fnt_A.bgeo")
+  , (Model   "models/fnt_B.bgeo")
+  , (Model   "models/fnt_C.bgeo")
+  , (Model   "models/fnt_D.bgeo")
+  , (Model   "models/fnt_E.bgeo")
+  , (Model   "models/fnt_F.bgeo")
+  , (Model   "models/fnt_G.bgeo")
+  , (Model   "models/fnt_H.bgeo")
+  , (Model   "models/fnt_I.bgeo")
+  , (Model   "models/fnt_J.bgeo")
+  , (Model   "models/fnt_K.bgeo")
+  , (Model   "models/fnt_L.bgeo")
+  , (Model   "models/fnt_M.bgeo")
+  , (Model   "models/fnt_N.bgeo")
+  , (Model   "models/fnt_O.bgeo")
+  , (Model   "models/fnt_P.bgeo")
+  , (Model   "models/fnt_Q.bgeo")
+  , (Model   "models/fnt_R.bgeo")
+  , (Model   "models/fnt_S.bgeo")
+  , (Model   "models/fnt_T.bgeo")
+  , (Model   "models/fnt_U.bgeo")
+  , (Model   "models/fnt_V.bgeo")
+  , (Model   "models/fnt_W.bgeo")
+  , (Model   "models/fnt_X.bgeo")
+  , (Model   "models/fnt_Y.bgeo")
+  , (Model   "models/fnt_Z.bgeo")
+  , (Model   "models/fnt_LT.bgeo")
   ]
 
-defaultFormat' :: Format'
-defaultFormat' =  Format' "CC" (-0.4) 0.0 0.085 1.0
+defaultIcons :: [Model]
+defaultIcons =
+  [
+    (Model   "models/fnt_crosshair.bgeo")
+  ]
+
+-- defaultFormat' :: Format'
+-- defaultFormat' =  Format' "CC" (-0.4) 0.0 0.085 1.0
 
 defaultGUI' :: GUI'
 defaultGUI' =
   GUI'
-  [ TextField' True ["Hello, World!"] defaultFormat'
-  , FPS' True defaultFormat' ]
+  -- [ TextField' True ["Hello, World!"] defaultFormat'
+  -- , FPS' True defaultFormat' ]
   defaultFonts
+  []
 
 -- defaultWidget' :: Widget'
 -- defaultWidget' =
@@ -220,6 +228,8 @@ defaultProject =
     ""
     nil
     [0]
+    []
+    []
     ["rotate", "translate"]
     [[0,0,0,0,0,1000]
     ,[1000,0,0]]
@@ -247,38 +257,36 @@ write prj fileOut =
     config = defConfig { confCompare = comp }
 
 comp :: Text -> Text -> Ordering
-comp = keyOrder . (fmap pack) $ ["name", "resx", "resy", "camMode", "models", "objects", "background", "pname", "uuid ", "modelIDXs", "solvers", "solverAttrs", "fonts", "cameras", "pApt", "pFoc", "pTransform", "pMouseS", "pKeyboardRS", "pKeyboardTS"]
+comp = keyOrder . (fmap pack) $ ["name", "resx", "resy", "camMode", "models", "objects", "background", "pname", "uuid ", "modelIDXs", "solvers", "solverAttrs", "presolvers", "presolverAttrs", "fonts", "icons", "cameras", "pApt", "pFoc", "pTransform", "pMouseS", "pKeyboardRS", "pKeyboardTS"]
 
 read :: FilePath -> IO Project
-read filePath =
-  do
-    d <- (eitherDecode <$> B.readFile filePath) :: IO (Either String Project)
-    let name'     = (_name     . fromEitherDecode) d
-        resx'     = (_resx     . fromEitherDecode) d
-        resy'     = (_resy     . fromEitherDecode) d
-        camMode'  = (_camMode  . fromEitherDecode) d
-        models'   = (_models   . fromEitherDecode) d
-        preObjs'  = (_objects  . fromEitherDecode) d
-        bgrObjs'  = (_background . fromEitherDecode) d
-        gui'      = (_gui      . fromEitherDecode) d
---        fonts'    = (_fonts    . fromEitherDecode) d
-        cameras'  = (_cameras  . fromEitherDecode) d
-    return $
-      Project
-      name'
-      resx'
-      resy'
-      camMode'
-      models'
-      (sortOn (view uuid ) preObjs')
-      (sortOn (view uuid ) bgrObjs')
-      gui'
---      fonts'
-      cameras'
-      
-      where
-        fromEitherDecode = fromMaybe emptyProject . fromEither
-        fromEither d =
-          case d of
-            Right pt -> Just pt            
-            _ -> Nothing
+read filePath = do
+  Prelude.putStrLn $ "filePath : " ++ show filePath
+  d <- (eitherDecode <$> B.readFile filePath) :: IO (Either String Project)
+  let name'     = (_name     . fromEitherDecode) d
+      resx'     = (_resx     . fromEitherDecode) d
+      resy'     = (_resy     . fromEitherDecode) d
+      camMode'  = (_camMode  . fromEitherDecode) d
+      models'   = (_models   . fromEitherDecode) d
+      preObjs'  = (_objects  . fromEitherDecode) d
+      bgrObjs'  = (_background . fromEitherDecode) d
+      gui'      = (_gui      . fromEitherDecode) d
+      cameras'  = (_cameras  . fromEitherDecode) d
+  return $
+    Project
+    name'
+    resx'
+    resy'
+    camMode'
+    models'
+    (sortOn (view uuid ) preObjs')
+    (sortOn (view uuid ) bgrObjs')
+    gui'
+    cameras'
+    
+    where
+      fromEitherDecode = fromMaybe emptyProject . fromEither
+      fromEither d =
+        case d of
+          Right pt -> Just pt            
+          _ -> Nothing

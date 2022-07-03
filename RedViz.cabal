@@ -1,6 +1,6 @@
-cabal-version:       2.4
+cabal-version:       3.0
 name:                RedViz
-version:             0.1.0.0
+version:             0.2.0.0
 synopsis:            a library for realtime interactive 3D visualizations
 description:         a library for realtime interactive 3D visualizations and (glsl) shaders.
 homepage:            https://github.com/madjestic/RedViz
@@ -39,12 +39,13 @@ library
                        Graphics.RedViz.PGeo
                        Graphics.RedViz.VAO
                        Graphics.RedViz.FromVector
+                       Graphics.RedViz.Object
                        
   -- other-modules:
   -- other-extensions:
   ghc-options:   -O2 -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans
   --ghc-options:   -O2
-  build-depends:       base                ^>= 4.14.3.0
+  build-depends:       base
                      , aeson               
                      , aeson-pretty
                      , bearriver           

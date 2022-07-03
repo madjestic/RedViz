@@ -20,7 +20,8 @@ module Graphics.RedViz.Rendering
   ( openWindow
   , closeWindow
   , render
-  , renderString  
+  , renderString
+  , renderIcon
   , toDescriptor
   , initVAO
   , bindUniforms
@@ -55,9 +56,9 @@ import Graphics.RedViz.Material          as M
 import Graphics.RedViz.Texture           as T
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.VAO (VAO'')
-import Graphics.RedViz.Widget (Format (..), hoffset, voffset, alignment, Alignment(..), soffset, ssize)
+import Graphics.RedViz.Widget (Format (..), xoffset, yoffset, zoffset, alignment, Alignment(..), soffset, ssize)
 
---import Debug.Trace as DT
+-- import Debug.Trace as DT
 
 debug :: Bool
 #ifdef DEBUG
@@ -77,6 +78,7 @@ data BackendOptions
        primitiveMode :: PrimitiveMode -- Triangles | Points
      , bgrColor      :: Color4 GLfloat
      , ptSize        :: Float
+     , depthMsk      :: Capability
      } deriving Show
 
 openWindow :: Text -> (CInt, CInt) -> IO SDL.Window
@@ -120,6 +122,10 @@ renderString :: (Drawable -> IO ()) -> [Drawable] -> Format -> String -> IO ()
 renderString cmds fntsDrs fmt str =
   mapM_ cmds $ format fmt $ drawableString fntsDrs str
 
+renderIcon :: (Drawable -> IO ()) -> [Drawable] -> Format -> String -> IO ()
+renderIcon cmds fntsDrs fmt str =
+  mapM_ cmds $ format fmt $ drawableIcon fntsDrs str
+  
 -- | given a string of drawables, return a formatted string (e.g. add offsets for drawable chars)
 format :: Format -> [Drawable] -> [Drawable]
 format fmt drs = drw
@@ -129,29 +135,42 @@ format fmt drs = drw
 formatting :: Format -> (Drawable, Int) -> Drawable
 formatting fmt (drw, offset) = drw'
   where
-    -- uns  = view uniforms drw
     rot0 = view _m33 (view (uniforms . u_xform) drw)
     tr0  = view translation (view (uniforms . u_xform) drw)
-    s1   = fmt ^. soffset -- 0.085  -- scale Offset
-    s2   = identity !!* fmt ^. ssize :: V3 (V3 Double)-- fmt ^. ssize   -- 1.0    -- scale Size
-    (h, v) =
+    s1   = fmt ^. soffset
+    s2   = identity !!* fmt ^. ssize :: V3 (V3 Double)
+    (x, y) =
       case fmt ^. alignment of
-      --case (DT.trace ("formatting.fmt : " ++ show fmt) fmt) ^. alignment of
-        TL -> (-1.0, 1.0)
-        TC -> ( 0.0, 1.0)
-        TR -> ( 1.0, 1.0)
-        CL -> (-1.0, 0.0)
+        TL -> (-0.8, 0.5)
+        TC -> ( 0.0, 0.5)
+        TR -> ( 0.8, 0.5)
+        CL -> (-0.8, 0.0)
         CC -> ( 0.0, 0.0)
-        CR -> ( 1.0, 0.0)
-        BL -> (-1.0,-1.0)
-        BC -> (-1.0, 0.0)
-        BR -> (-1.0, 1.0)
-    h'    = fmt ^. hoffset -- -0.4   -- horizontal offset
-    v'    = fmt ^. voffset -- 1.1    -- vertical   offset <-- Problem is in fmt?
+        CR -> ( 0.8, 0.0)
+        BL -> (-0.8,-0.5)
+        BC -> ( 0.0,-0.5)
+        BR -> ( 0.8, 0.5)
+    x'    = fmt ^. xoffset
+    y'    = fmt ^. yoffset
+    z'    = fmt ^. zoffset
     offsetM44 =
       mkTransformationMat
       (rot0 * s2)
-      (tr0 ^+^ V3 ((h + h') + fromIntegral offset*s1) (v + v') 0)
+      (tr0 ^+^ V3 ((x + x') + fromIntegral offset*s1) (y + y') z')
+    drw' = set (uniforms . u_xform) offsetM44 drw
+
+formatCursor :: Format -> Drawable -> Drawable
+formatCursor fmt drw = drw'
+  where
+    rot0 = view _m33 (view (uniforms . u_xform) drw)
+    tr0  = view translation (view (uniforms . u_xform) drw)
+    s    = identity !!* fmt ^. ssize :: V3 (V3 Double)-- fmt ^. ssize   -- 1.0    -- s Size
+    (x, y) = (fmt ^. yoffset, fmt ^. xoffset)
+    
+    offsetM44 =
+      mkTransformationMat
+      (rot0 * s)
+      (tr0 ^+^ V3 x y 0)
     drw' = set (uniforms . u_xform) offsetM44 drw
 
 -- | Alphabet of drawables -> String -> String of drawables
@@ -159,6 +178,14 @@ drawableString :: [Drawable] -> String -> [Drawable]
 drawableString drs str = drws
   where
     drws = fmap (drawableChar drs) str
+
+drawableIcon :: [Drawable] -> String -> [Drawable]
+drawableIcon drs str = drws
+  where
+    drws =
+      case str of
+        "cursor" -> [head drs]
+        _ -> [head drs]
 
 -- | Alphabet of drawables -> Char -> a drawable char
 drawableChar :: [Drawable] -> Char -> Drawable
@@ -182,7 +209,6 @@ drawableChar drs chr =
     'f' -> drs!!15
     'g' -> drs!!16
     'h' -> drs!!17
-    'H' -> drs!!17
     'i' -> drs!!18
     'j' -> drs!!19
     'k' -> drs!!20
@@ -198,7 +224,6 @@ drawableChar drs chr =
     'u' -> drs!!30
     'v' -> drs!!31
     'w' -> drs!!32
-    'W' -> drs!!32
     'x' -> drs!!33
     'y' -> drs!!34
     'z' -> drs!!35
@@ -214,19 +239,47 @@ drawableChar drs chr =
     '*' -> drs!!45
     '/' -> drs!!46
     ':' -> drs!!47
-    '\'' -> drs!!48
+    '\''-> drs!!48
+    'A' -> drs!!49
+    'B' -> drs!!50
+    'C' -> drs!!51
+    'D' -> drs!!52
+    'E' -> drs!!53
+    'F' -> drs!!54
+    'G' -> drs!!55
+    'H' -> drs!!56
+    'I' -> drs!!57
+    'J' -> drs!!58
+    'K' -> drs!!59
+    'L' -> drs!!60
+    'M' -> drs!!61
+    'N' -> drs!!62
+    'O' -> drs!!63
+    'P' -> drs!!64
+    'Q' -> drs!!65
+    'R' -> drs!!66
+    'S' -> drs!!67
+    'T' -> drs!!68
+    'U' -> drs!!69
+    'V' -> drs!!70
+    'W' -> drs!!71
+    'X' -> drs!!72
+    'Y' -> drs!!73
+    'Z' -> drs!!74
+    '<' -> drs!!75
     _   -> head drs
 
 render :: [Texture] -> [(UUID, GLuint)] ->  BackendOptions -> Drawable -> IO ()
 render txs hmap opts (Drawable _ unis (Descriptor vao' numIndices') _) =
   do
-    -- print $ "render.name : " ++ name
-    -- print $ "render.unis :" ++ show unis ++ "\n render.txs :" ++ show txs ++ "\n render.hmap : " ++ show hmap
+ -- print $ "render.name : " ++ name
+ -- print $ "render.unis :" ++ show unis ++ "\n render.txs :" ++ show txs ++ "\n render.hmap : " ++ show hmap
     bindUniforms txs unis hmap
     bindVertexArrayObject $= Just vao'
 
     GL.pointSize $= ptSize opts --0.001
-    --GL.pointSmooth $= Enabled
+  --GL.pointSmooth $= Enabled
+    GL.depthMask $= depthMsk opts
 
     drawElements (primitiveMode opts) numIndices' GL.UnsignedInt nullPtr
 

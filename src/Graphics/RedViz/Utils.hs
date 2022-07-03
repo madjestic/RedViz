@@ -24,11 +24,13 @@ module Graphics.RedViz.Utils
   , Graphics.RedViz.Utils.fromList
   , (<$.>)
   , (<*.>)
+  , (^*^)
   , toV3
   , rotateList
   , rotateList'
   , fromUUID
   , encodeStringUUID
+  , vectorizedCompose
   ) where
 
 import Control.Lens ( view )
@@ -38,6 +40,7 @@ import Data.ByteString.Char8           (pack
 import Data.Set                  as DS (fromList, toList)
 import Data.List.Index                 (indexed)
 import Data.List                       (elemIndex)
+import Data.List                 as DL (transpose)
 import Data.Locator
 import Data.UUID                 as U
 import Data.Vector               as DV (fromList, (!), map, toList)
@@ -70,8 +73,17 @@ instance VectorSpace (V4 (V4 Double)) Double where
           m' = view _m33 m
           n' = view _m33 n
       tr = (view translation m) ^+^ (view translation n)
-          
   dot    (m :: M44 Double) (n :: M44 Double) = DV.dot m n
+
+vectorizedCompose :: [[M44 Double]] -> [M44 Double]
+vectorizedCompose = fmap (foldr1 (^*^)) . DL.transpose
+
+(^*^) :: M44 Double -> M44 Double -> M44 Double
+(^*^) mtx0 mtx1 = mkTransformationMat rot tr
+  where
+    rot = view _m33 mtx0 !*! view _m33 mtx1 :: M33 Double
+    --rot = LM.identity :: M33 Double -- DEBUG
+    tr  = view translation mtx0 ^+^ view translation mtx1
 
 -- | [Float]  ~= vertex
 --  [[Float]] ~= VAO

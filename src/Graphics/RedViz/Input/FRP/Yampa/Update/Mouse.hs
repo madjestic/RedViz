@@ -34,5 +34,5 @@ updateMouse =
         (isEvent mmovE)
         []
     returnA -< (mouse', events)
-    --returnA -< (mouse, DT.trace ("mouse :" ++ show events) events)
+    --returnA -< (mouse, DT.trace ("mouse :" ++ show events) events)    
 
