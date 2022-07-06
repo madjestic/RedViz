@@ -9,6 +9,8 @@ import FRP.Yampa
 import Graphics.RedViz.Input.FRP.Yampa.AppInput
 import Graphics.RedViz.Input.Mouse
 
+-- import Debug.Trace    as DT
+
 updateMouse :: SF AppInput (Mouse, [Event (Double, Double)])
 updateMouse =
   proc input -> do
@@ -16,8 +18,8 @@ updateMouse =
     rmbE <- rbpPos       -< input
     mmovE <- mouseMoving -< input
 
-    mpos' <- mousePos     -< input
-    rpos' <- mouseRelPos  -< input
+    mpos' <- mousePos    -< input
+    rpos' <- mouseRelPos -< input
 
     let
       events = [lmbE, rmbE, mmovE]
@@ -30,6 +32,7 @@ updateMouse =
            True -> Just $ fromEvent rmbE
            _    -> Nothing)
         mpos'
+        --(DT.trace ("mpos' : " ++ show mpos') mpos')
         rpos'
         (isEvent mmovE)
         []

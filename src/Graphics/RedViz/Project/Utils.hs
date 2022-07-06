@@ -9,8 +9,10 @@ import Graphics.RedViz.Camera
 import Graphics.RedViz.Controllable
 import Graphics.RedViz.Utils
 
-fromProjectCamera :: ProjectCamera -> Camera
-fromProjectCamera pcam =
+
+-- TODO: pass prj resolution to camera
+fromProjectCamera :: Project -> ProjectCamera -> Camera
+fromProjectCamera prj0 pcam =
   defaultCam
   {
     _apt        = _pApt pcam
@@ -21,4 +23,5 @@ fromProjectCamera pcam =
   , _mouseS     = pure $ _pMouseS pcam     :: V3 Double
   , _keyboardRS = pure $ _pKeyboardRS pcam :: V3 Double
   , _keyboardTS = pure $ _pKeyboardTS pcam :: V3 Double
+  , _res        = (_resx prj0, _resy prj0)
   }

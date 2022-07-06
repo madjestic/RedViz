@@ -30,7 +30,7 @@ module Graphics.RedViz.Controllable
   , vel
   , device
   , device'
-  , mouse
+--  , mouse
   , keyboard
   ) where
 
@@ -67,7 +67,7 @@ data Device
   =  Device
      {
        _keyboard :: Keyboard
-     , _mouse    :: Mouse
+     --, _mouse    :: Mouse
      } deriving Show
 
 -- transform' :: Lens' Controllable (M44 Double)

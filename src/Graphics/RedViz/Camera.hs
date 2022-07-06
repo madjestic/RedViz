@@ -24,6 +24,7 @@ module Graphics.RedViz.Camera
   , keyboardRS
   , keyboardTS
   , defaultCamController
+  , res
   ) where
 
 import Control.Lens
@@ -44,6 +45,7 @@ data Camera =
      , _mouseS     :: V3 Double -- mouse    "sensitivity"
      , _keyboardRS :: V3 Double -- keyboard "rotation sensitivity"
      , _keyboardTS :: V3 Double -- keyboard "translation sensitivity"
+     , _res        :: (Int, Int)
      } deriving Show
 
 $(makeLenses ''Camera)
@@ -58,6 +60,7 @@ defaultCam =
   1.0
   1.0
   1.0
+  (256,256)
 
 defaultCamController :: Controllable
 defaultCamController =
@@ -72,9 +75,13 @@ defaultCamController =
         (V4 0 0 0 1)))
     (V3 0 0 0) -- velocity
     (V3 0 0 0) -- rotation
-    (Device (Keyboard keys0 kvs0) (Mouse Nothing Nothing (0,0) (0.0, 0.0) False mvs0 )))
+    (Device
+     (Keyboard keys0 kvs0)
+     --(Mouse Nothing Nothing (0,0) (0.0, 0.0) False mvs0 )
+    )
+  )
   where
-    mvs0   = [] --undefined
+    -- mvs0   = [] --undefined
     -- mvs0 - mouse vectors
     keys0  = ( Keys False False False False False False False False False False False False False False False False False )
     -- kvs0 - key vectors keyVecs

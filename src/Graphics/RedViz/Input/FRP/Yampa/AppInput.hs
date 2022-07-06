@@ -34,6 +34,7 @@ import qualified SDL
 -- <| Signal Functions |> --
 -- | Current mouse position
 mousePos :: SF AppInput (Double,Double)
+--mousePos = iPre (initAppInput (400,400)) >>> arr inpMousePos
 mousePos = arr inpMousePos
 
 mouseRelPos :: SF AppInput (Double,Double)
@@ -238,10 +239,10 @@ data AppInput =
 
 type WinInput = Event SDL.EventPayload    
 
-initAppInput :: AppInput
-initAppInput =
+initAppInput :: (Int, Int) ->  AppInput
+initAppInput (x0, y0)=
      AppInput 
-     { inpMousePos          = (0.0, 0.0)
+     { inpMousePos          = (fromIntegral x0/2, fromIntegral y0/2) --(0.0, 0.0)
      , inpMouseRelPos       = (0.0, 0.0)
      , inpMouseLeft         = Nothing
      , inpMouseMiddle       = Nothing
@@ -293,35 +294,35 @@ initAppInput =
      , inpKeyRightPressed   = Nothing
      , inpKeyRightReleased  = Nothing
      -- PageUp
-     , inpKeyPageUpPressed   = Nothing
-     , inpKeyPageUpReleased  = Nothing
+     , inpKeyPageUpPressed  = Nothing
+     , inpKeyPageUpReleased = Nothing
      -- PageDown
      , inpKeyPageDownPressed   = Nothing
      , inpKeyPageDownReleased  = Nothing
      -- LShift
-     , inpKeyLShiftPressed   = Nothing
-     , inpKeyLShiftReleased  = Nothing     
+     , inpKeyLShiftPressed  = Nothing
+     , inpKeyLShiftReleased = Nothing     
      -- LCtrl
      , inpKeyLCtrlPressed   = Nothing
      , inpKeyLCtrlReleased  = Nothing
      -- LAlt
-     , inpKeyLAltPressed   = Nothing
-     , inpKeyLAltReleased  = Nothing
+     , inpKeyLAltPressed    = Nothing
+     , inpKeyLAltReleased   = Nothing
      -- RShift
-     , inpKeyRShiftPressed   = Nothing
-     , inpKeyRShiftReleased  = Nothing     
+     , inpKeyRShiftPressed  = Nothing
+     , inpKeyRShiftReleased = Nothing     
      -- RCtrl
      , inpKeyRCtrlPressed   = Nothing
      , inpKeyRCtrlReleased  = Nothing
      -- Any Other Key
      , inpAnyKeyPressed     = Nothing
-     , inpAnyKeyReleased     = Nothing
+     , inpAnyKeyReleased    = Nothing
      }
 
 -- | Filter and transform SDL events into events which are relevant to our
 --   application
-parseWinInput :: SF WinInput AppInput
-parseWinInput = accumHoldBy nextAppInput initAppInput
+parseWinInput :: (Int, Int) -> SF WinInput AppInput
+parseWinInput res = accumHoldBy nextAppInput (initAppInput res)
 
 scancode :: SDL.KeyboardEventData -> Scancode
 scancode ev =
