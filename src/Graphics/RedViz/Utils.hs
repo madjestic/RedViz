@@ -26,6 +26,7 @@ module Graphics.RedViz.Utils
   , (<*.>)
   , (^*^)
   , toV3
+  , toV4
   , rotateList
   , rotateList'
   , fromUUID
@@ -45,8 +46,10 @@ import Data.Locator
 import Data.UUID                 as U
 import Data.Vector               as DV (fromList, (!), map, toList)
 import Data.VectorSpace          as DV
+import Data.Maybe (fromJust)
 import Graphics.Rendering.OpenGL (GLuint)
-import Linear.V3
+import Linear.V                        (fromVector, fromV)
+import Linear.V3 
 import Linear.V4
 import Linear.Matrix
 import Linear.Metric             as LM
@@ -146,7 +149,12 @@ fromList xs' = V4 x y z w
 (<*.>) = zipWith ($)
 
 toV3 :: [a] -> V3 a
-toV3 xs = V3 (head xs) (xs!!1) (xs!!2)
+--toV3 xs = V3 (head xs) (xs!!1) (xs!!2)
+toV3 xs = fromV . fromJust . fromVector $ DV.fromList xs
+
+toV4 :: [a] -> V4 a
+--toV4 xs = V4 (head xs) (xs!!1) (xs!!2) (xs!!3)
+toV4 xs = fromV . fromJust . fromVector $ DV.fromList xs
 
 rotateList :: Int -> [a] -> [a]
 rotateList _ [] = []

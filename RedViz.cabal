@@ -1,6 +1,6 @@
 cabal-version:       3.0
 name:                RedViz
-version:             0.2.0.0
+version:             0.2.0.1
 synopsis:            a library for realtime interactive 3D visualizations
 description:         a library for realtime interactive 3D visualizations and (glsl) shaders.
 homepage:            https://github.com/madjestic/RedViz
@@ -44,11 +44,13 @@ library
   -- other-modules:
   -- other-extensions:
   ghc-options:   -O2 -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans
+  --ghc-options:   -threaded -fprof-auto -fprof-cafs "-with-rtsopts=-N -p -s -hc -i0.1 -xc"
   --ghc-options:   -O2
   build-depends:       base
                      , aeson               
                      , aeson-pretty
-                     , bearriver           
+                     --, bearriver
+                     , Yampa >= 0.13.7
                      , bytestring           
                      , containers          
                      , GLUtil              
@@ -61,7 +63,7 @@ library
                      , random              
                      , scientific          
                      , simple-affine-space 
-                     , sdl2                
+                     , sdl2
                      , sort
                      , split
                      , store

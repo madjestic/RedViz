@@ -93,10 +93,17 @@ openWindow title (sizex,sizey) =
     let config = OpenGLConfig { glColorPrecision = V4 8 8 8 0
                               , glDepthPrecision = 24
                               , glStencilPrecision = 8
-                              , glMultisampleSamples = 8
-                              --, glProfile = Compatibility Normal 2 1
+                              , glMultisampleSamples = 4
                               , glProfile = Core Normal 4 5
                               }
+
+                              -- defaultOpenGL = OpenGLConfig
+                              --   { glColorPrecision = V4 8 8 8 0
+                              --   , glDepthPrecision = 24
+                              --   , glStencilPrecision = 8
+                              --   , glMultisampleSamples = 1
+                              --   , glProfile = Compatibility Normal 2 1
+                              --   }                 
 
     depthFunc $= Just Less
 
@@ -105,7 +112,7 @@ openWindow title (sizex,sizey) =
               SDL.defaultWindow
               { SDL.windowInitialSize = V2 sizex sizey
               , SDL.windowGraphicsContext = OpenGLContext config
-              }
+              }      
 
     SDL.showWindow window
     _ <- SDL.glCreateContext window

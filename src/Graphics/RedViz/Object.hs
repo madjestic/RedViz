@@ -30,7 +30,7 @@ data Object'
       , _materials   :: [Material]    -- | hence [Material] is present on the Object level too, we use that value, instead of looking it up from respective VGeo.
       , _programs    :: [Program]     -- | Shader Programs
       , _transforms  :: ![M44 Double] -- | transforms for parts (object fragments)
-      , _transform0  :: !(M44 Double) -- | shared (pre) transform for space normalization
+      , _transform0  :: !(M44 Double) -- | basis (position/orientation in world space)
       , _ypr0        :: !(V3 Double)
       , _ypr         :: !(V3 Double)
       , _time        :: Double
