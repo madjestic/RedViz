@@ -25,8 +25,8 @@ data Object'
   =  Object'
      {
        _descriptors :: [Descriptor] -- | Material is bound in Descriptor, but we also use this data for draw-call separation per material.
-                -- data Descriptor =
-                     -- Descriptor VertexArrayObject NumArrayIndices
+       -- data Descriptor =
+       -- Descriptor VertexArrayObject NumArrayIndices
       , _materials   :: [Material]    -- | hence [Material] is present on the Object level too, we use that value, instead of looking it up from respective VGeo.
       , _programs    :: [Program]     -- | Shader Programs
       , _transforms  :: ![M44 Double] -- | transforms for parts (object fragments)

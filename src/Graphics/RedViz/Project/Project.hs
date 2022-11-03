@@ -19,6 +19,7 @@ module Graphics.RedViz.Project.Project
   , background
   , PreObject (..)
   , pname
+  , pidx
   , modelIDXs
   , uuid
   , presolvers
@@ -56,6 +57,7 @@ data PreObject
      {
        _pname          :: String
      , _ptype          :: String
+     , _pidx           :: Integer
      , _uuid           :: UUID
      , _modelIDXs      :: [Int]
      , _presolvers     :: [String]
@@ -226,6 +228,7 @@ defaultProject =
   [ (PreObject
     "Box"
     ""
+    0
     nil
     [0]
     []

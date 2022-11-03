@@ -47,6 +47,7 @@ data Material
        -- | Path to fragment shader program.
      , _fragShader :: FilePath
        -- | Paths to texture bindings and other 'Texture' data.
+     , _geomShader :: Maybe FilePath
      , _textures   :: [Texture]  
      } deriving Show
 $(makeLenses ''Material)
@@ -58,6 +59,7 @@ defaultMat
     "default"
     "shader.vert"
     "shader.frag"
+    Nothing
     [defaultTexture]
 
 -- | Read a Material json-formatted file from disk.
@@ -74,10 +76,11 @@ read jsonFile =
     let name'       = (_name       . fromEitherDecode) d
         vertShader' = (_vertShader . fromEitherDecode) d
         fragShader' = (_fragShader . fromEitherDecode) d
+        geomShader' = (_geomShader . fromEitherDecode) d
         textures'   = (_textures   . fromEitherDecode) d
-    return $ Material name' vertShader' fragShader' textures'
+    return $ Material name' vertShader' fragShader' geomShader' textures'
       where
-        fromEitherDecode = fromMaybe (Material "" "" "" []) . fromEither
+        fromEitherDecode = fromMaybe (Material "" "" "" Nothing []) . fromEither
         fromEither d =
           case d of
             Right pt -> Just pt
@@ -92,4 +95,4 @@ write mat fileOut =
       config = defConfig { confCompare = comp }
 
 comp :: Text -> Text -> Ordering
-comp = keyOrder . fmap pack $ ["name", "fragShader", "vertShader", "textures"]
+comp = keyOrder . fmap pack $ ["name", "fragShader", "vertShader", "geomShader", "textures"]
