@@ -57,6 +57,7 @@ import Graphics.RedViz.Texture           as T
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.VAO (VAO'')
 import Graphics.RedViz.Widget (Format (..), xoffset, yoffset, zoffset, alignment, Alignment(..), soffset, ssize)
+import Graphics.RedViz.Backend
 
 -- import Debug.Trace as DT
 
@@ -66,20 +67,6 @@ debug = True
 #else
 debug = False
 #endif
-
-
-data Backend
-  = OpenGL
-  | Vulkan
-
-data BackendOptions
-  =  BackendOptions
-     {
-       primitiveMode :: PrimitiveMode -- Triangles | Points
-     , bgrColor      :: Color4 GLfloat
-     , ptSize        :: Float
-     , depthMsk      :: Capability
-     } deriving Show
 
 openWindow :: Text -> (CInt, CInt) -> IO SDL.Window
 openWindow title (sizex,sizey) =

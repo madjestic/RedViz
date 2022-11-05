@@ -40,6 +40,7 @@ library
                        Graphics.RedViz.VAO
                        Graphics.RedViz.FromVector
                        Graphics.RedViz.Object
+                       Graphics.RedViz.Backend
                        
   -- other-modules:
   -- other-extensions:
