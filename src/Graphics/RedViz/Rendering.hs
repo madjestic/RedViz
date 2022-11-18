@@ -55,7 +55,7 @@ import Graphics.RedViz.Descriptor
 import Graphics.RedViz.Material          as M
 import Graphics.RedViz.Texture           as T
 import Graphics.RedViz.Drawable
-import Graphics.RedViz.VAO (VAO'')
+import Graphics.RedViz.VAO (SVAO')
 import Graphics.RedViz.Widget (Format (..), xoffset, yoffset, zoffset, alignment, Alignment(..), soffset, ssize)
 import Graphics.RedViz.Backend
 
@@ -119,6 +119,9 @@ renderString cmds fntsDrs fmt str =
 renderIcon :: (Drawable -> IO ()) -> [Drawable] -> Format -> String -> IO ()
 renderIcon cmds fntsDrs fmt str =
   mapM_ cmds $ format fmt $ drawableIcon fntsDrs str
+
+renderLines :: [V3 Double] -> IO ()
+renderLines = undefined
   
 -- | given a string of drawables, return a formatted string (e.g. add offsets for drawable chars)
 format :: Format -> [Drawable] -> [Drawable]
@@ -394,7 +397,7 @@ fromV3V4 v3 = V4 (v3 ^. _x) (v3 ^. _y) (v3 ^. _z)
 nameFromPath :: FilePath -> String
 nameFromPath f = head (splitOn "." $ splitOn "/" f!!1)
 
-toDescriptor :: VAO'' -> IO Descriptor
+toDescriptor :: SVAO' -> IO Descriptor
 toDescriptor = initVAO
 
 initVAO :: ([Int], Int, [Float]) -> IO Descriptor

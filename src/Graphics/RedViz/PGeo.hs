@@ -38,6 +38,7 @@ module Graphics.RedViz.PGeo
   , fromVGeo
   , fromSVGeo
   , VAO
+  , toVAO
   ) where
 
 import Control.Lens
@@ -119,7 +120,7 @@ makeStore ''VGeo
 emptyVGeo :: VGeo
 emptyVGeo =  VGeo [[]] [] [[]] [] [] [[]] [[]] [[]]
 
-fromSVGeo :: SVGeo -> VAO''
+fromSVGeo :: SVGeo -> SVAO'
 fromSVGeo (SVGeo is' st' vs' _ _ _ _ _) = toVAO'' is' st' vs'
 
 readBGeo :: FilePath -> IO VGeo

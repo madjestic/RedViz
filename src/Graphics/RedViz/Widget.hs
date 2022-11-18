@@ -94,7 +94,7 @@ data Widget
      { _active  :: Bool
      , _lable   :: String -- to show tooltips
      , _coords  :: (Double, Double) -- (mouse) pos -> update and draw
-     , _options :: BackendOptions     
+     , _options :: BackendOptions
      }
 $(makeLenses ''Widget)
 

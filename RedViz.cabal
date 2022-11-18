@@ -41,7 +41,7 @@ library
                        Graphics.RedViz.FromVector
                        Graphics.RedViz.Object
                        Graphics.RedViz.Backend
-                       
+                       Graphics.RedViz.Primitives
   -- other-modules:
   -- other-extensions:
   ghc-options:   -O2 -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans

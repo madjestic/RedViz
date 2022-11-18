@@ -40,5 +40,19 @@ $(makeLenses ''Object')
 zeroV3 :: V3 Double
 zeroV3 = V3 0 0 0
 
+-- defaultObject' :: Object'
+-- defaultObject' = Object' [] [] [] [] (identity::M44 Double) zeroV3 zeroV3 0.0
 defaultObject' :: Object'
-defaultObject' = Object' [] [] [] [] (identity::M44 Double) zeroV3 zeroV3 0.0
+defaultObject' =
+  Object'
+  {
+    _descriptors = []
+  , _materials   = []
+  , _programs    = []
+  , _transforms  = []
+  , _transform0  = identity :: M44 Double
+  , _ypr0        = zeroV3
+  , _ypr         = zeroV3
+  , _time        = 0.0
+  }
+

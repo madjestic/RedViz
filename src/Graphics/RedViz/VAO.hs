@@ -17,7 +17,7 @@ module Graphics.RedViz.VAO
     VAO
   , toVAO
   , VAO'
-  , VAO''
+  , SVAO'
   , toVAO'
   , toVAO''
   ) where
@@ -57,20 +57,19 @@ toVAO idxs as cds ns ts ps = vaos
 
     cList' = toLists2 . computeAs U $ concat' 1 [as'', cds'', ns'', ts'', ps''] :: [[Float]]
     
-    mat = fromLists' Par cList' :: (Array U Ix2 Float)
+    ar = fromLists' Par cList' :: (Array U Ix2 Float)
     cListOpt =
       toLists2 . computeAs P <$>
-      fmap (\row -> backpermute' (Sz (Prelude.length (idxs !! row) :. 13)) (\(i :. j) -> ((indices !> row) ! i) :. j) mat) [0 .. div (elemsCount indices) (elemsCount (indices !> 0))-1]
+      fmap (\row -> backpermute' (Sz (Prelude.length (idxs !! row) :. 13)) (\(i :. j) -> ((indices !> row) ! i) :. j) ar) [0 .. div (elemsCount indices) (elemsCount (indices !> 0))-1]
     --vaos = (DT.trace ("cListOpt" ++ show cListOpt) $ cListOpt)
     vaos = cListOpt
 
-type VAO' = [([Int], Int, [Float])]
-
-type VAO'' = ([Int], Int, [Float])
+type VAO'  = [([Int], Int, [Float])]
+type SVAO' =  ([Int], Int, [Float])
 
 toVAO' :: [[Int]] -> [Int] -> [[Float]] -> VAO'
 toVAO' is_ st_ vs_ = (,,) <$.> is_ <*.> st_ <*.> vs_
 
-toVAO'' :: [Int] -> Int -> [Float] -> VAO''
+toVAO'' :: [Int] -> Int -> [Float] -> SVAO'
 toVAO'' = (,,)
 
