@@ -12,7 +12,7 @@
 --
 --------------------------------------------------------------------------------
 
-
+{-# LANGUAGE CPP    #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE InstanceSigs #-}
@@ -29,6 +29,7 @@ module Graphics.RedViz.Material
   ) where  
 
 import Control.Lens hiding ((.=))
+import Control.Monad (when)
 import Data.Aeson
 import Data.Aeson.Encode.Pretty
 import Data.Aeson.TH
@@ -37,6 +38,14 @@ import qualified Data.ByteString.Lazy as B
 import Data.Text    hiding (drop)
 
 import Graphics.RedViz.Texture as T hiding (name, _name)
+
+debug :: Bool
+#ifdef DEBUG
+debug = True
+#else
+debug = False
+#endif
+
 
 data Material
   =  Material
@@ -68,10 +77,12 @@ read jsonFile =
   do
     -- print $ "jsonFile :" ++ jsonFile
     d <- (eitherDecode <$> B.readFile jsonFile) :: IO (Either String Material)
-    print $ "Loading Material :"
-      ++ case d of
-           Right m -> view name m
-           _ -> "error"
+
+    when debug $
+      print $ "Loading Material :"
+        ++ case d of
+             Right m -> view name m
+             _ -> "error"
 
     let name'       = (_name       . fromEitherDecode) d
         vertShader' = (_vertShader . fromEitherDecode) d

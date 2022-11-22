@@ -47,6 +47,7 @@ library
   ghc-options:   -O2 -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans
   --ghc-options:   -threaded -fprof-auto -fprof-cafs "-with-rtsopts=-N -p -s -hc -i0.1 -xc"
   --ghc-options:   -O2
+  --cpp-options:   -DDEBUG  
   build-depends:       base
                      , aeson               
                      , aeson-pretty
