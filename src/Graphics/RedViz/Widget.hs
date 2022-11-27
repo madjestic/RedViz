@@ -21,7 +21,7 @@ module Graphics.RedViz.Widget
   , defaultFormat
   ) where
 
-import Control.Lens
+import Control.Lens hiding (Empty)
 import Graphics.RedViz.Backend
 
 data Alignment =
@@ -55,7 +55,8 @@ data BBox
 $(makeLenses ''BBox)
 
 data Widget
-  =  TextField
+  =  Empty
+  |  TextField
      { _active  :: Bool
      , _text    :: [String]
      , _format  :: Format
@@ -105,6 +106,7 @@ instance Show Widget where
   show (Cursor a l xy opts)       = show "Cursor :"      ++ show (a, l, xy, opts)
   show (Toggle a l bb o p f opts) = show "Toggle :"      ++ show (a, l, bb, o, p, f, opts)
   show (MultiToggle a c ts opts)  = show "MultiToggle :" ++ show (a, c, ts, opts)
+  show (Empty)                    = show "Empty Widget"
 
 isPressed :: Maybe Widget -> Bool
 isPressed wgt = 
