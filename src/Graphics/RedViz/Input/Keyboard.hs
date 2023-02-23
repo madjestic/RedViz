@@ -11,7 +11,6 @@
 -- A basic keyboard control structure.
 --
 --------------------------------------------------------------------------------
-
 module Graphics.RedViz.Input.Keyboard
   ( Keyboard (..)
   , Keys (..)
@@ -28,21 +27,21 @@ data Keyboard
 
 data Keys =
      Keys
-     { keyW      :: Bool
-     , keyS      :: Bool
-     , keyA      :: Bool
-     , keyD      :: Bool
-     , keyQ      :: Bool
-     , keyE      :: Bool
-     , keyZ      :: Bool
-     , keyC      :: Bool
-     , keyUp     :: Bool
-     , keyDown   :: Bool
-     , keyLeft   :: Bool
-     , keyRight  :: Bool
-     , keyPageUp :: Bool
+     { keyW        :: Bool
+     , keyS        :: Bool
+     , keyA        :: Bool
+     , keyD        :: Bool
+     , keyQ        :: Bool
+     , keyE        :: Bool
+     , keyZ        :: Bool
+     , keyC        :: Bool
+     , keyUp       :: Bool
+     , keyDown     :: Bool
+     , keyLeft     :: Bool
+     , keyRight    :: Bool
+     , keyPageUp   :: Bool
      , keyPageDown :: Bool
-     , keyLShift :: Bool
-     , keyLCtrl  :: Bool
-     , keyLAlt   :: Bool
+     , keyLShift   :: Bool
+     , keyLCtrl    :: Bool
+     , keyLAlt     :: Bool
      } deriving Show

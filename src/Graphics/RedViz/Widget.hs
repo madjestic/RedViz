@@ -91,6 +91,11 @@ data Widget
      , _toggles :: [Widget]
      , _options :: BackendOptions     
      }
+  |  Icon
+     { _active  :: Bool
+     , _lable   :: String -- to show tooltips
+     , _idx     :: Int
+     }
   |  Cursor
      { _active  :: Bool
      , _lable   :: String -- to show tooltips
@@ -103,6 +108,7 @@ instance Show Widget where
   show (TextField b t f opts)     = show "TextField :"   ++ show (b, t, f, opts)
   show (FPS b f opts)             = show "FPS :"         ++ show (b, f, opts)
   show (Button a l bb o p f opts) = show "Button :"      ++ show (a, l, bb, o, p, f, opts)
+  show (Icon   a l i)             = show "Icon :"        ++ show (a, l, i)
   show (Cursor a l xy opts)       = show "Cursor :"      ++ show (a, l, xy, opts)
   show (Toggle a l bb o p f opts) = show "Toggle :"      ++ show (a, l, bb, o, p, f, opts)
   show (MultiToggle a c ts opts)  = show "MultiToggle :" ++ show (a, c, ts, opts)

@@ -25,6 +25,7 @@ module Graphics.RedViz.Camera
   , keyboardTS
   , defaultCamController
   , res
+  , scale
   ) where
 
 import Control.Lens
@@ -46,6 +47,7 @@ data Camera =
      , _keyboardRS :: V3 Double -- keyboard "rotation sensitivity"
      , _keyboardTS :: V3 Double -- keyboard "translation sensitivity"
      , _res        :: (Int, Int)
+     , _scale      :: Double    -- accumulated scale (while hold key)
      } deriving Show
 
 $(makeLenses ''Camera)
@@ -61,6 +63,7 @@ defaultCam =
   1.0
   1.0
   (256,256)
+  0.0
 
 defaultCamController :: Controllable
 defaultCamController =

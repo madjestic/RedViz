@@ -29,13 +29,12 @@ import Linear.V3
 data Mouse
   =  Mouse
   { -- | Mouse State
-    _lmb   :: Maybe (Double, Double)
-  --, mmb
-  , _rmb   :: Maybe (Double, Double)
-  , _pos  ::       (Double, Double)
-  , _rpos ::       (Double, Double)
+    _lmb   :: Maybe (Int, Int)
+  , _rmb   :: Maybe (Int, Int)
+  , _pos  ::        (Int, Int)
+  , _rpos ::        (Int, Int)
   , _mmov ::        Bool
-  , mVecs ::       [V3 Double]
+  , mVecs ::        [V3 Int]
   } deriving Show
 
 $(makeLenses ''Mouse)

@@ -24,4 +24,5 @@ fromProjectCamera prj0 pcam =
   , _keyboardRS = pure $ _pKeyboardRS pcam :: V3 Double
   , _keyboardTS = pure $ _pKeyboardTS pcam :: V3 Double
   , _res        = (_resx prj0, _resy prj0)
+  , _scale      = 1.0                      :: Double
   }

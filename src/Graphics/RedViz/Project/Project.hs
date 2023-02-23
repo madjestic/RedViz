@@ -200,6 +200,7 @@ defaultIcons :: [Model]
 defaultIcons =
   [
     (Model   "models/fnt_crosshair.bgeo")
+  , (Model   "models/gizmo.bgeo")
   ]
 
 -- defaultFormat' :: Format'

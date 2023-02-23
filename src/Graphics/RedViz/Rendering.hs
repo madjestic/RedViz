@@ -21,6 +21,7 @@ module Graphics.RedViz.Rendering
   , closeWindow
   , render
   , renderString
+  , renderIcons
   , renderIcon
   , toDescriptor
   , initVAO
@@ -116,9 +117,13 @@ renderString :: (Drawable -> IO ()) -> [Drawable] -> Format -> String -> IO ()
 renderString cmds fntsDrs fmt str =
   mapM_ cmds $ format fmt $ drawableString fntsDrs str
 
-renderIcon :: (Drawable -> IO ()) -> [Drawable] -> Format -> String -> IO ()
-renderIcon cmds fntsDrs fmt str =
-  mapM_ cmds $ format fmt $ drawableIcon fntsDrs str
+renderIcon :: (Drawable -> IO ()) -> [Drawable] -> Format -> Int -> IO ()
+renderIcon cmds icnsDrs fmt idx =
+  cmds $ formatting fmt $ (drawableIcon icnsDrs idx, 0)
+
+renderIcons :: (Drawable -> IO ()) -> [Drawable] -> Format -> [Int] -> IO ()
+renderIcons cmds icnsDrs fmt idxs =
+  mapM_ cmds $ format fmt $ drawableIcons icnsDrs idxs
 
 renderLines :: [V3 Double] -> IO ()
 renderLines = undefined
@@ -176,19 +181,19 @@ drawableString drs str = drws
   where
     drws = fmap (drawableChar drs) str
 
-drawableIcon :: [Drawable] -> String -> [Drawable]
-drawableIcon drs str = drws
+drawableIcons :: [Drawable] -> [Int] -> [Drawable]
+drawableIcons  drs idxs = drws
   where
-    drws =
-      case str of
-        "cursor" -> [head drs]
-        _ -> [head drs]
+    drws = (drs!!) <$> idxs
+
+drawableIcon :: [Drawable] -> Int -> Drawable
+drawableIcon drs idx = drs!!idx
 
 -- | Alphabet of drawables -> Char -> a drawable char
 drawableChar :: [Drawable] -> Char -> Drawable
 drawableChar drs chr =
   case chr of
-    '0' -> head drs
+    '0' -> head drs -- TODO: replace with hash lookup
     '1' -> drs!!1
     '2' -> drs!!2
     '3' -> drs!!3

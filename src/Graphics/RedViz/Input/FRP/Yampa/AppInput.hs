@@ -33,11 +33,11 @@ import qualified SDL
 
 -- <| Signal Functions |> --
 -- | Current mouse position
-mousePos :: SF AppInput (Double,Double)
+mousePos :: SF AppInput (Int,Int)
 --mousePos = iPre (initAppInput (400,400)) >>> arr inpMousePos
 mousePos = arr inpMousePos
 
-mouseRelPos :: SF AppInput (Double,Double)
+mouseRelPos :: SF AppInput (Int,Int)
 --mouseRelPos = iPre initAppInput >>> arr inpMouseRelPos
 mouseRelPos = arr inpMouseRelPos
 
@@ -54,7 +54,7 @@ lbp :: SF AppInput (Event ())
 lbp = lbpPos >>^ tagWith ()
 
 -- | Events that indicate left button click and are tagged with mouse position
-lbpPos :: SF AppInput (Event (Double,Double))
+lbpPos :: SF AppInput (Event (Int,Int))
 lbpPos = inpMouseLeft ^>> edgeJust
 
 -- | Is left button down
@@ -66,14 +66,14 @@ rbp :: SF AppInput (Event ())
 rbp = rbpPos >>^ tagWith ()
 
 -- | Events that indicate right button click and are tagged with mouse position
-rbpPos :: SF AppInput (Event (Double,Double))
+rbpPos :: SF AppInput (Event (Int,Int))
 rbpPos = inpMouseRight ^>> edgeJust
 
 -- | Is right button down
 rbDown :: SF AppInput Bool
 rbDown = arr (isJust . inpMouseRight)
 
-mouseMoving :: SF AppInput (Event (Double, Double))
+mouseMoving :: SF AppInput (Event (Int, Int))
 --mouseMoving = arr inpMouseMoving >>> edge
 mouseMoving = inpMouseMoving ^>> edgeJust
 
@@ -161,14 +161,14 @@ keyInput code mode =
 
 data AppInput =
      AppInput
-     { inpMousePos          :: (Double, Double)        -- ^ Current mouse position
-     , inpMouseRelPos       :: (Double, Double)        -- ^ Relative mouse motion
-     , inpMouseLeft         :: Maybe (Double, Double)  -- ^ Left   button currently down
-     , inpMouseRight        :: Maybe (Double, Double)  -- ^ Right  button currently down
-     , inpMouseMiddle       :: Maybe (Double, Double)  -- ^ Middle button currently down
+     { inpMousePos          :: (Int, Int)        -- ^ Current mouse position
+     , inpMouseRelPos       :: (Int, Int)        -- ^ Relative mouse motion
+     , inpMouseLeft         :: Maybe (Int, Int)  -- ^ Left   button currently down
+     , inpMouseRight        :: Maybe (Int, Int)  -- ^ Right  button currently down
+     , inpMouseMiddle       :: Maybe (Int, Int)  -- ^ Middle button currently down
      , inpQuit              :: Bool                    -- ^ SDL's QuitEvent
      , inpCenter            :: Bool
-     , inpMouseMoving       :: Maybe (Double, Double)
+     , inpMouseMoving       :: Maybe (Int, Int)
      , inpMouseStopped      :: Bool
      , inpKeySpacePressed   :: Maybe SDL.Scancode
      , inpKeySpaceReleased  :: Maybe SDL.Scancode
@@ -242,8 +242,8 @@ type WinInput = Event SDL.EventPayload
 initAppInput :: (Int, Int) ->  AppInput
 initAppInput (x0, y0)=
      AppInput 
-     { inpMousePos          = (fromIntegral x0/2, fromIntegral y0/2) --(0.0, 0.0)
-     , inpMouseRelPos       = (0.0, 0.0)
+     { inpMousePos          = (x0`div`2, y0`div`2) --(0.0, 0.0)
+     , inpMouseRelPos       = (0, 0)
      , inpMouseLeft         = Nothing
      , inpMouseMiddle       = Nothing
      , inpMouseRight        = Nothing

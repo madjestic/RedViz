@@ -11,7 +11,7 @@ import Graphics.RedViz.Input.Mouse
 
 -- import Debug.Trace    as DT
 
-updateMouse :: SF AppInput (Mouse, [Event (Double, Double)])
+updateMouse :: SF AppInput (Mouse, [Event (Int, Int)])
 updateMouse =
   proc input -> do
     lmbE <- lbpPos       -< input

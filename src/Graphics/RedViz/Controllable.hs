@@ -47,7 +47,7 @@ import Graphics.RedViz.Utils ()
 data Controllable
   =  Controller
      {
-       _debug      :: (Double, Double)
+       _debug      :: (Int, Int)
      , _transform  :: M44 Double
      , _vel        :: V3 Double  -- velocity
      , _ypr        :: V3 Double  -- yaw/pitch/roll

@@ -7,6 +7,7 @@ module Graphics.RedViz.Object
   , programs
   , transforms
   , transform0
+  , transform1
   , time
   , ypr0
   , ypr
@@ -30,7 +31,8 @@ data Object'
       , _materials   :: [Material]    -- | hence [Material] is present on the Object level too, we use that value, instead of looking it up from respective VGeo.
       , _programs    :: [Program]     -- | Shader Programs
       , _transforms  :: ![M44 Double] -- | transforms for parts (object fragments)
-      , _transform0  :: !(M44 Double) -- | basis (position/orientation in world space)
+      , _transform0  :: !(M44 Double) -- | initial basis (position/orientation in world space)
+      , _transform1  :: !(M44 Double) -- | basis (position/orientation in world space)
       , _ypr0        :: !(V3 Double)
       , _ypr         :: !(V3 Double)
       , _time        :: Double
@@ -51,6 +53,7 @@ defaultObject' =
   , _programs    = []
   , _transforms  = []
   , _transform0  = identity :: M44 Double
+  , _transform1  = identity :: M44 Double
   , _ypr0        = zeroV3
   , _ypr         = zeroV3
   , _time        = 0.0
