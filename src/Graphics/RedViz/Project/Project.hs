@@ -34,7 +34,7 @@ module Graphics.RedViz.Project.Project
   , Graphics.RedViz.Project.Project.read
   , write
   , defaultProject
-  , GUI' (..)
+  , PreGUI (..)
   , gui
   ) where
 
@@ -50,7 +50,7 @@ import Data.UUID
 
 import Graphics.RedViz.Project.Model
 
--- import Debug.Trace as DT
+--import Debug.Trace as DT
 
 data PreObject
   =  PreObject
@@ -82,15 +82,15 @@ data ProjectCamera
 $(makeLenses ''ProjectCamera)
 deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''ProjectCamera
 
-data GUI'
-  =  GUI'
+data PreGUI
+  =  PreGUI
      {
---       _widgets :: [Widget']
        _fonts   :: [Model]
-     , _icons    :: [Model]
+     , _icons   :: [Model]
+--     , _gui     :: FilePath
      } deriving Show
-$(makeLenses ''GUI')
-deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''GUI'
+$(makeLenses ''PreGUI)
+deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''PreGUI
 
 data Project
   =  Project
@@ -102,18 +102,18 @@ data Project
      , _models     :: [Model]
      , _objects    :: [PreObject]
      , _background :: [PreObject]
-     , _gui        :: GUI'
+     , _gui        :: PreGUI
      , _cameras    :: [ProjectCamera]
      } deriving Show
 $(makeLenses ''Project)
 deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''Project
 
-emptyGUI :: GUI'
-emptyGUI = GUI' [] []
+emptyPreGUI :: PreGUI
+emptyPreGUI = PreGUI [] []
 
 emptyProject :: Project
 emptyProject =
-  Project "foobar" (-1) (-1) "AbsoluteLocation" [] [] [] emptyGUI []
+  Project "foobar" (-1) (-1) "AbsoluteLocation" [] [] [] emptyPreGUI []
 
 defaultFonts :: [Model]
 defaultFonts =
@@ -206,9 +206,9 @@ defaultIcons =
 -- defaultFormat' :: Format'
 -- defaultFormat' =  Format' "CC" (-0.4) 0.0 0.085 1.0
 
-defaultGUI' :: GUI'
-defaultGUI' =
-  GUI'
+defaultPreGUI :: PreGUI
+defaultPreGUI =
+  PreGUI
   -- [ TextField' True ["Hello, World!"] defaultFormat'
   -- , FPS' True defaultFormat' ]
   defaultFonts
@@ -240,7 +240,7 @@ defaultProject =
     )
   ]
   []
-  defaultGUI'
+  defaultPreGUI
   [(ProjectCamera
     "PlayerCamera"
     50.0
@@ -278,15 +278,17 @@ read filePath = do
       cameras'  = (_cameras  . fromEitherDecode) d
   return $
     Project
-    name'
-    resx'
-    resy'
-    camMode'
-    models'
-    (sortOn (view uuid ) preObjs')
-    (sortOn (view uuid ) bgrObjs')
-    gui'
-    cameras'
+    {
+      _name       = name'
+    , _resx       = resx'
+    , _resy       = resy'
+    , _camMode    = camMode'
+    , _models     = models'
+    , _objects    = sortOn (view uuid) preObjs'
+    , _background = sortOn (view uuid) bgrObjs'
+    , _gui        = gui'
+    , _cameras    = cameras'
+    }
     
     where
       fromEitherDecode = fromMaybe emptyProject . fromEither

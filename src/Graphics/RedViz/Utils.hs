@@ -26,6 +26,7 @@ module Graphics.RedViz.Utils
   , (<*.>)
   , (^*^)
   , toV3
+  , toV3'
   , toV4
   , rotateList
   , rotateList'
@@ -44,7 +45,7 @@ import Data.List                       (elemIndex)
 import Data.List                 as DL (transpose)
 import Data.Locator
 import Data.UUID                 as U
-import Data.Vector               as DV (fromList, (!), map, toList)
+import Data.Vector               as DV (fromList, (!), map, toList, slice)
 import Data.VectorSpace          as DV
 import Data.Maybe (fromJust)
 import Graphics.Rendering.OpenGL (GLuint)
@@ -133,14 +134,19 @@ matchLists il nil' =
 -- [a] -> V3 a
 -- [a] -> M44 a
 -- etc.
-fromList :: [Float] -> M44 Double
-fromList xs' = V4 x y z w
+fromList :: Maybe [Float] -> M44 Double
+fromList xs0 = m44
   where
-    x  = V4 (xs!!0 ) (xs!!1 ) (xs!!2 ) (xs!!3 ) 
-    y  = V4 (xs!!4 ) (xs!!5 ) (xs!!6 ) (xs!!7 ) 
-    z  = V4 (xs!!8 ) (xs!!9 ) (xs!!10) (xs!!11) 
-    w  = V4 (xs!!12) (xs!!13) (xs!!14) (xs!!15)
-    xs = fmap realToFrac xs' :: [Double]
+    m44 = 
+      case xs0 of
+        Just xs' -> V4 x y z w
+          where
+            x  = V4 (head xs) (xs!!1 ) (xs!!2 ) (xs!!3 ) 
+            y  = V4 (xs!!4 )  (xs!!5 ) (xs!!6 ) (xs!!7 ) 
+            z  = V4 (xs!!8 )  (xs!!9 ) (xs!!10) (xs!!11) 
+            w  = V4 (xs!!12)  (xs!!13) (xs!!14) (xs!!15)
+            xs = fmap realToFrac xs' :: [Double]
+        Nothing -> identity
 
 (<$.>) :: (a -> b) -> [a] -> [b]
 (<$.>) = fmap
@@ -149,8 +155,13 @@ fromList xs' = V4 x y z w
 (<*.>) = zipWith ($)
 
 toV3 :: [a] -> V3 a
---toV3 xs = V3 (head xs) (xs!!1) (xs!!2)
-toV3 xs = fromV . fromJust . fromVector $ DV.fromList xs
+toV3 xs = case length xs of
+  3 -> fromV . fromJust . fromVector $ DV.fromList xs
+  _ -> error "the list artument to toV3 is length != 3"
+
+-- like toV3 but with slice support
+toV3' :: Int -> Int -> [a] -> V3 a
+toV3' k l xs = fromV . fromJust . fromVector $ slice k l $ DV.fromList xs
 
 toV4 :: [a] -> V4 a
 --toV4 xs = V4 (head xs) (xs!!1) (xs!!2) (xs!!3)

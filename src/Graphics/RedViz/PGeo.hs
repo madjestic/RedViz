@@ -99,7 +99,7 @@ data SVGeo -- VGeo Singleton
 $(makeLenses ''SVGeo)
 
 fromVGeo :: VGeo -> [SVGeo]
-fromVGeo (VGeo is' st' vs' mts' ms' vls' avls' xf') = svgeo :: [SVGeo]
+fromVGeo (VGeo is' st' vs' mts' ms' vls' avls' xf' _) = svgeo :: [SVGeo]
   where
     svgeo = SVGeo <$.> is' <*.> st' <*.> vs' <*.> mts' <*.> ms' <*.> vls' <*.> avls' <*.> xf'
 
@@ -114,11 +114,12 @@ data VGeo
      , vls :: [[Float]]  -- velocities
      , avls:: [[Float]]  -- angular velocities
      , xf  :: [[Float]]  -- preTransforms
+     , nm  :: FilePath   -- name for record keeping, maybe remove when done?
      } deriving Show
 makeStore ''VGeo 
 
 emptyVGeo :: VGeo
-emptyVGeo =  VGeo [[]] [] [[]] [] [] [[]] [[]] [[]]
+emptyVGeo =  VGeo [[]] [] [[]] [] [] [[]] [[]] [[]] "empty vgeo"
 
 fromSVGeo :: SVGeo -> SVAO'
 fromSVGeo (SVGeo is' st' vs' _ _ _ _ _) = toVAO'' is' st' vs'
@@ -128,9 +129,9 @@ readBGeo file =
   do
     -- _ <- DT.trace "trace" $ return ()
     bs <- BS.readFile file
-    return $ case (DS.decode bs) of
-               Right vgeo -> vgeo
-               Left _ -> emptyVGeo
+    return $ case DS.decode bs of
+               Right vgeo -> vgeo { nm = file }
+               Left _ -> error ("Error reading file : " ++ show file) emptyVGeo
 
 -- readVGeo :: FilePath -> IO VGeo
 -- readVGeo file = 
@@ -173,7 +174,7 @@ readPGeo jsonFile =
             _ -> Nothing
 
 fromPGeo :: PGeo -> VGeo
-fromPGeo (PGeo idx' as' cs' ns' uvw' ps' mts' mass' vels' avels' xf') = VGeo idxs st vaos mts' mass' vels avels xf'
+fromPGeo (PGeo idx' as' cs' ns' uvw' ps' mts' mass' vels' avels' xf') = VGeo idxs st vaos mts' mass' vels avels xf' "converted from pgeo"
   where
     stride = 13 -- TODO: make it more elegant, right now VBO's are hard-coded to be have stride = 13...
     vao = toVAO idx' as' cs' ns' uvw' ps'

@@ -60,7 +60,7 @@ import Graphics.RedViz.VAO (SVAO')
 import Graphics.RedViz.Widget (Format (..), xoffset, yoffset, zoffset, alignment, Alignment(..), soffset, ssize)
 import Graphics.RedViz.Backend
 
--- import Debug.Trace as DT
+--import Debug.Trace as DT
 
 debug :: Bool
 #ifdef DEBUG
@@ -269,7 +269,7 @@ drawableChar drs chr =
     'Y' -> drs!!73
     'Z' -> drs!!74
     '<' -> drs!!75
-    _   -> head drs
+    _   -> error "font drs index out of range             "
 
 render :: [Texture] -> [(UUID, GLuint)] ->  BackendOptions -> Drawable -> IO ()
 render txs hmap opts (Drawable _ unis (Descriptor vao' numIndices') _) =
