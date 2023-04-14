@@ -55,15 +55,17 @@ $(makeLenses ''Camera)
 defaultCam :: Camera
 defaultCam =
   Camera
-  "PlayerCamera" -- Player Camera
-  50.0
-  100.0
-  defaultCamController
-  1.0
-  1.0
-  1.0
-  (256,256)
-  0.0
+  {
+    _name       = "PlayerCamera"
+  , _apt        = 50.0
+  , _foc        = 100.0
+  , _controller = defaultCamController
+  , _mouseS     = 1.0
+  , _keyboardRS = 1.0
+  , _keyboardTS = 1.0
+  , _res        = (256,256)
+  , _scale      = 0.0
+  }
 
 defaultCamController :: Controllable
 defaultCamController =

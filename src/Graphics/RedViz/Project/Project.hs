@@ -3,6 +3,7 @@
 module Graphics.RedViz.Project.Project 
   ( Project  (..)
   , ProjectCamera (..)
+  , defaultPCam
   , pTransform
   , pApt
   , pFoc
@@ -81,6 +82,23 @@ data ProjectCamera
      } deriving Show
 $(makeLenses ''ProjectCamera)
 deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''ProjectCamera
+
+defaultPCam :: ProjectCamera
+defaultPCam =
+  (ProjectCamera
+   {
+     _pcname      = "PlayerCamera"
+   , _pApt        = 50.0
+   , _pFoc        = 100.0
+   , _pTransform  =
+     [1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 1,-11,
+      0, 0, 0, 1]
+   , _pMouseS     = 0.01
+   , _pKeyboardRS = 0.01
+   , _pKeyboardTS = 0.1
+   })
 
 data PreGUI
   =  PreGUI
