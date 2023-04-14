@@ -23,6 +23,7 @@ module Graphics.RedViz.Rendering
   , renderString
   , renderIcons
   , renderIcon
+  , renderCursor
   , toDescriptor
   , initVAO
   , bindUniforms
@@ -50,6 +51,7 @@ import Linear.Projection as LP (infinitePerspective)
 import Unsafe.Coerce
 import Control.Lens       hiding (indexed)
 import Graphics.GLUtil                        (readTexture, texture2DWrap)
+import GHC.Float (int2Double)
 
 import Graphics.RedViz.LoadShaders
 import Graphics.RedViz.Descriptor
@@ -57,7 +59,7 @@ import Graphics.RedViz.Material          as M
 import Graphics.RedViz.Texture           as T
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.VAO (SVAO')
-import Graphics.RedViz.Widget (Format (..), xoffset, yoffset, zoffset, alignment, Alignment(..), soffset, ssize)
+import Graphics.RedViz.Widget (Format (..), xoffset, yoffset, zoffset, alignment, Alignment(..), soffset, ssize, xres, yres)
 import Graphics.RedViz.Backend
 
 --import Debug.Trace as DT
@@ -119,7 +121,12 @@ renderString cmds fntsDrs fmt str =
 
 renderIcon :: (Drawable -> IO ()) -> [Drawable] -> Format -> Int -> IO ()
 renderIcon cmds icnsDrs fmt idx =
-  cmds $ formatting fmt $ (drawableIcon icnsDrs idx, 0)
+  --cmds $ formatting fmt $ (drawableIcon icnsDrs idx, 0)
+  cmds $ formatting fmt (drawableIcon icnsDrs idx, 0)
+
+renderCursor :: (Drawable -> IO ()) -> [Drawable] -> Format -> Int -> IO ()
+renderCursor cmds icnsDrs fmt idx =
+  cmds $ formatCursor fmt $ drawableIcon icnsDrs idx
 
 renderIcons :: (Drawable -> IO ()) -> [Drawable] -> Format -> [Int] -> IO ()
 renderIcons cmds icnsDrs fmt idxs =
@@ -143,15 +150,15 @@ formatting fmt (drw, offset) = drw'
     s2   = identity !!* fmt ^. ssize :: V3 (V3 Double)
     (x, y) =
       case fmt ^. alignment of
-        TL -> (-0.8, 0.5)
-        TC -> ( 0.0, 0.5)
-        TR -> ( 0.8, 0.5)
-        CL -> (-0.8, 0.0)
+        TL -> (-1.0, 1.0)
+        TC -> ( 0.0, 1.0)
+        TR -> ( 1.0, 1.0)
+        CL -> (-1.0, 0.0)
         CC -> ( 0.0, 0.0)
-        CR -> ( 0.8, 0.0)
-        BL -> (-0.8,-0.5)
-        BC -> ( 0.0,-0.5)
-        BR -> ( 0.8, 0.5)
+        CR -> ( 1.0, 0.0)
+        BL -> (-1.0,-1.0)
+        BC -> ( 0.0,-1.0)
+        BR -> ( 1.0, 1.0)
     x'    = fmt ^. xoffset
     y'    = fmt ^. yoffset
     z'    = fmt ^. zoffset
@@ -159,6 +166,7 @@ formatting fmt (drw, offset) = drw'
       mkTransformationMat
       (rot0 * s2)
       (tr0 ^+^ V3 ((x + x') + fromIntegral offset*s1) (y + y') z')
+      --(tr0 ^+^ V3 0 0 0.2)
     drw' = set (uniforms . u_xform) offsetM44 drw
 
 formatCursor :: Format -> Drawable -> Drawable
@@ -167,13 +175,17 @@ formatCursor fmt drw = drw'
     rot0 = view _m33 (view (uniforms . u_xform) drw)
     tr0  = view translation (view (uniforms . u_xform) drw)
     s    = identity !!* fmt ^. ssize :: V3 (V3 Double)-- fmt ^. ssize   -- 1.0    -- s Size
-    (x, y) = (fmt ^. yoffset, fmt ^. xoffset)
+    (x, y) = (fmt ^. xoffset, fmt ^. yoffset)
+    (resx, resy) = (int2Double $ fmt ^. xres, int2Double $ fmt ^. yres)
     
     offsetM44 =
       mkTransformationMat
       (rot0 * s)
-      (tr0 ^+^ V3 x y 0)
+      (tr0 ^+^ V3 (x/resx-0.5) (0.5-y/resy) 0)
     drw' = set (uniforms . u_xform) offsetM44 drw
+      -- (DT.trace (
+      --     "x, y : " ++ show (x,y) ++ "\n" ++
+      --     "x/resx, y/resy : " ++ show (x/resx,y/resy) ++ "\n" ) drw)
 
 -- | Alphabet of drawables -> String -> String of drawables
 drawableString :: [Drawable] -> String -> [Drawable]
@@ -313,6 +325,7 @@ bindUniforms txs unis hmap =
     let programDebug = loadShaders
                        [ ShaderInfo VertexShader   (FileSource (_vertShader u_mat' ))   -- u_mat is only used for debug
                        , ShaderInfo FragmentShader (FileSource (_fragShader u_mat' )) ]
+
     program0 <- if debug then programDebug else pure u_prog'
     currentProgram $= Just program0
 

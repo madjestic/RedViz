@@ -7,6 +7,8 @@ module Graphics.RedViz.Widget
   , Format (..)
   , Widget (..)
   , BBox (..)
+  , xres
+  , yres
   , xoffset
   , yoffset
   , alignment
@@ -15,12 +17,14 @@ module Graphics.RedViz.Widget
   , ssize
   , text
   , lable
+  , format
   , bbox
   , rover
   , pressed
   , isPressed
-  , coords
+  --, coords
   , defaultFormat
+  , defaultCursorFormat
   ) where
 
 import Control.Lens hiding (Empty)
@@ -42,6 +46,8 @@ instance FromJSON Alignment
 data Format -- move to Format.hs?
   =  Format
      { _alignment :: Alignment
+     , _xres      :: Int
+     , _yres      :: Int
      , _xoffset   :: Double
      , _yoffset   :: Double
      , _zoffset   :: Double
@@ -53,8 +59,12 @@ instance ToJSON Format
 instance FromJSON Format
 
 defaultFormat :: Format
-defaultFormat = Format CC 0.0 0.0 0.0 0.085 1.0
+defaultFormat = Format CC 1280 720 0.0 0.0 0.0 0.085 1.0
 
+defaultCursorFormat :: Int -> Int -> Format
+defaultCursorFormat resx' resy' =
+  Format CC resx' resy' 0.0 0.0 0.0 0.0 0.2
+  
 data BBox
   =  BBox
      { -- TL BR
@@ -108,11 +118,14 @@ data Widget
      { _active  :: Bool
      , _lable   :: String -- to show tooltips
      , _idx     :: Int
+     , _format  :: Format
+     , _options :: BackendOptions
      }
   |  Cursor
      { _active  :: Bool
      , _lable   :: String -- to show tooltips
-     , _coords  :: (Double, Double) -- (mouse) pos -> update and draw
+     --, _coords  :: (Double, Double) -- (mouse) pos -> update and draw
+     , _format  :: Format
      , _options :: BackendOptions
      } deriving (Generic)
 $(makeLenses ''Widget)
@@ -125,8 +138,8 @@ instance Show Widget where
   show (TextField b t f opts)     = show ("TextField :"  :: String) ++ show (b, t, f, opts)
   show (FPS b f opts)             = show ("FPS :"        :: String) ++ show (b, f, opts)
   show (Button a l bb o p f opts) = show ("Button :"     :: String) ++ show (a, l, bb, o, p, f, opts)
-  show (Icon   a l i)             = show ("Icon :"       :: String) ++ show (a, l, i)
-  show (Cursor a l xy opts)       = show ("Cursor :"     :: String) ++ show (a, l, xy, opts)
+  show (Icon   a l i f opts)      = show ("Icon :"       :: String) ++ show (a, l, i, f, opts)
+  show (Cursor a l f opts)        = show ("Cursor :"     :: String) ++ show (a, f, l, opts)
   show (Toggle a l bb o p f opts) = show ("Toggle :"     :: String) ++ show (a, l, bb, o, p, f, opts)
   show (MultiToggle a c ts opts)  = show ("MultiToggle :":: String) ++ show (a, c, ts, opts)
   show (Empty)                    = show ("Empty Widget" :: String)
