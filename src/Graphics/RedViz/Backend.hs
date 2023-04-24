@@ -95,6 +95,9 @@ instance FromJSON (Color4 GLfloat) where
 
 defaultBackendOptions :: BackendOptions
 defaultBackendOptions = defOpts
+
+defaultBackendOptions' :: BackendOptions
+defaultBackendOptions' = defOpts'
   
 defOpts :: BackendOptions
 defOpts =

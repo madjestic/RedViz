@@ -52,7 +52,7 @@ import Linear.Projection as LP (infinitePerspective)
 import Unsafe.Coerce
 import Control.Lens       hiding (indexed)
 import Graphics.GLUtil                        (readTexture, texture2DWrap)
-import GHC.Float (int2Double)
+import GHC.Float (int2Double, double2Float)
 
 import Graphics.RedViz.LoadShaders
 import Graphics.RedViz.Descriptor
@@ -87,14 +87,6 @@ openWindow title (sizex,sizey) =
                               , glMultisampleSamples = 4
                               , glProfile = Core Normal 4 5
                               }
-
-                              -- defaultOpenGL = OpenGLConfig
-                              --   { glColorPrecision = V4 8 8 8 0
-                              --   , glDepthPrecision = 24
-                              --   , glStencilPrecision = 8
-                              --   , glMultisampleSamples = 1
-                              --   , glProfile = Compatibility Normal 2 1
-                              --   }                 
 
     depthFunc $= Just Less
 
@@ -151,9 +143,6 @@ renderIcons :: (Drawable -> IO ()) -> [Drawable] -> Format -> [Int] -> IO ()
 renderIcons cmds icnsDrs fmt idxs =
   mapM_ cmds $ format fmt $ drawableIcons icnsDrs idxs
 
-renderLines :: [V3 Double] -> IO ()
-renderLines = undefined
-  
 -- | given a string of drawables, return a formatted string (e.g. add offsets for drawable chars)
 format :: Format -> [Drawable] -> [Drawable]
 format fmt drs = drw
@@ -339,7 +328,10 @@ bindTexture hmap tx =
         txid = fromMaybe 0 (lookup (view uuid tx) hmap)
 
 bindUniforms :: [Texture] -> Uniforms -> [(UUID, GLuint)] -> IO ()
-bindUniforms txs unis hmap =
+bindUniforms
+  txs
+  (Uniforms u_mat' u_prog' u_mouse' u_time' u_res' u_cam' u_cam_a' u_cam_f' u_xform' u_ypr' u_vel' u_accel')
+  hmap =
   do
     let programDebug = loadShaders
                        [ ShaderInfo VertexShader   (FileSource (_vertShader u_mat' ))   -- u_mat is only used for debug
@@ -354,10 +346,10 @@ bindUniforms txs unis hmap =
 
     let resX          = fromIntegral $ fromEnum $ fst u_res' :: Double
         resY          = fromIntegral $ fromEnum $ snd u_res' :: Double
-        u_res0         = Vector2 (realToFrac resX) (realToFrac resY) :: Vector2 GLfloat
+        u_res         = Vector2 (realToFrac resX) (realToFrac resY) :: Vector2 GLfloat
 
     location1         <- get (uniformLocation program0 "u_resolution")
-    uniform location1 $= u_res0
+    uniform location1 $= u_res
 
     location2         <- get (uniformLocation program0 "u_time'")
     uniform location2 $= (u_time' :: GLdouble)
@@ -390,6 +382,33 @@ bindUniforms txs unis hmap =
     let sunP = GL.Vector3 299999999999.0 0.0 0.0 :: GL.Vector3 GLfloat
     location7 <- get (uniformLocation program0 "sunP")
     uniform location7 $= sunP
+    
+    let ypr  =
+          Vector3
+          (double2Float $ u_ypr'^._1)
+          (double2Float $ u_ypr'^._2)
+          (double2Float $ u_ypr'^._3)
+          :: Vector3 GLfloat
+    location8        <- get (uniformLocation program0 "ypr")
+    uniform location8 $= ypr
+
+    let vel  =
+          Vector3
+          (double2Float $ u_vel'^._1)
+          (double2Float $ u_vel'^._2)
+          (double2Float $ u_vel'^._3)
+          :: Vector3 GLfloat
+    location9        <- get (uniformLocation program0 "vel")
+    uniform location9 $= vel
+
+    let accel  =
+          Vector3
+          (double2Float $ u_accel'^._1)
+          (double2Float $ u_accel'^._2)
+          (double2Float $ u_accel'^._3)
+          :: Vector3 GLfloat
+    location10        <- get (uniformLocation program0 "accel")
+    uniform location10 $= accel
 
     --- | Allocate Textures
 
@@ -401,8 +420,7 @@ bindUniforms txs unis hmap =
     --- | Unload buffers
     --bindVertexArrayObject         $= Nothing
     --bindBuffer ElementArrayBuffer $= Nothing
-      where
-        Uniforms u_mat' u_prog' u_mouse' u_time' u_res' u_cam' u_cam_a' u_cam_f' u_xform' = unis
+      where        
         toList' = fmap realToFrac.concat.(fmap toList.toList) :: V4 (V4 Double) -> [GLfloat]
         xform'  = --- | = Object Position - Camera Position
           transpose $

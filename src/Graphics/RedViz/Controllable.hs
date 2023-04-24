@@ -25,7 +25,6 @@ module Graphics.RedViz.Controllable
   , Keyboard (..)
   , Mouse (..)
   , transform
---  , transform'
   , ypr
   , vel
   , device
@@ -53,14 +52,6 @@ data Controllable
      , _ypr        :: V3 Double  -- yaw/pitch/roll
      , _device     :: Device     -- store as index in the proj file: 0 - keyboard, 1 - mouse, etc.
      }
---   |  Solver
---      {
--- --       _pivot      :: V3 Double
---        _transform  :: M44 Double
---      , _ypr        :: V3 Double  -- yaw/pitch/roll
--- --     , _velocity   :: V3 Double
--- --     , _physC      :: Physics -- TODO : add phys.parms
---      }
   deriving Show
 
 data Device
@@ -69,9 +60,6 @@ data Device
        _keyboard :: Keyboard
      --, _mouse    :: Mouse
      } deriving Show
-
--- transform' :: Lens' Controllable (M44 Double)
--- transform' = lens _transform (\controllable newTransform -> Solver { _transform = newTransform })
 
 device'    :: Lens' Controllable Device
 device'    = lens _device (\controllable newDevice    -> controllable { _device    = newDevice })

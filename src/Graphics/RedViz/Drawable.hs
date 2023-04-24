@@ -25,6 +25,7 @@ module Graphics.RedViz.Drawable
 
 import Foreign.C
 import Linear.Matrix
+import Linear.V3
 import Control.Lens
 
 import Graphics.RedViz.Controllable as Controllable
@@ -52,11 +53,13 @@ data Uniforms
      , _u_mouse :: (Double, Double)
      , _u_time  :: Double
      , _u_res   :: (CInt, CInt)
-     --, u_proj  :: M44 Double --GLmatrix GLfloat
      , _u_cam   :: M44 Double
      , _u_cam_a :: Double
      , _u_cam_f :: Double
      , _u_xform :: M44 Double
+     , _u_cam_ypr   :: (Double, Double, Double)
+     , _u_cam_vel   :: (Double, Double, Double)
+     , _u_cam_accel :: (Double, Double, Double)
      } deriving Show
 
 $(makeLenses ''Drawable)
@@ -102,4 +105,26 @@ toDrawable name' mpos time' res' cam xformO opts (mat, prg, d) = dr
     apt    = _apt cam
     foc    = _foc cam
     xformC = view (controller . Controllable.transform) cam  :: M44 Double
-    dr  = Drawable name' (Uniforms mat prg mpos time' res' xformC apt foc xformO) d opts
+    dr  =
+      Drawable
+      {
+        Graphics.RedViz.Drawable.name = name'
+      ,_uniforms   =
+          Uniforms
+          {
+            _u_mats  = mat
+          , _u_prog  = prg
+          , _u_mouse = mpos
+          , _u_time  = time'
+          , _u_res   = res'
+          , _u_cam   = xformC
+          , _u_cam_a = apt
+          , _u_cam_f = foc
+          , _u_xform = xformO
+          , _u_cam_ypr   = (\(V3 x y z) -> (x,y,z)) $ cam ^. controller . Controllable.ypr
+          , _u_cam_vel   = (\(V3 x y z) -> (x,y,z)) $ cam ^. controller . Controllable.vel
+          , _u_cam_accel = (0,0,0) -- TODO: replace with actual acceleration
+          }
+      ,_descriptor = d
+      ,Graphics.RedViz.Drawable._options    = opts
+      }
