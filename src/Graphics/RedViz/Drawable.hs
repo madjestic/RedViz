@@ -20,21 +20,28 @@ module Graphics.RedViz.Drawable
   , u_xform
   , Drawable (..)
   , Uniforms (..)
+  , toDrawables
   ) where
 
-import Graphics.RedViz.Material
-import Graphics.RedViz.Descriptor
-import Graphics.Rendering.OpenGL (Program)
 import Foreign.C
 import Linear.Matrix
 import Control.Lens
+
+import Graphics.RedViz.Controllable as Controllable
+import Graphics.RedViz.Material
+import Graphics.RedViz.Camera
+import Graphics.RedViz.Object as Object
+import Graphics.RedViz.Descriptor
+import Graphics.Rendering.OpenGL (Program)
+import Graphics.RedViz.Backend
 
 data Drawable
   =  Drawable
      {  name       :: String
      , _uniforms   :: Uniforms
      , _descriptor :: Descriptor
-     , _program    :: Program
+     --, _program    :: Program
+     , _options    :: BackendOptions
      } deriving Show
 
 data Uniforms
@@ -54,3 +61,45 @@ data Uniforms
 
 $(makeLenses ''Drawable)
 $(makeLenses ''Uniforms)
+
+toDrawables
+  :: (Double, Double)
+  -> Double
+  -> (CInt, CInt)
+  -> Camera
+  -> Object' -> [Drawable]
+toDrawables mpos time0 res0 cam obj = drs
+  where
+    drs = toDrawable name' mpos time0 res0 cam xformO opts'
+          <$> [(mats, progs, ds)
+              | mats  <- obj ^. materials
+              , progs <- obj ^. programs
+              , ds    <- obj ^. descriptors]
+
+    name'  = obj ^. Object.name
+    xformO = obj ^. transform0
+    opts'  = obj ^. Object.options :: BackendOptions
+
+type MousePos    = (Double, Double)
+type Time        = Double
+type Res         = (CInt, CInt)
+type CameraM44   = M44 Double
+type ViewAngle   = Double
+type FieldOfView = Double
+
+toDrawable ::
+     String
+  -> MousePos
+  -> Time
+  -> Res
+  -> Camera
+  -> M44 Double
+  -> BackendOptions
+  -> (Material, Program, Descriptor)
+  -> Drawable
+toDrawable name' mpos time' res' cam xformO opts (mat, prg, d) = dr
+  where
+    apt    = _apt cam
+    foc    = _foc cam
+    xformC = view (controller . Controllable.transform) cam  :: M44 Double
+    dr  = Drawable name' (Uniforms mat prg mpos time' res' xformC apt foc xformO) d opts

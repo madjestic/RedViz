@@ -27,6 +27,7 @@ module Graphics.RedViz.Project.Project
   , presolverAttrs
   , solvers
   , solverAttrs
+  , options
   , fonts
   , icons
   , defaultFonts
@@ -41,7 +42,7 @@ module Graphics.RedViz.Project.Project
 
 import Control.Lens hiding (Empty)
 import Data.Aeson
-import Data.Aeson.TH
+import Data.Aeson.TH as TH
 import Data.Aeson.Encode.Pretty
 import Data.ByteString.Lazy as B hiding (drop, pack)
 import Data.Maybe                       (fromMaybe)
@@ -50,8 +51,9 @@ import Data.Text ( Text, pack )
 import Data.UUID
 
 import Graphics.RedViz.Project.Model
+import Graphics.RedViz.Backend
 
---import Debug.Trace as DT
+  --import Debug.Trace as DT
 
 data PreObject
   =  PreObject
@@ -65,10 +67,11 @@ data PreObject
      , _presolverAttrs :: [[Double]]
      , _solvers        :: [String]
      , _solverAttrs    :: [[Double]]
+     , _options        :: BackendOptions     
      } deriving Show
 
 $(makeLenses ''PreObject)
-deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''PreObject
+deriveJSON TH.defaultOptions {fieldLabelModifier = drop 1} ''PreObject
 
 data ProjectCamera
   =  ProjectCamera
@@ -221,20 +224,11 @@ defaultIcons =
   , (Model   "models/gizmo.bgeo")
   ]
 
--- defaultFormat' :: Format'
--- defaultFormat' =  Format' "CC" (-0.4) 0.0 0.085 1.0
-
 defaultPreGUI :: PreGUI
 defaultPreGUI =
   PreGUI
-  -- [ TextField' True ["Hello, World!"] defaultFormat'
-  -- , FPS' True defaultFormat' ]
   defaultFonts
   []
-
--- defaultWidget' :: Widget'
--- defaultWidget' =
---   TextField ["Hello, World!"]
 
 defaultProject :: Project
 defaultProject =
@@ -244,18 +238,20 @@ defaultProject =
   600
   "AbsoluteLocation"
   [ (Model   "models/box.bgeo")]
-  [ (PreObject
-    "Box"
-    ""
-    0
-    nil
-    [0]
-    []
-    []
-    ["rotate", "translate"]
-    [[0,0,0,0,0,1000]
-    ,[1000,0,0]]
-    )
+  [ PreObject
+    {
+      _pname          = "Box"                    
+    , _ptype          = ""                       
+    , _pidx           = 0                        
+    , _uuid           = nil                      
+    , _modelIDXs      = [0]                      
+    , _presolvers     = []                       
+    , _presolverAttrs = []                       
+    , _solvers        = ["rotate", "translate"]  
+    , _solverAttrs    = [[0,0,0,0,0,1000],
+                         [1000,0,0]]
+    , _options        =  defaultBackendOptions
+    }       
   ]
   []
   defaultPreGUI
@@ -279,7 +275,7 @@ write prj fileOut =
     config = defConfig { confCompare = comp }
 
 comp :: Text -> Text -> Ordering
-comp = keyOrder . (fmap pack) $ ["name", "resx", "resy", "camMode", "models", "objects", "background", "pname", "uuid ", "modelIDXs", "solvers", "solverAttrs", "presolvers", "presolverAttrs", "fonts", "icons", "cameras", "pApt", "pFoc", "pTransform", "pMouseS", "pKeyboardRS", "pKeyboardTS"]
+comp = keyOrder . (fmap pack) $ ["name", "resx", "resy", "camMode", "models", "objects", "background", "pname", "uuid ", "modelIDXs", "solvers", "solverAttrs", "presolvers", "presolverAttrs", "fonts", "icons", "cameras", "pApt", "pFoc", "pTransform", "pMouseS", "pKeyboardRS", "pKeyboardTS", "options"]
 
 read :: FilePath -> IO Project
 read filePath = do

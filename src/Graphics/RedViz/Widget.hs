@@ -117,14 +117,13 @@ data Widget
   |  Icon
      { _active  :: Bool
      , _lable   :: String -- to show tooltips
-     , _idx     :: Int
+     , _idx     :: Int    -- Model index
      , _format  :: Format
      , _options :: BackendOptions
      }
   |  Cursor
      { _active  :: Bool
      , _lable   :: String -- to show tooltips
-     --, _coords  :: (Double, Double) -- (mouse) pos -> update and draw
      , _format  :: Format
      , _options :: BackendOptions
      } deriving (Generic)

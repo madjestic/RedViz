@@ -92,6 +92,9 @@ instance FromJSON (Color4 GLfloat) where
       alpha <- o .: "alpha"
       return $ Color4 red green blue alpha
   parseJSON _ = error "Json format not exptected"
+
+defaultBackendOptions :: BackendOptions
+defaultBackendOptions = defOpts
   
 defOpts :: BackendOptions
 defOpts =

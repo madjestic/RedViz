@@ -23,6 +23,7 @@ module Graphics.RedViz.Rendering
   , renderString
   , renderIcons
   , renderIcon
+  , renderWidget
   , renderCursor
   , toDescriptor
   , initVAO
@@ -59,7 +60,7 @@ import Graphics.RedViz.Material          as M
 import Graphics.RedViz.Texture           as T
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.VAO (SVAO')
-import Graphics.RedViz.Widget (Format (..), xoffset, yoffset, zoffset, alignment, Alignment(..), soffset, ssize, xres, yres)
+import Graphics.RedViz.Widget (Widget (..), Format (..), xoffset, yoffset, zoffset, alignment, Alignment(..), soffset, ssize, xres, yres)
 import Graphics.RedViz.Backend
 
 --import Debug.Trace as DT
@@ -124,6 +125,24 @@ renderIcon cmds icnsDrs fmt idx =
   --cmds $ formatting fmt $ (drawableIcon icnsDrs idx, 0)
   cmds $ formatting fmt (drawableIcon icnsDrs idx, 0)
 
+renderWidget :: Double -> [Drawable] -> [Drawable] -> (Drawable -> IO ()) -> Widget-> IO ()
+renderWidget dt' drs drs' cmds wgt =
+  case wgt of
+    Icon a _ idx fmt _ ->
+      when a $ do
+      renderIcon cmds drs' fmt idx --"icon"
+    Cursor a _ fmt _ ->
+      when a $ do
+      renderCursor cmds drs' fmt 0 --"cursor"
+    TextField a t f _ ->
+      when a $ renderString cmds drs f $ concat t
+    Button a l _ _ _ f _ ->
+      when a $ renderString cmds drs f l
+    FPS a f _ ->
+      when a $ do
+        renderString cmds drs f $ "fps:" ++ show (round (1.0/dt') :: Integer)
+    _ -> return ()
+
 renderCursor :: (Drawable -> IO ()) -> [Drawable] -> Format -> Int -> IO ()
 renderCursor cmds icnsDrs fmt idx =
   cmds $ formatCursor fmt $ drawableIcon icnsDrs idx
@@ -181,7 +200,7 @@ formatCursor fmt drw = drw'
     offsetM44 =
       mkTransformationMat
       (rot0 * s)
-      (tr0 ^+^ V3 (x/resx-0.5) (0.5-y/resy) 0)
+      (tr0 ^+^ V3 (x/resx-0.5) (0.5-y/resy) 0.0)
     drw' = set (uniforms . u_xform) offsetM44 drw
       -- (DT.trace (
       --     "x, y : " ++ show (x,y) ++ "\n" ++
@@ -283,8 +302,8 @@ drawableChar drs chr =
     '<' -> drs!!75
     _   -> error "font drs index out of range             "
 
-render :: [Texture] -> [(UUID, GLuint)] ->  BackendOptions -> Drawable -> IO ()
-render txs hmap opts (Drawable _ unis (Descriptor vao' numIndices') _) =
+render :: [Texture] -> [(UUID, GLuint)] ->  Drawable -> IO ()
+render txs hmap (Drawable _ unis (Descriptor vao' numIndices') opts) =
   do
  -- print $ "render.name : " ++ name
  -- print $ "render.unis :" ++ show unis ++ "\n render.txs :" ++ show txs ++ "\n render.hmap : " ++ show hmap
@@ -469,9 +488,9 @@ loadTex :: FilePath -> IO TextureObject
 loadTex f =
   do
     t <- either error id <$> readTexture f
-    texture2DWrap $= (Repeated, ClampToEdge)
+    texture2DWrap            $= (Repeated, ClampToEdge)
     textureFilter  Texture2D $= ((Linear', Just Nearest), Linear')
-    blend $= Enabled
-    blendFunc $= (SrcAlpha, OneMinusSrcAlpha)
+    blend                    $= Enabled
+    blendFunc                $= (SrcAlpha, OneMinusSrcAlpha)
     generateMipmap' Texture2D
     return t

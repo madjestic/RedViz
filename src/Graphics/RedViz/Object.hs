@@ -8,10 +8,12 @@ module Graphics.RedViz.Object
   , transforms
   , transform0
   , transform1
-  , time
   , ypr0
   , ypr
+  , time
+  , options
   , defaultObject'
+  , name
   ) where
 
 import Control.Lens hiding (transform, pre)
@@ -20,12 +22,14 @@ import Linear.Matrix
 import Linear.V3
 
 import Graphics.RedViz.Descriptor
-import Graphics.RedViz.Material
+import Graphics.RedViz.Material hiding (name, _name)
+import Graphics.RedViz.Backend
 
 data Object'
   =  Object'
      {
-       _descriptors :: [Descriptor] -- | Material is bound in Descriptor, but we also use this data for draw-call separation per material.
+        _name        :: String
+      , _descriptors :: [Descriptor] -- | Material is bound in Descriptor, but we also use this data for draw-call separation per material.
        -- data Descriptor =
        -- Descriptor VertexArrayObject NumArrayIndices
       , _materials   :: [Material]    -- | hence [Material] is present on the Object level too, we use that value, instead of looking it up from respective VGeo.
@@ -36,6 +40,7 @@ data Object'
       , _ypr0        :: !(V3 Double)
       , _ypr         :: !(V3 Double)
       , _time        :: Double
+      , _options     :: BackendOptions
      } deriving Show
 $(makeLenses ''Object')
 
@@ -57,5 +62,7 @@ defaultObject' =
   , _ypr0        = zeroV3
   , _ypr         = zeroV3
   , _time        = 0.0
+  , _options     = defaultBackendOptions
+  , _name        = "defaultObject'"
   }
 
