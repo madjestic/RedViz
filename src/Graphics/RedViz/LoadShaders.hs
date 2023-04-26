@@ -21,6 +21,7 @@ module Graphics.RedViz.LoadShaders (
 import Control.Exception
 import Control.Monad
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as BS
 import Graphics.Rendering.OpenGL
 -- import Debug.Trace as DT
 
@@ -68,13 +69,20 @@ linkAndCheck = checked linkProgram linkStatus programInfoLog "link"
 loadCompileAttach :: Program -> [ShaderInfo] -> IO ()
 loadCompileAttach _ [] = return ()
 loadCompileAttach program (ShaderInfo shType source : infos) =
-   createShader shType `bracketOnError` deleteObjectName $ \shader -> do
-      -- _ <- DT.trace ("Loading Shader Program" ++ show program ++ show source) $ return ()
-      src <- getSource source
-      shaderSourceBS shader $= src
-      compileAndCheck shader
-      attachShader program shader
-      loadCompileAttach program infos
+  createShader shType `bracketOnError` deleteObjectName $ \shader ->
+  do
+    -- _ <- DT.trace ("Loading Shader Program" ++ show program ++ show source) $ return ()
+    src     <- getSource source
+    include <- getSource (FileSource "./mat/share/lib.glsl")
+    let
+      version   = head (BS.lines src)
+      shaderSrc = tail (BS.lines src)
+      src'      = BS.unlines $ version : include : shaderSrc
+    
+    shaderSourceBS shader $= src'
+    compileAndCheck shader
+    attachShader program shader
+    loadCompileAttach program infos
 
 compileAndCheck :: Shader -> IO ()
 compileAndCheck = checked compileShader compileStatus shaderInfoLog "compile"

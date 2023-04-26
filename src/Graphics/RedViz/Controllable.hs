@@ -26,6 +26,7 @@ module Graphics.RedViz.Controllable
   , Mouse (..)
   , transform
   , ypr
+  , yprS
   , vel
   , device
   , device'
@@ -50,6 +51,7 @@ data Controllable
      , _transform  :: M44 Double
      , _vel        :: V3 Double  -- velocity
      , _ypr        :: V3 Double  -- yaw/pitch/roll
+     , _yprS       :: V3 Double  -- yaw/pitch/roll Sum
      , _device     :: Device     -- store as index in the proj file: 0 - keyboard, 1 - mouse, etc.
      }
   deriving Show

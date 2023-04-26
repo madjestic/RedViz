@@ -11,7 +11,7 @@ import Graphics.RedViz.Input.Mouse
 
 -- import Debug.Trace    as DT
 
-updateMouse :: SF AppInput (Mouse, [Event (Int, Int)])
+updateMouse :: SF AppInput (Mouse, Event [(Int, Int)])
 updateMouse =
   proc input -> do
     lmbE <- lbpPos       -< input
@@ -22,7 +22,7 @@ updateMouse =
     rpos' <- mouseRelPos -< input
 
     let
-      events = [lmbE, rmbE, mmovE]
+      events = catEvents [lmbE, rmbE, mmovE]
       mouse' =
         Mouse
         (case isEvent lmbE of
@@ -37,5 +37,4 @@ updateMouse =
         (isEvent mmovE)
         []
     returnA -< (mouse', events)
-    --returnA -< (mouse, DT.trace ("mouse :" ++ show events) events)    
 

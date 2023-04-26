@@ -66,7 +66,7 @@ import Graphics.RedViz.Backend
 --import Debug.Trace as DT
 
 debug :: Bool
-#ifdef DEBUG
+#ifdef DEBUGSHADERS
 debug = True
 #else
 debug = False
@@ -337,7 +337,11 @@ bindUniforms
                        [ ShaderInfo VertexShader   (FileSource (_vertShader u_mat' ))   -- u_mat is only used for debug
                        , ShaderInfo FragmentShader (FileSource (_fragShader u_mat' )) ]
 
-    program0 <- if debug then programDebug else pure u_prog'
+    --program0 <- if debug then programDebug else pure u_prog'
+    program0 <- if debug && u_mat' ^. M.name == "PNKyaw"
+                then programDebug
+                else pure u_prog'
+                     
     currentProgram $= Just program0
 
     let u_mouse0      = Vector2 (realToFrac $ fst u_mouse') (realToFrac $ snd u_mouse') :: Vector2 GLfloat

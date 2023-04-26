@@ -70,20 +70,23 @@ defaultCam =
 defaultCamController :: Controllable
 defaultCamController =
   ( Controller
-    (0,0)
+    {_debug = (0,0)
     -- (transpose (identity :: M44 Double))
-    (
+    ,_transform =  
       (V4
         (V4 1 0 0 0)
         (V4 0 1 0 0) -- <- . . . y ...
         (V4 0 0 1 0) -- <- . . . z-component of transform
-        (V4 0 0 0 1)))
-    (V3 0 0 0) -- velocity
-    (V3 0 0 0) -- rotation
-    (Device
+        (V4 0 0 0 1))
+    ,_vel  = (V3 0 0 0) -- velocity
+    ,_ypr  = (V3 0 0 0) -- rotation
+    ,_yprS = (V3 0 0 0) -- sum of rotations
+    ,_device =
+     (Device
      (Keyboard keys0 kvs0)
      --(Mouse Nothing Nothing (0,0) (0.0, 0.0) False mvs0 )
-    )
+     )
+    }
   )
   where
     -- mvs0   = [] --undefined
