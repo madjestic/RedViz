@@ -43,17 +43,14 @@ data Drawable
      {  name       :: String
      , _uniforms   :: Uniforms
      , _descriptor :: Descriptor
-     --, _program    :: Program
+     , _program    :: Program
      , _options    :: BackendOptions
      } deriving Show
 
 data Uniforms
   =  Uniforms
      {
-       _u_mats  :: Material
-     , _u_prog  :: Program
-     , _u_mouse :: (Double, Double)
-     , _u_time  :: Double
+       _u_time  :: Double
      , _u_res   :: (CInt, CInt)
      , _u_cam   :: M44 Double
      , _u_cam_a :: Double
@@ -69,24 +66,23 @@ $(makeLenses ''Drawable)
 $(makeLenses ''Uniforms)
 
 toDrawables
-  :: (Double, Double)
-  -> Double
+  :: Double
   -> (CInt, CInt)
   -> Camera
   -> Object' -> [Drawable]
-toDrawables mpos time0 res0 cam obj = drs
+toDrawables time0 res0 cam obj = drs
   where
-    drs = toDrawable name' mpos time0 res0 cam xformO opts'
-          <$> [(mats, progs, ds)
-              | mats  <- obj ^. materials
-              , progs <- obj ^. programs
-              , ds    <- obj ^. descriptors]
+    drs = toDrawable name' time0 res0 cam xformO opts'
+          <$> zip3
+          (obj ^. materials)
+          (obj ^. programs)
+          (obj ^. descriptors)
+    
 
     name'  = obj ^. Object.name
     xformO = obj ^. transform0
     opts'  = obj ^. Object.options :: BackendOptions
 
-type MousePos    = (Double, Double)
 type Time        = Double
 type Res         = (CInt, CInt)
 type CameraM44   = M44 Double
@@ -95,7 +91,6 @@ type FieldOfView = Double
 
 toDrawable ::
      String
-  -> MousePos
   -> Time
   -> Res
   -> Camera
@@ -103,7 +98,7 @@ toDrawable ::
   -> BackendOptions
   -> (Material, Program, Descriptor)
   -> Drawable
-toDrawable name' mpos time' res' cam xformO opts (mat, prg, d) = dr
+toDrawable name' time' res' cam xformO opts (mat, prg, d) = dr
   where
     apt    = _apt cam
     foc    = _foc cam
@@ -115,10 +110,7 @@ toDrawable name' mpos time' res' cam xformO opts (mat, prg, d) = dr
       ,_uniforms   =
           Uniforms
           {
-            _u_mats  = mat
-          , _u_prog  = prg
-          , _u_mouse = mpos
-          , _u_time  = time'
+            _u_time  = time'
           , _u_res   = res'
           , _u_cam   = xformC
           , _u_cam_a = apt
@@ -130,5 +122,6 @@ toDrawable name' mpos time' res' cam xformO opts (mat, prg, d) = dr
           , _u_cam_accel = (0,0,0)
           }
       ,_descriptor = d
+      ,_program    = prg
       ,Graphics.RedViz.Drawable._options    = opts
       }

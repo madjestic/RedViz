@@ -291,12 +291,14 @@ drawableChar drs chr =
     '<' -> drs!!75
     _   -> error "font drs index out of range             "
 
-render :: [Texture] -> [(UUID, GLuint)] ->  Drawable -> IO ()
-render txs hmap (Drawable _ unis (Descriptor vao' numIndices') opts) =
+type MousePos    = (Double, Double)    
+
+render :: [Texture] -> [(UUID, GLuint)] ->  MousePos -> Drawable -> IO ()
+render txs hmap mpos (Drawable _ unis (Descriptor vao' numIndices') prog opts) =
   do
  -- print $ "render.name : " ++ name
  -- print $ "render.unis :" ++ show unis ++ "\n render.txs :" ++ show txs ++ "\n render.hmap : " ++ show hmap
-    bindUniforms txs unis hmap
+    bindUniforms txs unis prog mpos hmap
     bindVertexArrayObject $= Just vao'
 
     GL.pointSize $= ptSize opts --0.001
@@ -327,20 +329,21 @@ bindTexture hmap tx =
       where
         txid = fromMaybe 0 (lookup (view uuid tx) hmap)
 
-bindUniforms :: [Texture] -> Uniforms -> [(UUID, GLuint)] -> IO ()
+bindUniforms :: [Texture] -> Uniforms -> Program -> MousePos -> [(UUID, GLuint)] -> IO ()
 bindUniforms
   txs
-  (Uniforms u_mat' u_prog' u_mouse' u_time' u_res' u_cam' u_cam_a' u_cam_f' u_xform' u_ypr' u_yprS' u_vel' u_accel')
+  (Uniforms u_time' u_res' u_cam' u_cam_a' u_cam_f' u_xform' u_ypr' u_yprS' u_vel' u_accel')
+  u_prog'
+  u_mouse'
   hmap =
   do
-    let programDebug = loadShaders
-                       [ ShaderInfo VertexShader   (FileSource (_vertShader u_mat' ))   -- u_mat is only used for debug
-                       , ShaderInfo FragmentShader (FileSource (_fragShader u_mat' )) ]
+    let programDebug =
+          loadShaders
+          [ ShaderInfo VertexShader   (FileSource "./mat/checkerboard/src/shader.vert")   -- u_mat is only used for debug
+          , ShaderInfo FragmentShader (FileSource "./mat/checkerboard/src/shader.frag") ]
 
     program0 <- if debug then programDebug else pure u_prog'
-    -- program0 <- if debug -- && u_mat' ^. M.name == "PNKroll"
-    --             then programDebug
-    --             else pure u_prog'
+
                      
     currentProgram $= Just program0
 
