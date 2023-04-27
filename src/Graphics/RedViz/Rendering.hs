@@ -56,7 +56,6 @@ import GHC.Float (int2Double, double2Float)
 
 import Graphics.RedViz.LoadShaders
 import Graphics.RedViz.Descriptor
-import Graphics.RedViz.Material          as M
 import Graphics.RedViz.Texture           as T
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.VAO (SVAO')

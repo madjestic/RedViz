@@ -99,7 +99,7 @@ defaultPCam =
       0, 0, 1,-11,
       0, 0, 0, 1]
    , _pMouseS     = 0.01
-   , _pKeyboardRS = 0.01
+   , _pKeyboardRS = 0.001
    , _pKeyboardTS = 0.1
    })
 

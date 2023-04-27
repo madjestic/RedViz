@@ -98,7 +98,7 @@ toDrawable ::
   -> BackendOptions
   -> (Material, Program, Descriptor)
   -> Drawable
-toDrawable name' time' res' cam xformO opts (mat, prg, d) = dr
+toDrawable name' time' res' cam xformO opts (_, prg, d) = dr
   where
     apt    = _apt cam
     foc    = _foc cam
