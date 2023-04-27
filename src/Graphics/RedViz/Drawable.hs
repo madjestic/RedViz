@@ -36,7 +36,7 @@ import Graphics.RedViz.Descriptor
 import Graphics.Rendering.OpenGL (Program)
 import Graphics.RedViz.Backend
 
-import Debug.Trace    as DT
+--import Debug.Trace    as DT
 
 data Drawable
   =  Drawable
@@ -60,6 +60,7 @@ data Uniforms
      , _u_cam_f :: Double
      , _u_xform :: M44 Double
      , _u_cam_ypr   :: (Double, Double, Double)
+     , _u_cam_yprS  :: (Double, Double, Double)
      , _u_cam_vel   :: (Double, Double, Double)
      , _u_cam_accel :: (Double, Double, Double)
      } deriving Show
@@ -104,7 +105,6 @@ toDrawable ::
   -> Drawable
 toDrawable name' mpos time' res' cam xformO opts (mat, prg, d) = dr
   where
-    ypr' = (\(V3 x y z) -> (x,y,z)) $ cam ^. controller . Controllable.ypr
     apt    = _apt cam
     foc    = _foc cam
     xformC = view (controller . Controllable.transform) cam  :: M44 Double
@@ -124,7 +124,8 @@ toDrawable name' mpos time' res' cam xformO opts (mat, prg, d) = dr
           , _u_cam_a = apt
           , _u_cam_f = foc
           , _u_xform = xformO
-          , _u_cam_ypr   = (\(V3 x y z) -> (x,y,z)) $ cam ^. controller . Controllable.yprS
+          , _u_cam_ypr   = (\(V3 x y z) -> (x,y,z)) $ cam ^. controller . Controllable.ypr
+          , _u_cam_yprS  = (\(V3 x y z) -> (x,y,z)) $ cam ^. controller . Controllable.yprS
           , _u_cam_vel   = (\(V3 x y z) -> (x,y,z)) $ cam ^. controller . Controllable.vel
           , _u_cam_accel = (0,0,0)
           }

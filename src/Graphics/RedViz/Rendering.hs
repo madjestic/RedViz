@@ -330,17 +330,17 @@ bindTexture hmap tx =
 bindUniforms :: [Texture] -> Uniforms -> [(UUID, GLuint)] -> IO ()
 bindUniforms
   txs
-  (Uniforms u_mat' u_prog' u_mouse' u_time' u_res' u_cam' u_cam_a' u_cam_f' u_xform' u_ypr' u_vel' u_accel')
+  (Uniforms u_mat' u_prog' u_mouse' u_time' u_res' u_cam' u_cam_a' u_cam_f' u_xform' u_ypr' u_yprS' u_vel' u_accel')
   hmap =
   do
     let programDebug = loadShaders
                        [ ShaderInfo VertexShader   (FileSource (_vertShader u_mat' ))   -- u_mat is only used for debug
                        , ShaderInfo FragmentShader (FileSource (_fragShader u_mat' )) ]
 
-    --program0 <- if debug then programDebug else pure u_prog'
-    program0 <- if debug && u_mat' ^. M.name == "PNKyaw"
-                then programDebug
-                else pure u_prog'
+    program0 <- if debug then programDebug else pure u_prog'
+    -- program0 <- if debug -- && u_mat' ^. M.name == "PNKroll"
+    --             then programDebug
+    --             else pure u_prog'
                      
     currentProgram $= Just program0
 
@@ -396,14 +396,24 @@ bindUniforms
     location8        <- get (uniformLocation program0 "ypr")
     uniform location8 $= ypr
 
+    let yprS =
+          Vector3
+          (double2Float $ u_yprS'^._1)
+          (double2Float $ u_yprS'^._2)
+          (double2Float $ u_yprS'^._3)
+          :: Vector3 GLfloat
+    location9        <- get (uniformLocation program0 "yprS")
+    uniform location9 $= yprS
+
+
     let vel  =
           Vector3
           (double2Float $ u_vel'^._1)
           (double2Float $ u_vel'^._2)
           (double2Float $ u_vel'^._3)
           :: Vector3 GLfloat
-    location9        <- get (uniformLocation program0 "vel")
-    uniform location9 $= vel
+    location10        <- get (uniformLocation program0 "vel")
+    uniform location10 $= vel
 
     let accel  =
           Vector3
@@ -411,8 +421,8 @@ bindUniforms
           (double2Float $ u_accel'^._2)
           (double2Float $ u_accel'^._3)
           :: Vector3 GLfloat
-    location10        <- get (uniformLocation program0 "accel")
-    uniform location10 $= accel
+    location11        <- get (uniformLocation program0 "accel")
+    uniform location11 $= accel
 
     --- | Allocate Textures
 
