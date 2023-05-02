@@ -42,6 +42,11 @@ library
                        Graphics.RedViz.Object
                        Graphics.RedViz.Backend
                        Graphics.RedViz.Primitives
+                       Graphics.RedViz.GLUtil
+                       Graphics.RedViz.GLUtil.JuicyTextures
+                       Graphics.RedViz.GLUtil.Textures
+                       Graphics.RedViz.GLUtil.TypeMapping
+                       
   -- other-modules:
   -- other-extensions:
   -- ghc-options:   -O2 -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans
@@ -56,7 +61,8 @@ library
                      , Yampa >= 0.13.7
                      , bytestring           
                      , containers          
-                     , GLUtil              
+                     --, GLUtil
+                     , JuicyPixels
                      , ilist               
                      , lens                
                      , linear              
@@ -70,6 +76,7 @@ library
                      , sort
                      , split
                      , store
+                     , array
                      , text                
                      , uuid                
                      , vector

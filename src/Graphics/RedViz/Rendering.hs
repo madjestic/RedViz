@@ -47,12 +47,12 @@ import Foreign.Storable                       (sizeOf)
 import Graphics.Rendering.OpenGL as GL hiding (color, normal, Size)
 import SDL                             hiding (Point, Event, Timer, (^+^), (*^), (^-^), dot, project, Texture)
 import Linear.Vector
-import Data.Foldable     as DF (toList)
-import Linear.Projection as LP (infinitePerspective)
+import Data.Foldable             as DF        (toList)
+import Linear.Projection         as LP        (infinitePerspective)
 import Unsafe.Coerce
-import Control.Lens       hiding (indexed)
-import Graphics.GLUtil                        (readTexture, texture2DWrap)
-import GHC.Float (int2Double, double2Float)
+import Control.Lens                    hiding (indexed)
+import Graphics.RedViz.GLUtil                 (readTexture, texture2DWrap)
+import GHC.Float                              (int2Double, double2Float)
 
 import Graphics.RedViz.LoadShaders
 import Graphics.RedViz.Descriptor
