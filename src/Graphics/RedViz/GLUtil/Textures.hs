@@ -1,3 +1,7 @@
+--------------------------------------------------------------------------------
+-- Copyright:           (c) 2012,2013 Anthony Cowley
+--------------------------------------------------------------------------------
+
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, 
              ScopedTypeVariables, TypeFamilies, FlexibleContexts #-}
 -- |Utilities for loading texture data.

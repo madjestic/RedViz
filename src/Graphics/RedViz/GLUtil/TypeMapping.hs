@@ -1,4 +1,8 @@
-{-# LANGUAGE FlexibleInstances, ScopedTypeVariables, TypeSynonymInstances #-}
+--------------------------------------------------------------------------------
+-- Copyright:           (c) 2012,2013 Anthony Cowley
+--------------------------------------------------------------------------------
+
+{-# LANGUAGE FlexibleInstances, ScopedTypeVariables #-}
 -- |This module contains classes and functions to relate Haskell types
 -- with OpenGL DataTypes (typically used to describe the values stored
 -- in arrays) and VariableTypes (used as attributes and uniforms in

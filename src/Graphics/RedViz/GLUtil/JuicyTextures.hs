@@ -1,3 +1,7 @@
+--------------------------------------------------------------------------------
+-- Copyright:           (c) 2012,2013 Anthony Cowley
+--------------------------------------------------------------------------------
+
 {-# LANGUAGE CPP, RankNTypes #-}
 -- | Uses the @JuicyPixels@ package to load images that are then used
 -- to create OpenGL textuers.
