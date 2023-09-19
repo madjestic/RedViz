@@ -1,15 +1,14 @@
 cabal-version:       3.0
 name:                RedViz
-version:             0.2.0.1
+version:             0.3.0.0
 synopsis:            a library for realtime interactive 3D visualizations
-description:         a library for realtime interactive 3D visualizations and (glsl) shaders.
+description:         a library for realtime graphics and interactive 3D visualizations.
 homepage:            https://github.com/madjestic/RedViz
--- bug-reports:
 license:             BSD-3-Clause
 license-file:        LICENSE
 author:              madjestic
 maintainer:          madjestic13@gmail.com
--- copyright:
+copyright:           Vladimir Lopatin
 category:            Graphics
 extra-source-files:  CHANGELOG.md, README.md
 
@@ -18,11 +17,15 @@ library
                        Graphics.RedViz.LoadShaders
                        Graphics.RedViz.Rendering
                        Graphics.RedViz.Material
+                       Graphics.RedViz.Material.Lens
                        Graphics.RedViz.Descriptor
                        Graphics.RedViz.Drawable
+                       Graphics.RedViz.Drawable.Lens
                        Graphics.RedViz.Texture
+                       Graphics.RedViz.Texture.Lens
                        Graphics.RedViz.Utils
                        Graphics.RedViz.Camera
+                       Graphics.RedViz.Camera.Lens
                        Graphics.RedViz.Controllable
                        Graphics.RedViz.Input
                        Graphics.RedViz.Input.Keyboard
@@ -40,6 +43,7 @@ library
                        Graphics.RedViz.VAO
                        Graphics.RedViz.FromVector
                        Graphics.RedViz.Object
+                       Graphics.RedViz.Object.Lens
                        Graphics.RedViz.Backend
                        Graphics.RedViz.Primitives
                        Graphics.RedViz.GLUtil
@@ -47,21 +51,18 @@ library
                        Graphics.RedViz.GLUtil.Textures
                        Graphics.RedViz.GLUtil.TypeMapping
                        
-  -- other-modules:
-  -- other-extensions:
   -- ghc-options:   -O2 -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans
   ghc-options:   -O2     
   --ghc-options:   -threaded -fprof-auto -fprof-cafs "-with-rtsopts=-N -p -s -hc -i0.1 -xc"
-  --ghc-options:   -O2 -threaded
   --cpp-options:   -DDEBUG  
   build-depends:       base
                      , aeson               
                      , aeson-pretty
-                     --, bearriver
-                     , Yampa >= 0.13.7
+                     , bearriver
+                     --, Yampa >= 0.13.7
+                     --, dunai
                      , bytestring           
                      , containers          
-                     --, GLUtil
                      , JuicyPixels
                      , ilist               
                      , lens                

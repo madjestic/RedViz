@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Texture
--- Copyright   :  (c) Vladimir Lopatin 2022
+-- Copyright   :  (c) Vladimir Lopatin 2023
 -- License     :  BSD3
 --
 -- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
@@ -14,15 +14,15 @@
 
 {-# LANGUAGE TemplateHaskell #-}
 
-module Graphics.RedViz.Texture 
+module Graphics.RedViz.Texture.Lens
   ( Texture (..)
-  -- , name
-  -- , path
-  -- , uuid
+  , name
+  , path
+  , uuid
   , defaultTexture
   ) where
 
---import Control.Lens
+import Control.Lens
 import Data.Aeson
 import Data.Aeson.Encode.Pretty
 import Data.Aeson.TH
@@ -34,19 +34,20 @@ import Graphics.RedViz.Utils (encodeStringUUID)
 data Texture
   =  Texture
      { -- | Binding name in a shader.
-       name :: String
+       _name :: String
        -- | A filepath to an image file location on disk, relative to project root.
-     , path :: FilePath -- TODO: replace with Maybe FilePath or Either (FilePath or Generated, maybe a formula?)
+     , _path :: FilePath -- TODO: replace with Maybe FilePath or Either (FilePath or Generated, maybe a formula?)
        -- | A unique object (texture) ID.
-     , uuid :: UUID
+     , _uuid :: UUID
      } deriving Show
-deriveJSON defaultOptions ''Texture
+$(makeLenses ''Texture)
+deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''Texture
 
 instance Eq Texture where
-  t0 == t1 = uuid t0 == uuid t1
+  t0 == t1 = view uuid t0 == view uuid t1
 
 instance Ord Texture where
-  compare t0 t1  = compare (uuid t0) (uuid t1)
+  compare t0 t1  = compare (view uuid t0) (view uuid t1)
 
 -- | A default Texture type constructor.
 defaultTexture :: Texture

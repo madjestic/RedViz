@@ -74,7 +74,6 @@ rbDown :: SF AppInput Bool
 rbDown = arr (isJust . inpMouseRight)
 
 mouseMoving :: SF AppInput (Event (Int, Int))
---mouseMoving = arr inpMouseMoving >>> edge
 mouseMoving = inpMouseMoving ^>> edgeJust
 
 mouseStopped :: SF AppInput (Event ())

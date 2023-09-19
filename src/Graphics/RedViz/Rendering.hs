@@ -56,8 +56,8 @@ import GHC.Float                              (int2Double, double2Float)
 
 import Graphics.RedViz.LoadShaders
 import Graphics.RedViz.Descriptor
-import Graphics.RedViz.Texture           as T
-import Graphics.RedViz.Drawable
+import Graphics.RedViz.Texture.Lens as T
+import Graphics.RedViz.Drawable.Lens
 import Graphics.RedViz.VAO (SVAO')
 import Graphics.RedViz.Widget (Widget (..), Format (..), xoffset, yoffset, zoffset, alignment, Alignment(..), soffset, ssize, xres, yres)
 import Graphics.RedViz.Backend
@@ -493,7 +493,7 @@ initVAO (idx', st', vs') =
     let numIndices = length idx
     withArray idx $ \ptr ->
       do
-        let indicesSize = fromIntegral (numIndices * sizeOf (head idx))
+        let indicesSize = fromIntegral (numIndices * sizeOf (0 :: GLenum))
         bufferData ElementArrayBuffer $= (indicesSize, ptr, StaticDraw)
 
         --- | Bind the pointer to the vertex attribute data

@@ -13,15 +13,22 @@
 --------------------------------------------------------------------------------
 
 
--- {-# LANGUAGE TemplateHaskell #-}
--- {-# LANGUAGE Arrows #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE Arrows #-}
 
-module Graphics.RedViz.Camera
+module Graphics.RedViz.Camera.Lens
   ( Camera (..)
   , defaultCam
+  , controller
+  , mouseS
+  , keyboardRS
+  , keyboardTS
+  , defaultCamController
+  , res
+  , scale
   ) where
 
--- import Control.Lens
+import Control.Lens
 import Linear                    (V4 (..))
 import Linear.V3
 
@@ -32,31 +39,32 @@ import Graphics.RedViz.Input.Keyboard
 
 data Camera =
      Camera
-     { name       :: String
-     , apt        :: Double
-     , foc        :: Double 
-     , controller :: Controllable
-     , mouseS     :: V3 Double -- mouse    "sensitivity"
-     , keyboardRS :: V3 Double -- keyboard "rotation sensitivity"
-     , keyboardTS :: V3 Double -- keyboard "translation sensitivity"
-     , res        :: (Int, Int)
-     , scale      :: Double    -- accumulated scale (while hold key)
+     { _name       :: String
+     , _apt        :: Double
+     , _foc        :: Double 
+     , _controller :: Controllable
+     , _mouseS     :: V3 Double -- mouse    "sensitivity"
+     , _keyboardRS :: V3 Double -- keyboard "rotation sensitivity"
+     , _keyboardTS :: V3 Double -- keyboard "translation sensitivity"
+     , _res        :: (Int, Int)
+     , _scale      :: Double    -- accumulated scale (while hold key)
      } deriving Show
 
+$(makeLenses ''Camera)
 
 defaultCam :: Camera
 defaultCam =
   Camera
   {
-    name       = "PlayerCamera"
-  , apt        = 50.0
-  , foc        = 100.0
-  , controller = defaultCamController
-  , mouseS     = 1.0
-  , keyboardRS = 1.0
-  , keyboardTS = 1.0
-  , res        = (256,256)
-  , scale      = 0.0
+    _name       = "PlayerCamera"
+  , _apt        = 50.0
+  , _foc        = 100.0
+  , _controller = defaultCamController
+  , _mouseS     = 1.0
+  , _keyboardRS = 1.0
+  , _keyboardTS = 1.0
+  , _res        = (256,256)
+  , _scale      = 0.0
   }
 
 defaultCamController :: Controllable

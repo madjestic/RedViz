@@ -15,20 +15,20 @@
 {-# LANGUAGE CPP    #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
---{-# LANGUAGE InstanceSigs #-}
---{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Graphics.RedViz.Material
+module Graphics.RedViz.Material.Lens
   ( Material (..)
---  , name
+  , name
   , defaultMat
-  , Graphics.RedViz.Material.read
+  , Graphics.RedViz.Material.Lens.read
   , write
---  , textures
+  , textures
   ) where  
 
---import Control.Lens hiding ((.=))
+import Control.Lens hiding ((.=))
 import Control.Monad (when)
 import Data.Aeson
 import Data.Aeson.Encode.Pretty
@@ -37,7 +37,7 @@ import Data.Maybe                (fromMaybe)
 import qualified Data.ByteString.Lazy as B
 import Data.Text    hiding (drop)
 
-import Graphics.RedViz.Texture as T hiding (name)
+import Graphics.RedViz.Texture.Lens as T hiding (name, _name)
 
 debug :: Bool
 #ifdef DEBUG
@@ -46,19 +46,21 @@ debug = True
 debug = False
 #endif
 
+
 data Material
   =  Material
      { -- | Material name.
-       name       :: String
+       _name       :: String
        -- | Path to vertex shader program.
-     , vertShader :: FilePath
+     , _vertShader :: FilePath
        -- | Path to fragment shader program.
-     , fragShader :: FilePath
+     , _fragShader :: FilePath
        -- | Paths to texture bindings and other 'Texture' data.
-     , geomShader :: Maybe FilePath
-     , textures   :: [Texture]  
+     , _geomShader :: Maybe FilePath
+     , _textures   :: [Texture]  
      } deriving Show
-deriveJSON defaultOptions ''Material
+$(makeLenses ''Material)
+deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''Material
 
 defaultMat :: Material
 defaultMat
@@ -79,14 +81,14 @@ read jsonFile =
     when debug $
       print $ "Loading Material :"
         ++ case d of
-             Right m -> name m
+             Right m -> view name m
              _ -> "error"
 
-    let name'       = (name       . fromEitherDecode) d
-        vertShader' = (vertShader . fromEitherDecode) d
-        fragShader' = (fragShader . fromEitherDecode) d
-        geomShader' = (geomShader . fromEitherDecode) d
-        textures'   = (textures   . fromEitherDecode) d
+    let name'       = (_name       . fromEitherDecode) d
+        vertShader' = (_vertShader . fromEitherDecode) d
+        fragShader' = (_fragShader . fromEitherDecode) d
+        geomShader' = (_geomShader . fromEitherDecode) d
+        textures'   = (_textures   . fromEitherDecode) d
     return $ Material name' vertShader' fragShader' geomShader' textures'
       where
         fromEitherDecode = fromMaybe (Material "" "" "" Nothing []) . fromEither

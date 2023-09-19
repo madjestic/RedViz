@@ -12,26 +12,24 @@
 --
 --------------------------------------------------------------------------------
 
-
-{-# LANGUAGE TemplateHaskell #-}
+--{-# LANGUAGE TemplateHaskell #-}
 
 module Graphics.RedViz.Drawable
-  ( uniforms
-  , u_xform
-  , Drawable (..)
+  ( Drawable (..)
   , Uniforms (..)
   , toDrawables
+  , toDrawable
   ) where
 
 import Foreign.C
 import Linear.Matrix
 import Linear.V3
-import Control.Lens
+--import Control.Lens
 
 import Graphics.RedViz.Controllable as Controllable
-import Graphics.RedViz.Material
+--import Graphics.RedViz.Material
 import Graphics.RedViz.Camera
-import Graphics.RedViz.Object as Object
+import qualified Graphics.RedViz.Object as Object
 import Graphics.RedViz.Descriptor
 import Graphics.Rendering.OpenGL (Program)
 import Graphics.RedViz.Backend
@@ -40,48 +38,43 @@ import Graphics.RedViz.Backend
 
 data Drawable
   =  Drawable
-     {  name       :: String
-     , _uniforms   :: Uniforms
-     , _descriptor :: Descriptor
-     , _program    :: Program
-     , _options    :: BackendOptions
+     { name       :: String
+     , uniforms   :: Uniforms
+     , descriptor :: Descriptor
+     , program    :: Program
+     , options    :: BackendOptions
      } deriving Show
 
 data Uniforms
   =  Uniforms
      {
-       _u_time  :: Double
-     , _u_res   :: (CInt, CInt)
-     , _u_cam   :: M44 Double
-     , _u_cam_a :: Double
-     , _u_cam_f :: Double
-     , _u_xform :: M44 Double
-     , _u_cam_ypr   :: (Double, Double, Double)
-     , _u_cam_yprS  :: (Double, Double, Double)
-     , _u_cam_vel   :: (Double, Double, Double)
-     , _u_cam_accel :: (Double, Double, Double)
+       u_time  :: Double
+     , u_res   :: (CInt, CInt)
+     , u_cam   :: M44 Double
+     , u_cam_a :: Double
+     , u_cam_f :: Double
+     , u_xform :: M44 Double
+     , u_cam_ypr   :: (Double, Double, Double)
+     , u_cam_yprS  :: (Double, Double, Double)
+     , u_cam_vel   :: (Double, Double, Double)
+     , u_cam_accel :: (Double, Double, Double)
      } deriving Show
-
-$(makeLenses ''Drawable)
-$(makeLenses ''Uniforms)
 
 toDrawables
   :: Double
   -> (CInt, CInt)
   -> Camera
-  -> Object' -> [Drawable]
+  -> Object.Object' -> [Drawable]
 toDrawables time0 res0 cam obj = drs
   where
     drs = toDrawable name' time0 res0 cam xformO opts'
-          <$> zip3
-          (obj ^. materials)
-          (obj ^. programs)
-          (obj ^. descriptors)
-    
+          <$> zip
+          (Object.programs    obj)
+          (Object.descriptors obj)
 
-    name'  = obj ^. Object.name
-    xformO = obj ^. transform0
-    opts'  = obj ^. Object.options :: BackendOptions
+    name'  = Object.name       obj
+    xformO = Object.transform0 obj
+    opts'  = Object.options    obj :: BackendOptions
 
 type Time        = Double
 type Res         = (CInt, CInt)
@@ -96,32 +89,34 @@ toDrawable ::
   -> Camera
   -> M44 Double
   -> BackendOptions
-  -> (Material, Program, Descriptor)
+  -> (Program, Descriptor)
   -> Drawable
-toDrawable name' time' res' cam xformO opts (_, prg, d) = dr
+toDrawable name' time' res' cam xformO opts (prg, d) = dr
   where
-    apt    = _apt cam
-    foc    = _foc cam
-    xformC = view (controller . Controllable.transform) cam  :: M44 Double
+    apt'    = apt cam
+    foc'    = foc cam
+    --xformC =  (controller . Controllable.transform) cam  :: M44 Double
+    xformC =  _transform (controller cam) :: M44 Double
+    --xformC =  undefined :: M44 Double
     dr  =
       Drawable
       {
         Graphics.RedViz.Drawable.name = name'
-      ,_uniforms   =
+      , uniforms   =
           Uniforms
           {
-            _u_time  = time'
-          , _u_res   = res'
-          , _u_cam   = xformC
-          , _u_cam_a = apt
-          , _u_cam_f = foc
-          , _u_xform = xformO
-          , _u_cam_ypr   = (\(V3 x y z) -> (x,y,z)) $ cam ^. controller . Controllable.ypr
-          , _u_cam_yprS  = (\(V3 x y z) -> (x,y,z)) $ cam ^. controller . Controllable.yprS
-          , _u_cam_vel   = (\(V3 x y z) -> (x,y,z)) $ cam ^. controller . Controllable.vel
-          , _u_cam_accel = (0,0,0)
+            u_time  = time'
+          , u_res   = res'
+          , u_cam   = xformC
+          , u_cam_a = apt'
+          , u_cam_f = foc'
+          , u_xform = xformO
+          , u_cam_ypr   = (\(V3 x y z) -> (x,y,z)) $ _ypr  (controller cam)
+          , u_cam_yprS  = (\(V3 x y z) -> (x,y,z)) $ _yprS (controller cam)
+          , u_cam_vel   = (\(V3 x y z) -> (x,y,z)) $ _vel  (controller cam)
+          , u_cam_accel = (0,0,0)
           }
-      ,_descriptor = d
-      ,_program    = prg
-      ,Graphics.RedViz.Drawable._options    = opts
+      , descriptor = d
+      , program    = prg
+      , options    = opts
       }
