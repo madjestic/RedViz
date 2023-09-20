@@ -22,6 +22,7 @@ import Control.Exception
 import Control.Monad
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BS
+import System.Directory
 import Graphics.Rendering.OpenGL
 -- import Debug.Trace as DT
 
@@ -73,16 +74,28 @@ loadCompileAttach program (ShaderInfo shType source : infos) =
   do
     -- _ <- DT.trace ("Loading Shader Program" ++ show program ++ show source) $ return ()
     src     <- getSource source
-    include <- getSource (FileSource "./mat/share/lib.glsl")
-    let
-      version   = head (BS.lines src)
-      shaderSrc = tail (BS.lines src)
-      src'      = BS.unlines $ version : include : shaderSrc
-    
-    shaderSourceBS shader $= src'
-    compileAndCheck shader
-    attachShader program shader
-    loadCompileAttach program infos
+    matDir    <- doesFileExist "./mat/share/lib.glsl"
+    shaderDir <- doesFileExist "./shaders/share/lib.glsl"
+
+    let mfs
+          | matDir    = Just "./mat/share/lib.glsl"
+          | shaderDir = Just "./shaders/share/lib.glsl"
+          | otherwise = Nothing
+
+    case mfs of
+      Nothing -> fail "Error : shared shader file does not exist!"
+      Just fs -> do
+        include <- getSource (FileSource fs)
+
+        let
+          version   = head (BS.lines src)
+          shaderSrc = tail (BS.lines src)
+          src'      = BS.unlines $ version : include : shaderSrc
+         
+        shaderSourceBS shader $= src'
+        compileAndCheck shader
+        attachShader program shader
+        loadCompileAttach program infos
 
 compileAndCheck :: Shader -> IO ()
 compileAndCheck = checked compileShader compileStatus shaderInfoLog "compile"

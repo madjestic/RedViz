@@ -58,11 +58,11 @@ library
   build-depends:       base
                      , aeson               
                      , aeson-pretty
+                     , array
                      , bearriver
-                     --, Yampa >= 0.13.7
-                     --, dunai
                      , bytestring           
-                     , containers          
+                     , containers
+                     , directory
                      , JuicyPixels
                      , ilist               
                      , lens                
@@ -77,7 +77,6 @@ library
                      , sort
                      , split
                      , store
-                     , array
                      , text                
                      , uuid                
                      , vector
