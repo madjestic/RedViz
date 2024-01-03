@@ -184,8 +184,8 @@ fromUUID = read . concatMap show . (\ (x,y,z,w)-> fmap toInteger [x,y,z,w]) . to
 encodeStringUUID :: String -> UUID
 encodeStringUUID x = genSeedUUID . fromInteger . fromBase62 . unpack . hashStringToBase62 6 $ pack x
 
-encodeStringInteger :: String -> Integer
-encodeStringInteger x = fromBase62 . unpack . hashStringToBase62 1 $ pack x
+-- encodeStringInteger :: String -> Integer
+-- encodeStringInteger x = fromBase62 . unpack . hashStringToBase62 1 $ pack x
 
 genSeedUUID :: Int -> UUID
 genSeedUUID seed =

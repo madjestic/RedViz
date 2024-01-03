@@ -24,10 +24,8 @@ module Graphics.RedViz.Texture.Lens
 
 import Control.Lens
 import Data.Aeson
-import Data.Aeson.Encode.Pretty
 import Data.Aeson.TH
 import Data.UUID
-import Data.Text    hiding (drop)
 
 import Graphics.RedViz.Utils (encodeStringUUID)
 
@@ -56,6 +54,3 @@ defaultTexture
     "checkerboard"
     "./textures/checkerboard.png"
     (encodeStringUUID "./textures/checkerboard.png")
-
-comp :: Text -> Text -> Ordering
-comp = keyOrder . fmap pack $ ["name", "path", "uuid"]
