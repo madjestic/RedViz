@@ -84,12 +84,12 @@ defaultCamController =
     ,_device =
      (Device
      (Keyboard keys0 kvs0)
-     --(Mouse Nothing Nothing (0,0) (0.0, 0.0) False mvs0 )
+     (Mouse Nothing Nothing (0,0) (0,0) False mvs0 )
      )
     }
   )
   where
-    -- mvs0   = [] --undefined
+    mvs0   = [] --undefined
     -- mvs0 - mouse vectors
     keys0  = ( Keys False False False False False False False False False False False False False False False False False )
     -- kvs0 - key vectors keyVecs

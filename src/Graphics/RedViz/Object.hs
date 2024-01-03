@@ -1,57 +1,152 @@
---{-# LANGUAGE TemplateHaskell #-}
+module Graphics.RedViz.Object where
 
-module Graphics.RedViz.Object
-  ( Object' (..)
-  , defaultObject'
-  ) where
-
---import Control.Lens hiding (transform, pre)
-import Graphics.Rendering.OpenGL (Program)
-import Linear.Matrix
+import Data.UUID
 import Linear.V3
 
-import Graphics.RedViz.Descriptor
-import Graphics.RedViz.Material hiding (name)
-import Graphics.RedViz.Backend
+import Graphics.RedViz.Transformable
+import Graphics.RedViz.Drawable
+import Graphics.RedViz.Solvable (Solvable(..), CoordSys(..), RotationOrder(..))
+import Graphics.RedViz.Backend (BackendOptions, defaultBackendOptions)
 
-data Object'
-  =  Object'
-     {
-        name        :: String
-      , descriptors :: [Descriptor] -- | Material is bound in Descriptor, but we also use this data for draw-call separation per material.
-       -- data Descriptor =
-       -- Descriptor VertexArrayObject NumArrayIndices
-      , materials   :: [Material]    -- | hence [Material] is present on the Object level too, we use that value, instead of looking it up from respective VGeo.
-      , programs    :: [Program]     -- | Shader Programs
-      , transforms  :: ![M44 Double] -- | transforms for parts (object fragments)
-      , transform0  :: !(M44 Double) -- | initial basis (position/orientation in world space)
-      , transform1  :: !(M44 Double) -- | basis (position/orientation in world space)
-      , ypr0        :: !(V3 Double)
-      , ypr         :: !(V3 Double)
-      , time        :: Double
-      , options     :: BackendOptions
+data PType = Default
+           | Font
+           | Icon
+
+instance Show PType where
+  show Default = "Default"
+  show Font    = "Font"
+  show Icon    = "Icon"
+
+data Object
+  =  Object
+     { transform :: Transformable
+     , drws      :: [Drawable]
+     , selected  :: Bool
+     , oslvrs    :: [Solvable]
+     , uuid      :: UUID
+     , parent    :: UUID
      } deriving Show
--- $(makeLenses ''Object')
 
-zeroV3 :: V3 Double
-zeroV3 = V3 0 0 0
-
--- defaultObject' :: Object'
--- defaultObject' = Object' [] [] [] [] (identity::M44 Double) zeroV3 zeroV3 0.0
-defaultObject' :: Object'
-defaultObject' =
-  Object'
-  {
-    descriptors = []
-  , materials   = []
-  , programs    = []
-  , transforms  = []
-  , transform0  = identity :: M44 Double
-  , transform1  = identity :: M44 Double
-  , ypr0        = zeroV3
-  , ypr         = zeroV3
-  , time        = 0.0
-  , options     = defaultBackendOptions
-  , name        = "defaultObject'"
+initObj :: Object
+initObj =
+  Object
+  { transform = defaultTransformable
+  , drws     = []
+  , selected = False
+  , oslvrs   = []
+  , uuid     = nil
+  , parent   = nil
   }
 
+data PreObject
+  =  PreObject
+     { pname      :: String
+     , ptype      :: PType
+     , pidx       :: Integer
+     , puuid      :: UUID
+     , modelIDXs  :: [Int]
+     , tsolvers   :: [Solvable] -- transformable solvers
+     , osolvers   :: [Solvable] -- properties solvers
+     , options    :: BackendOptions
+     , pparent    :: UUID
+     , pchildren  :: [PreObject]
+     } deriving Show
+
+testPreObject :: PreObject
+testPreObject = 
+    PreObject
+    {
+      pname          = "pig_object"
+    , ptype          = Default
+    , pidx           = 0
+    , puuid          = nil
+    , modelIDXs      = [0]
+    , tsolvers       =
+      [ Identity
+      -- , Rotate
+      --   { space = ObjectSpace
+      --   , cxyz  = V3 0 0 0
+      --   , rord  = XYZ
+      --   , rxyz  = V3 0 0 (0.5)
+      --   , avel  = V3 0 0 0.05 }
+      , Translate
+        { space   = WorldSpace
+        , txyz    = V3 1.5 0 0
+        , tvel    = V3 0.0 0 0
+        , kinslv = Identity }
+        -- , Rotate
+        -- { space   = ObjectSpace
+        -- , cxyz    = V3 0 0 0
+        -- , rord    = XYZ
+        -- , rxyz    = V3 0 0 (0.5)
+        -- , avel    = V3 0 0 (0.1)
+        -- , kinslv  = Identity
+        --   -- Speed
+        --   -- { life = 1.0
+        --   -- , age  = 0.0
+        --   -- , inc  = 0.01
+        --   -- , amp  = 1.0
+        --   -- , func = id }
+        -- }
+      -- , Translate
+      --  { space = WorldSpace
+      --  , txyz  = V3 1.1 0 0
+      --  , tvel  = V3 0.0 0 0 }
+      ]
+    , osolvers    =
+      [ Identity
+      , Select
+      ]
+      , options   = defaultBackendOptions
+      , pparent   = nil
+      , pchildren =
+        [ PreObject
+          {
+            pname          = "grid_object"
+          , ptype          = Default
+          , pidx           = 0
+          , puuid          = nil
+          , modelIDXs      = [1]
+          , tsolvers       =
+            [ Identity
+            -- , Rotate
+            --   { space = ObjectSpace
+            --   , cxyz  = V3 0 0 0
+            --   , rord  = XYZ
+            --   , rxyz  = V3 0 0 (0.5)
+            --   , avel  = V3 0 0 0.05 }
+            , Translate
+              { space   = WorldSpace
+              , txyz    = V3 1.5 0 0
+              , tvel    = V3 0.0 0 0
+              , kinslv = Identity }
+              , Rotate
+              { space   = ObjectSpace
+              , cxyz    = V3 0 0 0
+              , rord    = XYZ
+              , rxyz    = V3 0 0 (0.5)
+              , avel    = V3 0 0 (0.02)
+              , kinslv  = Identity
+                -- Speed
+                -- { life = 1.0
+                -- , age  = 0.0
+                -- , inc  = 0.01
+                -- , amp  = 1.0
+                -- , func = id }
+              }
+            -- , Translate
+            --  { space = WorldSpace
+            --  , txyz  = V3 1.1 0 0
+            --  , tvel  = V3 0.0 0 0 }
+              , Parent 
+            ]
+          , osolvers  =
+            [ Identity
+            , Select
+            ]
+            , options   = defaultBackendOptions
+            , pparent   = nil
+            , pchildren = []
+          }            
+        ]
+    }      

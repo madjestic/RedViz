@@ -60,7 +60,7 @@ data Device
   =  Device
      {
        _keyboard :: Keyboard
-     --, _mouse    :: Mouse
+     , _mouse    :: Mouse
      } deriving Show
 
 device'    :: Lens' Controllable Device

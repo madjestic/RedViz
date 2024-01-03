@@ -4,7 +4,7 @@ module Graphics.RedViz.Project.Utils
 
 import Linear.V3
 
-import Graphics.RedViz.Project.Project
+import Graphics.RedViz.Project.Lens
 import Graphics.RedViz.Camera.Lens
 import Graphics.RedViz.Controllable
 import Graphics.RedViz.Utils

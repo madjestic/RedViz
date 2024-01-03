@@ -34,7 +34,7 @@ import Graphics.RedViz.Controllable as Controllable
 import Graphics.RedViz.Camera.Lens
 import qualified Graphics.RedViz.Object.Lens as Object
 import Graphics.RedViz.Descriptor
-import Graphics.Rendering.OpenGL (Program)
+-- import Graphics.Rendering.OpenGL (Program)
 import Graphics.RedViz.Backend
 
 --import Debug.Trace    as DT
@@ -44,7 +44,6 @@ data Drawable
      {  name       :: String
      , _uniforms   :: Uniforms
      , _descriptor :: Descriptor
-     , _program    :: Program
      , _options    :: BackendOptions
      } deriving Show
 
@@ -74,9 +73,7 @@ toDrawables
 toDrawables time0 res0 cam obj = drs
   where
     drs = toDrawable name' time0 res0 cam xformO opts'
-          <$> zip
-          (obj ^. Object.programs)
-          (obj ^. Object.descriptors)
+          <$> obj ^. Object.descriptors
 
     name'  = obj ^. Object.name
     xformO = obj ^. Object.transform0
@@ -95,9 +92,9 @@ toDrawable ::
   -> Camera
   -> M44 Double
   -> BackendOptions
-  -> (Program, Descriptor)
+  -> Descriptor
   -> Drawable
-toDrawable name' time' res' cam xformO opts (prg, d) = dr
+toDrawable name' time' res' cam xformO opts d = dr
   where
     apt    = _apt cam
     foc    = _foc cam
@@ -121,6 +118,5 @@ toDrawable name' time' res' cam xformO opts (prg, d) = dr
           , _u_cam_accel = (0,0,0)
           }
       ,_descriptor = d
-      ,_program    = prg
       ,_options    = opts
       }

@@ -16,7 +16,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE CPP    #-}
 
-module Graphics.RedViz.Rendering
+module Graphics.RedViz.Rendering.Lens
   ( openWindow
   , closeWindow
   , render
@@ -29,7 +29,7 @@ module Graphics.RedViz.Rendering
   , initVAO
   , bindUniforms
   , bindTexture
-  , bindTexture'
+  , bindTexture'  
   , bindTextureObject
   , loadTex
   , Backend (..)
@@ -57,7 +57,7 @@ import GHC.Float                              (int2Double, double2Float)
 
 import Graphics.RedViz.LoadShaders
 import Graphics.RedViz.Descriptor
-import Graphics.RedViz.Texture as T
+import Graphics.RedViz.Texture.Lens as T
 import Graphics.RedViz.Drawable.Lens
 import Graphics.RedViz.VAO (SVAO')
 import Graphics.RedViz.Widget (Widget (..), Format (..), xoffset, yoffset, zoffset, alignment, Alignment(..), soffset, ssize, xres, yres)
@@ -322,16 +322,14 @@ bindTexture hmap tx =
   do
     putStrLn $ "Binding Texture : " ++ show tx ++ " at TextureUnit : " ++ show txid
     texture Texture2D        $= Enabled
-    print $ "tx : " ++ show tx
-    print $ "txid : " ++ show txid
     activeTexture            $= TextureUnit txid
     --activeTexture            $= TextureUnit (DT.trace ("bindTexture.txid : " ++ show txid) txid)
-    tx0 <- loadTex $ path tx --TODO : replace that with a hashmap lookup?
+    tx0 <- loadTex $ view path tx --TODO : replace that with a hashmap lookup?
     textureBinding Texture2D $= Just tx0
       where
-        txid = fromMaybe 0 (lookup (uuid tx) hmap)
+        txid = fromMaybe 0 (lookup (view uuid tx) hmap)
 
-bindTexture' :: [(UUID, GLuint)] -> Texture -> IO (Texture, TextureObject)
+bindTexture' :: [(UUID, GLuint)] -> Texture -> IO TextureObject
 bindTexture' hmap tx =
   do
     putStrLn $ "Binding Texture : " ++ show tx ++ " at TextureUnit : " ++ show txid
@@ -340,11 +338,11 @@ bindTexture' hmap tx =
     print $ "txid : " ++ show txid
     activeTexture            $= TextureUnit txid
     --activeTexture            $= TextureUnit (DT.trace ("bindTexture.txid : " ++ show txid) txid)
-    tx0 <- loadTex $ path tx --TODO : replace that with a hashmap lookup?
+    tx0 <- loadTex $ view path tx --TODO : replace that with a hashmap lookup?
     textureBinding Texture2D $= Just tx0
-    return (tx, tx0)
+    return tx0
       where
-        txid = fromMaybe 0 (lookup (uuid tx) hmap)
+        txid = fromMaybe 0 (lookup (view uuid tx) hmap)
 
 bindUniforms :: [Texture] -> Uniforms -> Program -> MousePos -> [(UUID, GLuint)] -> IO ()
 bindUniforms
@@ -354,13 +352,13 @@ bindUniforms
   u_mouse'
   hmap =
   do
-    putStr "Shader Debug Mode"
     let programDebug =
           loadShaders
           [ ShaderInfo VertexShader   (FileSource "./mat/checkerboard/src/shader.vert")   -- u_mat is only used for debug
           , ShaderInfo FragmentShader (FileSource "./mat/checkerboard/src/shader.frag") ]
 
     program0 <- if debug then programDebug else pure u_prog'
+
                      
     currentProgram $= Just program0
 
@@ -465,10 +463,10 @@ bindUniforms
 allocateTextures :: Program -> [(UUID, GLuint)] -> Texture -> IO ()
 allocateTextures program0 hmap tx =
   do
-    location <- get (uniformLocation program0 (T.name tx))
+    location <- get (uniformLocation program0 (view T.name tx))
     uniform location $= TextureUnit txid
       where
-        txid = fromMaybe 0 (lookup (uuid tx) hmap)
+        txid = fromMaybe 0 (lookup (view uuid tx) hmap)
 
 fromList :: [a] -> M44 a
 fromList xs = V4
@@ -489,7 +487,7 @@ nameFromPath f = head (splitOn "." $ splitOn "/" f!!1)
 toDescriptor :: SVAO' -> Program -> IO Descriptor
 toDescriptor = initVAO
 
-initVAO :: ([Int], Int, [Float]) -> Program-> IO Descriptor
+initVAO :: ([Int], Int, [Float]) -> Program -> IO Descriptor
 initVAO (idx', st', vs') prg =
   do
     let

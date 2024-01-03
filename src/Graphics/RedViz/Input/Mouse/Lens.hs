@@ -13,19 +13,28 @@
 --------------------------------------------------------------------------------
 
 
-module Graphics.RedViz.Input.Mouse
+{-# LANGUAGE TemplateHaskell, Arrows #-}
+
+module Graphics.RedViz.Input.Mouse.Lens
   ( Mouse (..)
+  , pos
+  , rpos
+  , mmov
   ) where
+
+import Control.Lens
 
 import Linear.V3
 
 data Mouse
   =  Mouse
   { -- | Mouse State
-    lmb   :: Maybe (Int, Int)
-  , rmb   :: Maybe (Int, Int)
-  , pos  ::        (Int, Int)
-  , rpos ::        (Int, Int)
-  , mmov ::        Bool
-  , mVecs ::       [V3 Int]
+    _lmb   :: Maybe (Int, Int)
+  , _rmb   :: Maybe (Int, Int)
+  , _pos  ::        (Int, Int)
+  , _rpos ::        (Int, Int)
+  , _mmov ::        Bool
+  , mVecs ::        [V3 Int]
   } deriving Show
+
+$(makeLenses ''Mouse)

@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module Graphics.RedViz.Project.Project 
+module Graphics.RedViz.Project.Lens
   ( Project  (..)
   , ProjectCamera (..)
   , defaultPCam
@@ -33,7 +33,7 @@ module Graphics.RedViz.Project.Project
   , defaultFonts
   , defaultIcons
   , cameras
-  , Graphics.RedViz.Project.Project.read
+  , Graphics.RedViz.Project.Lens.read
   , write
   , defaultProject
   , PreGUI (..)

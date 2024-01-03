@@ -15,6 +15,7 @@ extra-source-files:  CHANGELOG.md, README.md
 library
   exposed-modules:     Graphics.RedViz
                        Graphics.RedViz.LoadShaders
+                       Graphics.RedViz.Rendering.Lens
                        Graphics.RedViz.Rendering
                        Graphics.RedViz.Material
                        Graphics.RedViz.Material.Lens
@@ -30,13 +31,15 @@ library
                        Graphics.RedViz.Input
                        Graphics.RedViz.Input.Keyboard
                        Graphics.RedViz.Input.Mouse
+                       Graphics.RedViz.Input.Mouse.Lens
                        Graphics.RedViz.Input.FRP.Yampa.Update
                        Graphics.RedViz.Input.FRP.Yampa.Update.Mouse
                        Graphics.RedViz.Input.FRP.Yampa.Update.Keyboard
                        Graphics.RedViz.Input.FRP.Yampa
                        Graphics.RedViz.Input.FRP.Yampa.AppInput
                        Graphics.RedViz.Project.Model
-                       Graphics.RedViz.Project.Project
+                       Graphics.RedViz.Project.Lens
+                       Graphics.RedViz.Project
                        Graphics.RedViz.Project.Utils
                        Graphics.RedViz.Widget
                        Graphics.RedViz.PGeo
@@ -50,10 +53,14 @@ library
                        Graphics.RedViz.GLUtil.JuicyTextures
                        Graphics.RedViz.GLUtil.Textures
                        Graphics.RedViz.GLUtil.TypeMapping
+                       Graphics.RedViz.Solvable
+                       Graphics.RedViz.Transformable
                        
-  -- ghc-options:   -O2 -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans
+  --ghc-options:   -O2 -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans
+  --ghc-options:   -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans
   ghc-options:   -O2     
-  --ghc-options:   -threaded -fprof-auto -fprof-cafs "-with-rtsopts=-N -p -s -hc -i0.1 -xc"
+  --ghc-options:     -fprof-auto -fprof-cafs "-with-rtsopts=-N -p -s -hc -i0.1 -xc"
+  --ghc-options:     -fprof-auto -fprof-cafs 
   --cpp-options:   -DDEBUG  
   build-depends:       base
                      , aeson               

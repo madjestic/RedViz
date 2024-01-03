@@ -103,7 +103,7 @@ defOpts :: BackendOptions
 defOpts =
       BackendOptions
       { primitiveMode = Triangles
-      , bgrColor      = Color4 0.0 0.0 0.0 1.0
+      , bgrColor      = Color4 0.5 0.0 0.0 1.0
       , ptSize        = 1.0
       , depthMsk      = Enabled
       }
@@ -112,7 +112,7 @@ defOpts' :: BackendOptions
 defOpts' =
       BackendOptions
       { primitiveMode = Lines
-      , bgrColor      = Color4 0.0 0.0 0.0 1.0
+      , bgrColor      = Color4 0.0 0.5 0.0 1.0
       , ptSize        = 1.0
       , depthMsk      = Enabled
       }     

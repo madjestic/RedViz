@@ -15,8 +15,8 @@
 module Graphics.RedViz.Descriptor
   (Descriptor (..)) where
 
-import Graphics.Rendering.OpenGL (VertexArrayObject, NumArrayIndices)
+import Graphics.Rendering.OpenGL (VertexArrayObject, NumArrayIndices, Program)
 
 data Descriptor =
-     Descriptor VertexArrayObject NumArrayIndices
+     Descriptor VertexArrayObject NumArrayIndices Program
   deriving Show

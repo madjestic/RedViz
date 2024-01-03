@@ -12,37 +12,23 @@
 --
 --------------------------------------------------------------------------------
 
+module Graphics.RedViz.Camera where
 
--- {-# LANGUAGE TemplateHaskell #-}
--- {-# LANGUAGE Arrows #-}
-
-module Graphics.RedViz.Camera
-  ( Camera (..)
-  , defaultCam
-  ) where
-
--- import Control.Lens
-import Linear                    (V4 (..))
+import Graphics.RedViz.Solvable
+import Graphics.RedViz.Transformable
 import Linear.V3
 
-import Graphics.RedViz.Controllable
-import Graphics.RedViz.Input.Keyboard
-
--- import Debug.Trace as DT
-
-data Camera =
-     Camera
+data Camera
+  =  Camera
      { name       :: String
      , apt        :: Double
-     , foc        :: Double 
-     , controller :: Controllable
+     , foc        :: Double
+     , ctransform :: Transformable
      , mouseS     :: V3 Double -- mouse    "sensitivity"
      , keyboardRS :: V3 Double -- keyboard "rotation sensitivity"
      , keyboardTS :: V3 Double -- keyboard "translation sensitivity"
-     , res        :: (Int, Int)
-     , scale      :: Double    -- accumulated scale (while hold key)
+     , cslvrs     :: [Solvable]
      } deriving Show
-
 
 defaultCam :: Camera
 defaultCam =
@@ -51,50 +37,17 @@ defaultCam =
     name       = "PlayerCamera"
   , apt        = 50.0
   , foc        = 100.0
-  , controller = defaultCamController
-  , mouseS     = 1.0
-  , keyboardRS = 1.0
-  , keyboardTS = 1.0
-  , res        = (256,256)
-  , scale      = 0.0
+  , ctransform = defaultCamTransformable { tslvrs = [defaultCamSolver]}
+  , mouseS     = -0.0025
+  , keyboardRS = 0.05
+  , keyboardTS = 0.05
+  , cslvrs     = []
   }
 
-defaultCamController :: Controllable
-defaultCamController =
-  ( Controller
-    {_debug = (0,0)
-    -- (transpose (identity :: M44 Double))
-    ,_transform =  
-      (V4
-        (V4 1 0 0 0)
-        (V4 0 1 0 0) -- <- . . . y ...
-        (V4 0 0 1 0) -- <- . . . z-component of transform
-        (V4 0 0 0 1))
-    ,_vel  = (V3 0 0 0) -- velocity
-    ,_ypr  = (V3 0 0 0) -- rotation
-    ,_yprS = (V3 0 0 0) -- sum of rotations
-    ,_device =
-     (Device
-     (Keyboard keys0 kvs0)
-     --(Mouse Nothing Nothing (0,0) (0.0, 0.0) False mvs0 )
-     )
-    }
-  )
-  where
-    -- mvs0   = [] --undefined
-    -- mvs0 - mouse vectors
-    keys0  = ( Keys False False False False False False False False False False False False False False False False False )
-    -- kvs0 - key vectors keyVecs
-    kvs0   = [ fVel, bVel, lVel, rVel, uVel, dVel, pPitch, nPitch, pYaw, nYaw, pRoll, nRoll ]
-    fVel   = V3 ( 0  )( 0  )( 0.1)   -- forwards  velocity
-    bVel   = V3 ( 0  )( 0  )(-0.1)   -- backwards velocity
-    lVel   = V3 ( 0.1)( 0  )( 0  )   -- left      velocity
-    rVel   = V3 (-0.1)( 0  )( 0  )   -- right     velocity
-    uVel   = V3 ( 0  )(-0.1)( 0  )   -- right     velocity
-    dVel   = V3 ( 0  )( 0.1)( 0  )   -- right     velocity
-    pPitch = V3 (-1.0)( 0  )( 0  )   -- positive  pitch
-    nPitch = V3 ( 1.0)( 0  )( 0  )   -- negative  pitch
-    pYaw   = V3 ( 0  )(-1.0)( 0  )   -- positive  yaw
-    nYaw   = V3 ( 0  )( 1.0)( 0  )   -- negative  yaw
-    pRoll  = V3 ( 0  )(  0 )(-1.0)   -- positive  roll
-    nRoll  = V3 ( 0  )(  0 )( 1.0)   -- negative  roll
+defaultCamSolver :: Solvable
+defaultCamSolver =
+  Controller
+  { cvel   = (V3 0 0 0) -- velocity
+  , cypr   = (V3 0 0 0) -- rotation
+  , cyprS  = (V3 0 0 0) -- sum of rotations
+  }
