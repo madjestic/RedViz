@@ -27,7 +27,9 @@ module Graphics.RedViz.Drawable.Lens
 import Foreign.C
 import Linear.Matrix
 import Linear.V3
-import Control.Lens
+import Lens.Micro
+import Lens.Micro.Extras
+import Lens.Micro.TH
 
 import Graphics.RedViz.Controllable as Controllable
 -- import qualified Graphics.RedViz.Material

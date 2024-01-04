@@ -13,9 +13,9 @@ category:            Graphics
 extra-source-files:  CHANGELOG.md, README.md
 
 library
-  exposed-modules:     Graphics.RedViz
+  exposed-modules:     
+                       Graphics.RedViz
                        Graphics.RedViz.LoadShaders
-                       Graphics.RedViz.Rendering.Lens
                        Graphics.RedViz.Rendering
                        Graphics.RedViz.Material
                        Graphics.RedViz.Material.Lens
@@ -49,6 +49,9 @@ library
                        Graphics.RedViz.Object.Lens
                        Graphics.RedViz.Backend
                        Graphics.RedViz.Primitives
+                       Graphics.RedViz.GLTF
+                       Graphics.RedViz.GLTF.Load
+                       Graphics.RedViz.GLTF.Model
                        Graphics.RedViz.GLUtil
                        Graphics.RedViz.GLUtil.JuicyTextures
                        Graphics.RedViz.GLUtil.Textures
@@ -57,7 +60,6 @@ library
                        Graphics.RedViz.Transformable
                        
   --ghc-options:   -O2 -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans
-  --ghc-options:   -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans
   ghc-options:   -O2     
   --ghc-options:     -fprof-auto -fprof-cafs "-with-rtsopts=-N -p -s -hc -i0.1 -xc"
   --ghc-options:     -fprof-auto -fprof-cafs 
@@ -70,26 +72,50 @@ library
                      , bytestring           
                      , containers
                      , directory
+                     , geomancy                     
+                     , gltf-codec
+                     , gltf-loader
+                     , gl-block
                      , JuicyPixels
                      , ilist               
-                     , lens                
+                     , keid-core
+                     , microlens
+                     , microlens-th            
                      , linear              
                      , locators            
                      , massiv          
                      , OpenGL              
-                     , random              
+                     , random
+                     , rio
                      , scientific          
                      , simple-affine-space 
                      , sdl2
                      , sort
                      , split
                      , store
+                     , StateVar
                      , text                
                      , uuid                
                      , vector
                      
   hs-source-dirs:      src
   default-language:    Haskell2010
+
+  default-extensions:
+                     ImportQualifiedPost
+                     BlockArguments
+                     LambdaCase
+                     NamedFieldPuns
+                     OverloadedStrings
+                     RankNTypes
+                     RecordWildCards
+                     ScopedTypeVariables
+                     TupleSections
+                     TypeApplications
+                     DerivingStrategies
+                     DerivingVia
+                     DeriveGeneric
+    
 
 source-repository head
   type:     git

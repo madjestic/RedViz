@@ -36,7 +36,8 @@ module Graphics.RedViz.Controllable
 
 import Linear.Matrix
 import Linear.V3
-import Control.Lens hiding (transform)
+import Lens.Micro hiding (transform)
+import Lens.Micro.TH
 
 import Graphics.RedViz.Input.Keyboard
 import Graphics.RedViz.Input.Mouse

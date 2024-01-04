@@ -12,7 +12,6 @@
 --
 --------------------------------------------------------------------------------
 
-
 {-# LANGUAGE TemplateHaskell, Arrows #-}
 
 module Graphics.RedViz.Input.Mouse.Lens
@@ -22,7 +21,8 @@ module Graphics.RedViz.Input.Mouse.Lens
   , mmov
   ) where
 
-import Control.Lens
+import Lens.Micro
+import Lens.Micro.TH
 
 import Linear.V3
 

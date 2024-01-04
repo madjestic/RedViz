@@ -22,7 +22,9 @@ module Graphics.RedViz.Texture.Lens
   , defaultTexture
   ) where
 
-import Control.Lens
+import Lens.Micro
+import Lens.Micro.Extras
+import Lens.Micro.TH
 import Data.Aeson
 import Data.Aeson.TH
 import Data.UUID

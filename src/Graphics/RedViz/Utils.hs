@@ -35,7 +35,8 @@ module Graphics.RedViz.Utils
   , vectorizedCompose
   ) where
 
-import Control.Lens ( view )
+import Lens.Micro
+import Lens.Micro.Extras
 import Graphics.Rendering.OpenGL as GL (GLfloat)
 import Data.ByteString.Char8           (pack
                                        ,unpack)

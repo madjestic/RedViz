@@ -28,7 +28,8 @@ module Graphics.RedViz.Camera.Lens
   , scale
   ) where
 
-import Control.Lens
+import Lens.Micro
+import Lens.Micro.TH
 import Linear                    (V4 (..))
 import Linear.V3
 

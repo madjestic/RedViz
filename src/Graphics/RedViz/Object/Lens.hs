@@ -16,7 +16,8 @@ module Graphics.RedViz.Object.Lens
   , name
   ) where
 
-import Control.Lens hiding (transform, pre)
+import Lens.Micro hiding (transform, pre)
+import Lens.Micro.TH
 import Graphics.Rendering.OpenGL (Program)
 import Linear.Matrix
 import Linear.V3

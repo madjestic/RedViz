@@ -5,7 +5,8 @@ module Graphics.RedViz.Project.Model
   , path
   ) where
 
-import Control.Lens
+import Lens.Micro
+import Lens.Micro.TH
 import Data.Aeson
 import Data.Aeson.TH
 

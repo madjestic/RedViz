@@ -40,7 +40,9 @@ module Graphics.RedViz.Project.Lens
   , gui
   ) where
 
-import Control.Lens hiding (Empty)
+import Lens.Micro hiding (Empty)
+import Lens.Micro.Extras
+import Lens.Micro.TH
 import Data.Aeson
 import Data.Aeson.TH as TH
 import Data.Aeson.Encode.Pretty

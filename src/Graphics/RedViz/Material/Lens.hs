@@ -28,7 +28,9 @@ module Graphics.RedViz.Material.Lens
   , textures
   ) where  
 
-import Control.Lens hiding ((.=))
+import Lens.Micro hiding ((.=))
+import Lens.Micro.Extras
+import Lens.Micro.TH
 import Control.Monad (when)
 import Data.Aeson
 import Data.Aeson.Encode.Pretty

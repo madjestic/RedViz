@@ -11,328 +11,193 @@
 -- Utilities for handling OpenGL buffers and rendering.
 --
 --------------------------------------------------------------------------------
-
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE CPP    #-}
+--{-# LANGUAGE DeriveGeneric #-}
 
 module Graphics.RedViz.Rendering
-  ( openWindow
-  , closeWindow
-  , render
-  , renderString
-  , renderIcons
-  , renderIcon
+  ( bindTexture
+  , formatText
+  , formatString
+  , formatChar
+  , Uniforms (..)
+  , defaultUniforms
+  , renderObject
   , renderWidget
-  , renderCursor
-  , toDescriptor
-  , initVAO
-  , bindUniforms
-  , bindTexture
-  , bindTexture'
-  , bindTextureObject
-  , loadTex
-  , Backend (..)
-  , BackendOptions (..)
   ) where
 
-import Control.Monad
-import Data.Maybe                             (fromMaybe)
-import Data.Text                              (Text)
+import GHC.Generics
+import GHC.Float
+import Data.Maybe
+import Data.Foldable as DF
+import Data.StateVar as SV
 import Data.UUID
-import Data.List.Split                        (splitOn)
-import Foreign.C
-import Foreign.Marshal.Array                  (withArray)
-import Foreign.Ptr                            (plusPtr, nullPtr)
-import Foreign.Storable                       (sizeOf)
-import Graphics.Rendering.OpenGL as GL hiding (color, normal, Size)
-import SDL                             hiding (Point, Event, Timer, (^+^), (*^), (^-^), dot, project, Texture)
-import Linear.Vector
-import Data.Foldable             as DF        (toList)
-import Linear.Projection         as LP        (infinitePerspective)
-import Unsafe.Coerce
-import Control.Lens                    hiding (indexed)
-import Graphics.RedViz.GLUtil                 (readTexture, texture2DWrap)
-import GHC.Float                              (int2Double, double2Float)
+import Foreign.C.Types
+import Foreign.Ptr
+import Graphics.Rendering.OpenGL
+import Linear.Matrix
+import Linear.V2
+import Linear.V3
+import Linear.V4
+import Linear.Projection as LP        (infinitePerspective)
+import Lens.Micro
+import SDL (Point)
 
-import Graphics.RedViz.LoadShaders
-import Graphics.RedViz.Descriptor
-import Graphics.RedViz.Texture as T
-import Graphics.RedViz.Drawable.Lens
-import Graphics.RedViz.VAO (SVAO')
-import Graphics.RedViz.Widget (Widget (..), Format (..), xoffset, yoffset, zoffset, alignment, Alignment(..), soffset, ssize, xres, yres)
 import Graphics.RedViz.Backend
+import Graphics.RedViz.Camera
+import Graphics.RedViz.Descriptor
+import Graphics.RedViz.Drawable
+import Graphics.RedViz.GLUtil  (readTexture, texture2DWrap)
+import Graphics.RedViz.Object hiding (uuid)
+import Graphics.RedViz.Texture ( Texture(path, uuid) )
+import Graphics.RedViz.Transformable
+import Graphics.RedViz.Widget
 
---import Debug.Trace as DT
+data Uniforms
+  =  Uniforms
+     { u_time  :: Double
+     , u_res   :: (CInt, CInt)
+     , u_cam   :: M44 Double
+     , u_cam_a :: Double
+     , u_cam_f :: Double
+     , u_cam_ypr   :: (Double, Double, Double)
+     , u_cam_yprS  :: (Double, Double, Double)
+     , u_cam_vel   :: (Double, Double, Double)
+     , u_cam_accel :: (Double, Double, Double)
+     } deriving Show
 
-debug :: Bool
-#ifdef DEBUGSHADERS
-debug = True
-#else
-debug = False
-#endif
-
-openWindow :: Text -> (CInt, CInt) -> IO SDL.Window
-openWindow title (sizex,sizey) =
+bindUniforms :: Camera -> Uniforms -> Drawable -> IO ()  
+bindUniforms cam' unis' dr =  
   do
-    SDL.initialize [SDL.InitVideo]
-    SDL.HintRenderScaleQuality $= SDL.ScaleLinear
-    do renderQuality <- SDL.get SDL.HintRenderScaleQuality
-       when (renderQuality /= SDL.ScaleLinear) $
-         putStrLn "Warning: Linear texture filtering not enabled!"
+    let
+      u_xform'  = u_xform  dr
+      d'        = descriptor dr :: Descriptor
+      u_cam'    = (xform.ctransform) cam'
+      u_mouse'  = (0,0)
+      (Uniforms u_time' u_res' _ u_cam_a' u_cam_f' u_ypr' u_yprS' u_vel' u_accel') = unis'
+      (Descriptor _ _ u_prog') = d'
 
-    let config = OpenGLConfig { glColorPrecision = V4 8 8 8 0
-                              , glDepthPrecision = 24
-                              , glStencilPrecision = 8
-                              , glMultisampleSamples = 4
-                              , glProfile = Core Normal 4 5
-                              }
+    currentProgram $= Just u_prog'
 
-    depthFunc $= Just Less
+    let u_mouse0      = Vector2 (realToFrac $ fst u_mouse') (realToFrac $ snd u_mouse') :: Vector2 GLfloat
+    location0         <- SV.get (uniformLocation u_prog' "u_mouse'")
+    uniform location0 $= u_mouse0
 
-    window <- SDL.createWindow
-              title
-              SDL.defaultWindow
-              { SDL.windowInitialSize = V2 sizex sizey
-              , SDL.windowGraphicsContext = OpenGLContext config
-              }      
+    let resX          = fromIntegral $ fromEnum $ fst u_res' :: Double
+        resY          = fromIntegral $ fromEnum $ snd u_res' :: Double
+        u_res         = Vector2 (realToFrac resX) (realToFrac resY) :: Vector2 GLfloat
 
-    SDL.showWindow window
-    _ <- SDL.glCreateContext window
-
-    return window
-
-closeWindow :: SDL.Window -> IO ()
-closeWindow window =
-  do
-    SDL.destroyWindow window
-    SDL.quit
-
-renderString :: (Drawable -> IO ()) -> [Drawable] -> Format -> String -> IO ()
-renderString cmds fntsDrs fmt str =
-  mapM_ cmds $ format fmt $ drawableString fntsDrs str
-
-renderIcon :: (Drawable -> IO ()) -> [Drawable] -> Format -> Int -> IO ()
-renderIcon cmds icnsDrs fmt idx =
-  --cmds $ formatting fmt $ (drawableIcon icnsDrs idx, 0)
-  cmds $ formatting fmt (drawableIcon icnsDrs idx, 0)
-
-renderWidget :: Double -> [Drawable] -> [Drawable] -> (Drawable -> IO ()) -> Widget-> IO ()
-renderWidget dt' drs drs' cmds wgt =
-  case wgt of
-    Icon a _ idx fmt _ ->
-      when a $ do
-      renderIcon cmds drs' fmt idx --"icon"
-    Cursor a _ fmt _ ->
-      when a $ do
-      renderCursor cmds drs' fmt 0 --"cursor"
-    TextField a t f _ ->
-      when a $ renderString cmds drs f $ concat t
-    Button a l _ _ _ f _ ->
-      when a $ renderString cmds drs f l
-    FPS a f _ ->
-      when a $ do
-        renderString cmds drs f $ "fps:" ++ show (round (1.0/dt') :: Integer)
-    _ -> return ()
-
-renderCursor :: (Drawable -> IO ()) -> [Drawable] -> Format -> Int -> IO ()
-renderCursor cmds icnsDrs fmt idx =
-  cmds $ formatCursor fmt $ drawableIcon icnsDrs idx
-
-renderIcons :: (Drawable -> IO ()) -> [Drawable] -> Format -> [Int] -> IO ()
-renderIcons cmds icnsDrs fmt idxs =
-  mapM_ cmds $ format fmt $ drawableIcons icnsDrs idxs
-
--- | given a string of drawables, return a formatted string (e.g. add offsets for drawable chars)
-format :: Format -> [Drawable] -> [Drawable]
-format fmt drs = drw
-  where
-    drw = fmap (formatting fmt) (zip drs [0..])
-
-formatting :: Format -> (Drawable, Int) -> Drawable
-formatting fmt (drw, offset) = drw'
-  where
-    rot0 = view _m33 (view (uniforms . u_xform) drw)
-    tr0  = view translation (view (uniforms . u_xform) drw)
-    s1   = fmt ^. soffset
-    s2   = identity !!* fmt ^. ssize :: V3 (V3 Double)
-    (x, y) =
-      case fmt ^. alignment of
-        TL -> (-1.0, 1.0)
-        TC -> ( 0.0, 1.0)
-        TR -> ( 1.0, 1.0)
-        CL -> (-1.0, 0.0)
-        CC -> ( 0.0, 0.0)
-        CR -> ( 1.0, 0.0)
-        BL -> (-1.0,-1.0)
-        BC -> ( 0.0,-1.0)
-        BR -> ( 1.0, 1.0)
-    x'    = fmt ^. xoffset
-    y'    = fmt ^. yoffset
-    z'    = fmt ^. zoffset
-    offsetM44 =
-      mkTransformationMat
-      (rot0 * s2)
-      (tr0 ^+^ V3 ((x + x') + fromIntegral offset*s1) (y + y') z')
-      --(tr0 ^+^ V3 0 0 0.2)
-    drw' = set (uniforms . u_xform) offsetM44 drw
-
-formatCursor :: Format -> Drawable -> Drawable
-formatCursor fmt drw = drw'
-  where
-    rot0 = view _m33 (view (uniforms . u_xform) drw)
-    tr0  = view translation (view (uniforms . u_xform) drw)
-    s    = identity !!* fmt ^. ssize :: V3 (V3 Double)-- fmt ^. ssize   -- 1.0    -- s Size
-    (x, y) = (fmt ^. xoffset, fmt ^. yoffset)
-    (resx, resy) = (int2Double $ fmt ^. xres, int2Double $ fmt ^. yres)
+    location1         <- SV.get (uniformLocation u_prog' "u_resolution")
+    uniform location1 $= u_res
     
-    offsetM44 =
-      mkTransformationMat
-      (rot0 * s)
-      (tr0 ^+^ V3 (x/resx-0.5) (0.5-y/resy) 0.0)
-    drw' = set (uniforms . u_xform) offsetM44 drw
-      -- (DT.trace (
-      --     "x, y : " ++ show (x,y) ++ "\n" ++
-      --     "x/resx, y/resy : " ++ show (x/resx,y/resy) ++ "\n" ) drw)
+    location2         <- SV.get (uniformLocation u_prog' "u_time")
+    uniform location2 $= (double2Float u_time' :: GLfloat)
 
--- | Alphabet of drawables -> String -> String of drawables
-drawableString :: [Drawable] -> String -> [Drawable]
-drawableString drs str = drws
-  where
-    drws = fmap (drawableChar drs) str
+    let apt = u_cam_a' -- aperture
+        foc = u_cam_f' -- focal length
+        proj =
+          LP.infinitePerspective
+          (2.0 * atan ( apt/foc/2.0 )) -- FOV
+          (resX/resY)                  -- Aspect
+          0.01                         -- Near
 
-drawableIcons :: [Drawable] -> [Int] -> [Drawable]
-drawableIcons  drs idxs = drws
-  where
-    drws = (drs!!) <$> idxs
+    persp             <- newMatrix RowMajor $ toList' proj   :: IO (GLmatrix GLfloat)
+    location3         <- SV.get (uniformLocation u_prog' "persp")
+    uniform location3 $= persp
 
-drawableIcon :: [Drawable] -> Int -> Drawable
-drawableIcon drs idx = drs!!idx
+    camera            <- newMatrix RowMajor $ toList' u_cam' :: IO (GLmatrix GLfloat)
+    location4         <- SV.get (uniformLocation u_prog' "camera")
+    uniform location4 $= camera
 
--- | Alphabet of drawables -> Char -> a drawable char
-drawableChar :: [Drawable] -> Char -> Drawable
-drawableChar drs chr =
-  case chr of
-    '0' -> head drs -- TODO: replace with hash lookup
-    '1' -> drs!!1
-    '2' -> drs!!2
-    '3' -> drs!!3
-    '4' -> drs!!4
-    '5' -> drs!!5
-    '6' -> drs!!6
-    '7' -> drs!!7
-    '8' -> drs!!8
-    '9' -> drs!!9
-    'a' -> drs!!10
-    'b' -> drs!!11
-    'c' -> drs!!12
-    'd' -> drs!!13
-    'e' -> drs!!14
-    'f' -> drs!!15
-    'g' -> drs!!16
-    'h' -> drs!!17
-    'i' -> drs!!18
-    'j' -> drs!!19
-    'k' -> drs!!20
-    'l' -> drs!!21
-    'm' -> drs!!22
-    'n' -> drs!!23
-    'o' -> drs!!24
-    'p' -> drs!!25
-    'q' -> drs!!26
-    'r' -> drs!!27
-    's' -> drs!!28
-    't' -> drs!!29
-    'u' -> drs!!30
-    'v' -> drs!!31
-    'w' -> drs!!32
-    'x' -> drs!!33
-    'y' -> drs!!34
-    'z' -> drs!!35
-    '+' -> drs!!36
-    '-' -> drs!!37
-    '=' -> drs!!38
-    '>' -> drs!!39
-    ',' -> drs!!40
-    '.' -> drs!!41
-    '?' -> drs!!42
-    '!' -> drs!!43
-    ' ' -> drs!!44
-    '*' -> drs!!45
-    '/' -> drs!!46
-    ':' -> drs!!47
-    '\''-> drs!!48
-    'A' -> drs!!49
-    'B' -> drs!!50
-    'C' -> drs!!51
-    'D' -> drs!!52
-    'E' -> drs!!53
-    'F' -> drs!!54
-    'G' -> drs!!55
-    'H' -> drs!!56
-    'I' -> drs!!57
-    'J' -> drs!!58
-    'K' -> drs!!59
-    'L' -> drs!!60
-    'M' -> drs!!61
-    'N' -> drs!!62
-    'O' -> drs!!63
-    'P' -> drs!!64
-    'Q' -> drs!!65
-    'R' -> drs!!66
-    'S' -> drs!!67
-    'T' -> drs!!68
-    'U' -> drs!!69
-    'V' -> drs!!70
-    'W' -> drs!!71
-    'X' -> drs!!72
-    'Y' -> drs!!73
-    'Z' -> drs!!74
-    '<' -> drs!!75
-    _   -> error "font drs index out of range             "
+    -- | Compensate world space xform with camera position
+    -- = Object Position - Camera Position
+    xform             <- newMatrix RowMajor $ toList' (inv44 (identity & translation .~ u_cam'^.translation) !*! u_xform') :: IO (GLmatrix GLfloat)
+    location5         <- SV.get (uniformLocation u_prog' "xform")
+    uniform location5 $= xform
 
-type MousePos    = (Double, Double)    
+    let sunP = Vector3 299999999999.0 0.0 0.0 :: Vector3 GLfloat
+    location7 <- SV.get (uniformLocation u_prog' "sunP")
+    uniform location7 $= sunP
+    
+    let ypr  =
+          Vector3
+          (double2Float $ u_ypr'^._1)
+          (double2Float $ u_ypr'^._2)
+          (double2Float $ u_ypr'^._3)
+          :: Vector3 GLfloat
+    location8        <- SV.get (uniformLocation u_prog' "ypr")
+    uniform location8 $= ypr
 
-render :: [Texture] -> [(UUID, GLuint)] ->  MousePos -> Drawable -> IO ()
-render txs hmap mpos (Drawable _ unis (Descriptor vao' numIndices' prog) opts) =
-  do
- -- print $ "render.name : " ++ name
- -- print $ "render.unis :" ++ show unis ++ "\n render.txs :" ++ show txs ++ "\n render.hmap : " ++ show hmap
-    bindUniforms txs unis prog mpos hmap
-    bindVertexArrayObject $= Just vao'
+    let yprS =
+          Vector3
+          (double2Float $ u_yprS'^._1)
+          (double2Float $ u_yprS'^._2)
+          (double2Float $ u_yprS'^._3)
+          :: Vector3 GLfloat
+    location9        <- SV.get (uniformLocation u_prog' "yprS")
+    uniform location9 $= yprS
 
-    GL.pointSize $= ptSize opts --0.001
-  --GL.pointSmooth $= Enabled
-    GL.depthMask $= depthMsk opts
 
-    drawElements (primitiveMode opts) numIndices' GL.UnsignedInt nullPtr
+    let vel  =
+          Vector3
+          (double2Float $ u_vel'^._1)
+          (double2Float $ u_vel'^._2)
+          (double2Float $ u_vel'^._3)
+          :: Vector3 GLfloat
+    location10        <- SV.get (uniformLocation u_prog' "vel")
+    uniform location10 $= vel
 
-    cullFace  $= Just Back
-    depthFunc $= Just Less
+    let accel  =
+          Vector3
+          (double2Float $ u_accel'^._1)
+          (double2Float $ u_accel'^._2)
+          (double2Float $ u_accel'^._3)
+          :: Vector3 GLfloat
+    location11        <- SV.get (uniformLocation u_prog' "accel")
+    uniform location11 $= accel
 
-bindTextureObject :: GLuint -> TextureObject -> IO ()
-bindTextureObject uid tx0 = do
-  putStrLn $ "Binding Texture Object : " ++ show tx0 ++ " at TextureUnit : " ++ show uid
-  texture Texture2D        $= Enabled
-  activeTexture            $= TextureUnit uid
-  textureBinding Texture2D $= Just tx0
+    -- || Set Transform Matrix
+    let tr :: [GLfloat]
+        tr =
+          [ 1, 0, 0, 0
+          , 0, 1, 0, 0
+          , 0, 0, 1, 0
+          , 0, 0, 0, 1 ]
 
-bindTexture :: [(UUID, GLuint)] -> Texture -> IO ()
-bindTexture hmap tx =
-  do
-    putStrLn $ "Binding Texture : " ++ show tx ++ " at TextureUnit : " ++ show txid
+    transform <- newMatrix ColumnMajor tr :: IO (GLmatrix GLfloat)
+    location12 <- SV.get (uniformLocation u_prog' "transform")
+    uniform location12 $= transform
+
+    -- | Allocate Textures
     texture Texture2D        $= Enabled
-    print $ "tx : " ++ show tx
-    print $ "txid : " ++ show txid
-    activeTexture            $= TextureUnit txid
-    --activeTexture            $= TextureUnit (DT.trace ("bindTexture.txid : " ++ show txid) txid)
-    tx0 <- loadTex $ path tx --TODO : replace that with a hashmap lookup?
-    textureBinding Texture2D $= Just tx0
-      where
-        txid = fromMaybe 0 (lookup (uuid tx) hmap)
+    mapM_ allocateTextures (dtxs dr) -- TODO: this is ignored, should bind an appropriate texture
 
-bindTexture' :: [(UUID, GLuint)] -> Texture -> IO (Texture, TextureObject)
-bindTexture' hmap tx =
+    -- | Unload buffers
+    bindVertexArrayObject         $= Nothing
+    bindBuffer ElementArrayBuffer $= Nothing
+      where        
+        toList' = fmap realToFrac.concat.(fmap DF.toList.DF.toList) :: V4 (V4 Double) -> [GLfloat]
+
+allocateTextures :: (Int, (Texture, TextureObject)) -> IO ()
+allocateTextures (txid, (_, txo)) =
+  do
+    activeTexture $= TextureUnit (fromIntegral txid)
+    textureBinding Texture2D $= Just txo
+    return ()
+
+defaultUniforms :: Uniforms
+defaultUniforms = 
+  Uniforms
+  { u_time  = 0.0
+  , u_res   = (800,600)
+  , u_cam   = identity :: M44 Double
+  , u_cam_a = 50.0
+  , u_cam_f = 100.0
+  , u_cam_ypr   = (0,0,0)
+  , u_cam_yprS  = (0,0,0)
+  , u_cam_vel   = (0,0,0)
+  , u_cam_accel = (0,0,0) }
+
+bindTexture :: [(UUID, GLuint)] -> Texture -> IO (Texture, TextureObject)
+bindTexture hmap tx =
   do
     putStrLn $ "Binding Texture : " ++ show tx ++ " at TextureUnit : " ++ show txid
     texture Texture2D        $= Enabled
@@ -346,195 +211,56 @@ bindTexture' hmap tx =
       where
         txid = fromMaybe 0 (lookup (uuid tx) hmap)
 
-bindUniforms :: [Texture] -> Uniforms -> Program -> MousePos -> [(UUID, GLuint)] -> IO ()
-bindUniforms
-  txs
-  (Uniforms u_time' u_res' u_cam' u_cam_a' u_cam_f' u_xform' u_ypr' u_yprS' u_vel' u_accel')
-  u_prog'
-  u_mouse'
-  hmap =
-  do
-    putStr "Shader Debug Mode"
-    let programDebug =
-          loadShaders
-          [ ShaderInfo VertexShader   (FileSource "./mat/checkerboard/src/shader.vert")   -- u_mat is only used for debug
-          , ShaderInfo FragmentShader (FileSource "./mat/checkerboard/src/shader.frag") ]
-
-    program0 <- if debug then programDebug else pure u_prog'
-                     
-    currentProgram $= Just program0
-
-    let u_mouse0      = Vector2 (realToFrac $ fst u_mouse') (realToFrac $ snd u_mouse') :: Vector2 GLfloat
-    location0         <- get (uniformLocation program0 "u_mouse'")
-    uniform location0 $= u_mouse0
-
-    let resX          = fromIntegral $ fromEnum $ fst u_res' :: Double
-        resY          = fromIntegral $ fromEnum $ snd u_res' :: Double
-        u_res         = Vector2 (realToFrac resX) (realToFrac resY) :: Vector2 GLfloat
-
-    location1         <- get (uniformLocation program0 "u_resolution")
-    uniform location1 $= u_res
-
-    location2         <- get (uniformLocation program0 "u_time'")
-    uniform location2 $= (u_time' :: GLdouble)
-
-    let apt = u_cam_a' -- aperture
-        foc = u_cam_f' -- focal length
-        proj =
-          LP.infinitePerspective
-          (2.0 * atan ( apt/2.0 / foc )) -- FOV
-          (resX/resY)                    -- Aspect
-          0.01                           -- Near
-
-    persp             <- GL.newMatrix RowMajor $ toList' proj   :: IO (GLmatrix GLfloat)
-    location3         <- get (uniformLocation program0 "persp")
-    uniform location3 $= persp
-
-    --print $ show u_cam'
-    camera            <- GL.newMatrix RowMajor $ toList' u_cam' :: IO (GLmatrix GLfloat)
-    location4         <- get (uniformLocation program0 "camera")
-    uniform location4 $= camera
-
-    xform             <- GL.newMatrix RowMajor $ toList' xform' :: IO (GLmatrix GLfloat)
-    location5         <- get (uniformLocation program0 "xform")
-    uniform location5 $= xform
-
-    xform1            <- GL.newMatrix RowMajor $ toList' u_xform' :: IO (GLmatrix GLfloat)
-    location6         <- get (uniformLocation program0 "xform1")
-    uniform location6 $= xform1
-
-    let sunP = GL.Vector3 299999999999.0 0.0 0.0 :: GL.Vector3 GLfloat
-    location7 <- get (uniformLocation program0 "sunP")
-    uniform location7 $= sunP
-    
-    let ypr  =
-          Vector3
-          (double2Float $ u_ypr'^._1)
-          (double2Float $ u_ypr'^._2)
-          (double2Float $ u_ypr'^._3)
-          :: Vector3 GLfloat
-    location8        <- get (uniformLocation program0 "ypr")
-    uniform location8 $= ypr
-
-    let yprS =
-          Vector3
-          (double2Float $ u_yprS'^._1)
-          (double2Float $ u_yprS'^._2)
-          (double2Float $ u_yprS'^._3)
-          :: Vector3 GLfloat
-    location9        <- get (uniformLocation program0 "yprS")
-    uniform location9 $= yprS
+renderWidget :: Camera -> Uniforms -> Widget -> IO ()
+renderWidget cam unis' wgt = case wgt of
+  Empty                   -> do return ()
+  Cursor  False _ _ _     -> do return ()
+  Cursor  {} ->
+    (\dr -> do
+        bindUniforms cam unis' (formatDrw (format wgt) dr) 
+        let (Descriptor triangles numIndices _) = descriptor dr
+        bindVertexArrayObject $= Just triangles
+        drawElements Triangles numIndices UnsignedInt nullPtr
+        ) (head idrs) -- cursor font index is 75
+    where
+      idrs :: [Drawable]
+      idrs = concatMap drws (icons wgt)
+  TextField False _ _ _ _   -> do return ()
+  TextField _ s _ fmt _ ->
+    mapM_
+    (\dr -> do
+        bindUniforms cam unis' dr 
+        let (Descriptor triangles numIndices _) = descriptor dr
+        bindVertexArrayObject $= Just triangles
+        drawElements Triangles numIndices UnsignedInt nullPtr
+        ) $ formatText fmt wdrs s (0,0)
+  Selector _ icons' objs' -> 
+    mapM_
+    (\obj -> do
+        mapM_
+          (\dr -> do
+              bindUniforms cam unis' dr {u_xform = xform (transform obj)} 
+              let (Descriptor triangles numIndices _) = descriptor dr
+              bindVertexArrayObject $= Just triangles
+              --drawElements (primitiveMode $ doptions dr) numIndices GL.UnsignedInt nullPtr
+              drawElements (Lines) numIndices UnsignedInt nullPtr
+          ) (drws (icons'!!1))) objs'
+  where
+    wdrs = concatMap drws (fonts wgt)      
 
 
-    let vel  =
-          Vector3
-          (double2Float $ u_vel'^._1)
-          (double2Float $ u_vel'^._2)
-          (double2Float $ u_vel'^._3)
-          :: Vector3 GLfloat
-    location10        <- get (uniformLocation program0 "vel")
-    uniform location10 $= vel
+formatDrw :: Format -> Drawable -> Drawable
+formatDrw fmt dr = dr
 
-    let accel  =
-          Vector3
-          (double2Float $ u_accel'^._1)
-          (double2Float $ u_accel'^._2)
-          (double2Float $ u_accel'^._3)
-          :: Vector3 GLfloat
-    location11        <- get (uniformLocation program0 "accel")
-    uniform location11 $= accel
-
-    --- | Allocate Textures
-
-    -- putStrLn $ "bindUniforms.txNames : "  ++ show txNames
-    -- putStrLn $ "bindUniforms.txuids   : " ++ show txuids
-    mapM_ (allocateTextures program0 hmap) txs
-    --mapM_ (allocateTextures program0 (DT.trace ("bindUniforms.hmap : " ++ show hmap) hmap)) txs
-
-    --- | Unload buffers
-    --bindVertexArrayObject         $= Nothing
-    --bindBuffer ElementArrayBuffer $= Nothing
-      where        
-        toList' = fmap realToFrac.concat.(fmap toList.toList) :: V4 (V4 Double) -> [GLfloat]
-        xform'  = --- | = Object Position - Camera Position
-          transpose $
-          fromV3M44
-          ( u_xform' ^._xyz )
-          ( fromV3V4 (transpose u_xform' ^._w._xyz + transpose u_cam' ^._w._xyz) 1.0 ) :: M44 Double
-
-allocateTextures :: Program -> [(UUID, GLuint)] -> Texture -> IO ()
-allocateTextures program0 hmap tx =
-  do
-    location <- get (uniformLocation program0 (T.name tx))
-    uniform location $= TextureUnit txid
-      where
-        txid = fromMaybe 0 (lookup (uuid tx) hmap)
-
-fromList :: [a] -> M44 a
-fromList xs = V4
-              (V4 (head xs ) (xs!!1 )(xs!!2 )(xs!!3))
-              (V4 (xs!!4 ) (xs!!5 )(xs!!6 )(xs!!7))
-              (V4 (xs!!8 ) (xs!!9 )(xs!!10)(xs!!11))
-              (V4 (xs!!12) (xs!!13)(xs!!14)(xs!!15))
-
-fromV3M44 :: V3 (V4 a) -> V4 a -> M44 a
-fromV3M44 v3 = V4 (v3 ^. _x) (v3 ^. _y) (v3 ^. _z)
-
-fromV3V4 :: V3 a -> a -> V4 a
-fromV3V4 v3 = V4 (v3 ^. _x) (v3 ^. _y) (v3 ^. _z)
-
-nameFromPath :: FilePath -> String
-nameFromPath f = head (splitOn "." $ splitOn "/" f!!1)
-
-toDescriptor :: SVAO' -> Program -> IO Descriptor
-toDescriptor = initVAO
-
-initVAO :: ([Int], Int, [Float]) -> Program-> IO Descriptor
-initVAO (idx', st', vs') prg =
-  do
-    let
-      idx = unsafeCoerce <$> idx' :: [GLuint]
-      vs  = unsafeCoerce <$> vs'  :: [GLfloat]
-    --- | VAO
-    vao <- genObjectName
-    bindVertexArrayObject $= Just vao
-    --- | VBO
-    vertexBuffer <- genObjectName
-    bindBuffer ArrayBuffer $= Just vertexBuffer
-    withArray vs $ \ptr ->
-      do
-        let sizev = fromIntegral (length vs * sizeOf (head vs))
-        bufferData ArrayBuffer $= (sizev, ptr, StaticDraw)
-    --- | EBO
-    elementBuffer <- genObjectName
-    bindBuffer ElementArrayBuffer $= Just elementBuffer
-    let numIndices = length idx
-    withArray idx $ \ptr ->
-      do
-        let indicesSize = fromIntegral (numIndices * sizeOf (0 :: GLenum))
-        bufferData ElementArrayBuffer $= (indicesSize, ptr, StaticDraw)
-
-        --- | Bind the pointer to the vertex attribute data
-        let floatSize  = (fromIntegral $ sizeOf (0.0::GLfloat)) :: GLsizei
-            stride     = fromIntegral st' * floatSize
-
-        --- | Alpha
-        vertexAttribPointer (AttribLocation 0) $= (ToFloat, VertexArrayDescriptor 1 Float stride ((plusPtr nullPtr . fromIntegral) (0 * floatSize)))
-        vertexAttribArray   (AttribLocation 0) $= Enabled
-        --- | Colors
-        vertexAttribPointer (AttribLocation 1) $= (ToFloat, VertexArrayDescriptor 3 Float stride ((plusPtr nullPtr . fromIntegral) (1 * floatSize)))
-        vertexAttribArray   (AttribLocation 1) $= Enabled
-        --- | Normals
-        vertexAttribPointer (AttribLocation 2) $= (ToFloat, VertexArrayDescriptor 3 Float stride ((plusPtr nullPtr . fromIntegral) (4 * floatSize)))
-        vertexAttribArray   (AttribLocation 2) $= Enabled
-        --- | UVW
-        vertexAttribPointer (AttribLocation 3) $= (ToFloat, VertexArrayDescriptor 3 Float stride ((plusPtr nullPtr . fromIntegral) (7 * floatSize)))
-        vertexAttribArray   (AttribLocation 3) $= Enabled
-        --- | Positions
-        vertexAttribPointer (AttribLocation 4) $= (ToFloat, VertexArrayDescriptor 3 Float stride ((plusPtr nullPtr . fromIntegral) (10 * floatSize)))
-        vertexAttribArray   (AttribLocation 4) $= Enabled
-
-    return $ Descriptor vao (fromIntegral numIndices) prg
+  
+renderObject :: Camera -> Uniforms -> Object -> IO ()
+renderObject cam unis' obj = do
+  mapM_ (\dr -> do
+            bindUniforms cam unis' dr {u_xform = xform (transform obj)} 
+            let (Descriptor triangles numIndices _) = descriptor dr
+            bindVertexArrayObject $= Just triangles
+            drawElements Triangles numIndices UnsignedInt nullPtr
+        ) (drws obj)
 
 loadTex :: FilePath -> IO TextureObject
 loadTex f =
