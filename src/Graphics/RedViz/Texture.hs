@@ -16,9 +16,8 @@
 
 module Graphics.RedViz.Texture 
   ( Texture (..)
-  -- , name
-  -- , path
-  -- , uuid
+  , allocateTextures
+  , bindTexture
   , defaultTexture
   ) where
 
@@ -26,10 +25,15 @@ module Graphics.RedViz.Texture
 import Data.Aeson
 import Data.Aeson.Encode.Pretty
 import Data.Aeson.TH
+import Data.Maybe
 import Data.UUID
 import Data.Text    hiding (drop)
+import Graphics.Rendering.OpenGL.GL (TextureObject(..), ($=), blend, blendFunc, BlendingFactor(..), Capability(..), activeTexture, TextureUnit(..), GLuint)
+import Graphics.Rendering.OpenGL.GL.Texturing
 
 import Graphics.RedViz.Utils (encodeStringUUID)
+import Graphics.RedViz.GLUtil.Textures (texture2DWrap)
+import Graphics.RedViz.GLUtil.JuicyTextures
 
 data Texture
   =  Texture
@@ -58,3 +62,37 @@ defaultTexture
 
 comp :: Text -> Text -> Ordering
 comp = keyOrder . fmap pack $ ["name", "path", "uuid"]
+
+loadTexture :: FilePath -> IO TextureObject
+loadTexture f =
+  do
+    t <- either error id <$> readTexture f
+    texture2DWrap            $= (Repeated, ClampToEdge)
+    textureFilter  Texture2D $= ((Linear', Just Nearest), Linear')
+    blend                    $= Enabled
+    blendFunc                $= (SrcAlpha, OneMinusSrcAlpha)
+    generateMipmap' Texture2D
+    return t
+
+bindTexture :: [(UUID, GLuint)] -> Texture -> IO (Texture, TextureObject)
+bindTexture hmap tx =
+  do
+    putStrLn $ "Binding Texture : " ++ show tx ++ " at TextureUnit : " ++ show txid
+    texture Texture2D        $= Enabled
+    print $ "tx : " ++ show tx
+    print $ "txid : " ++ show txid
+    activeTexture            $= TextureUnit txid
+    --activeTexture            $= TextureUnit (DT.trace ("bindTexture.txid : " ++ show txid) txid)
+    tx0 <- loadTexture $ path tx --TODO : replace that with a hashmap lookup?
+    textureBinding Texture2D $= Just tx0
+    return (tx, tx0)
+      where
+        txid = fromMaybe 0 (lookup (uuid tx) hmap)
+    
+
+allocateTextures :: (Int, (Texture, TextureObject)) -> IO ()
+allocateTextures (txid, (_, txo)) =
+  do
+    activeTexture $= TextureUnit (fromIntegral txid)
+    textureBinding Texture2D $= Just txo
+    return ()

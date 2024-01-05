@@ -22,7 +22,7 @@ import Linear.V3
 import Lens.Micro
 
 import Graphics.RedViz.Descriptor
-import Graphics.RedViz.Material
+import Graphics.RedViz.Material as R
 import Graphics.RedViz.Texture
 
 data Drawable
@@ -33,6 +33,31 @@ data Drawable
      , doptions   :: BackendOptions
      , u_xform    :: M44 Double
      } deriving Show
+
+toDrawable
+  :: M44 Double
+  -> BackendOptions
+  -> [(Texture, TextureObject)]
+  -> (Descriptor, R.Material)
+  -> Drawable
+toDrawable xform' opts txos (d, mat') = dr
+  where
+    txs'   = R.textures mat'
+    txos'  = zip [0..] $ unzipWith txs' txos :: [(Int, (Texture, TextureObject))] 
+      where
+        unzipWith :: Eq a => [a] -> [(a,b)] -> [(a,b)]
+        unzipWith xs xys = xys'
+          where
+            xys' = filter (\xy -> fst xy `elem` xs) xys
+    dr =
+      Drawable
+      { 
+        u_xform    = xform'
+      , descriptor = d
+      , material   = mat'
+      , dtxs       = txos'
+      , doptions   = opts
+      }
 
 data Alignment =
    TL |TC |TR

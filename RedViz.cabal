@@ -15,19 +15,22 @@ extra-source-files:  CHANGELOG.md, README.md
 library
   exposed-modules:     
                        Graphics.RedViz
-                       Graphics.RedViz.LoadShaders
-                       Graphics.RedViz.Rendering
-                       Graphics.RedViz.Material
-                       Graphics.RedViz.Material.Lens
-                       Graphics.RedViz.Descriptor
-                       Graphics.RedViz.Drawable
-                       Graphics.RedViz.Drawable.Lens
-                       Graphics.RedViz.Texture
-                       Graphics.RedViz.Texture.Lens
-                       Graphics.RedViz.Utils
+                       Graphics.RedViz.Backend
                        Graphics.RedViz.Camera
                        Graphics.RedViz.Camera.Lens
                        Graphics.RedViz.Controllable
+                       Graphics.RedViz.Descriptor
+                       Graphics.RedViz.Drawable
+                       Graphics.RedViz.Drawable.Lens
+                       Graphics.RedViz.FromVector
+                       Graphics.RedViz.Game
+                       Graphics.RedViz.GLTF
+                       Graphics.RedViz.GLTF.Load
+                       Graphics.RedViz.GLTF.Model
+                       Graphics.RedViz.GLUtil
+                       Graphics.RedViz.GLUtil.JuicyTextures
+                       Graphics.RedViz.GLUtil.Textures
+                       Graphics.RedViz.GLUtil.TypeMapping
                        Graphics.RedViz.Input
                        Graphics.RedViz.Input.Keyboard
                        Graphics.RedViz.Input.Mouse
@@ -37,27 +40,26 @@ library
                        Graphics.RedViz.Input.FRP.Yampa.Update.Keyboard
                        Graphics.RedViz.Input.FRP.Yampa
                        Graphics.RedViz.Input.FRP.Yampa.AppInput
+                       Graphics.RedViz.LoadShaders
+                       Graphics.RedViz.Material
+                       Graphics.RedViz.Material.Lens
+                       Graphics.RedViz.Object
+                       Graphics.RedViz.Object.Lens
+                       Graphics.RedViz.PGeo
+                       Graphics.RedViz.Primitives
                        Graphics.RedViz.Project.Model
                        Graphics.RedViz.Project.Lens
                        Graphics.RedViz.Project
                        Graphics.RedViz.Project.Utils
-                       Graphics.RedViz.Widget
-                       Graphics.RedViz.PGeo
-                       Graphics.RedViz.VAO
-                       Graphics.RedViz.FromVector
-                       Graphics.RedViz.Object
-                       Graphics.RedViz.Object.Lens
-                       Graphics.RedViz.Backend
-                       Graphics.RedViz.Primitives
-                       Graphics.RedViz.GLTF
-                       Graphics.RedViz.GLTF.Load
-                       Graphics.RedViz.GLTF.Model
-                       Graphics.RedViz.GLUtil
-                       Graphics.RedViz.GLUtil.JuicyTextures
-                       Graphics.RedViz.GLUtil.Textures
-                       Graphics.RedViz.GLUtil.TypeMapping
+                       Graphics.RedViz.Rendering
                        Graphics.RedViz.Solvable
+                       Graphics.RedViz.Texture
+                       Graphics.RedViz.Texture.Lens
                        Graphics.RedViz.Transformable
+                       Graphics.RedViz.Uniforms
+                       Graphics.RedViz.Utils
+                       Graphics.RedViz.VAO
+                       Graphics.RedViz.Widget
                        
   --ghc-options:   -O2 -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans
   ghc-options:   -O2     

@@ -2,11 +2,16 @@ module Graphics.RedViz.Object where
 
 import Data.UUID
 import Linear.V3
+import Linear.Matrix
 
 import Graphics.RedViz.Transformable
+import Graphics.RedViz.Descriptor
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.Solvable (Solvable(..), CoordSys(..), RotationOrder(..))
 import Graphics.RedViz.Backend (BackendOptions, defaultBackendOptions)
+import Graphics.RedViz.Material as R
+import Graphics.RedViz.Texture
+import Graphics.Rendering.OpenGL.GL.Texturing
 
 data PType = Default
            | Font
@@ -37,6 +42,33 @@ initObj =
   , uuid     = nil
   , parent   = nil
   }
+
+toObject :: [(Texture, TextureObject)] -> [[(Descriptor, R.Material)]]-> PreObject -> IO Object
+toObject txTuples' dms' pobj = do
+  --print $ (options pobj)
+  let
+    dms      = (dms'!!) <$> modelIDXs pobj
+    txs      = concatMap (\(_,m) -> R.textures m) $ concat dms :: [Texture]
+    txTuples = filter (\(tx,_) -> tx `elem` txs) txTuples'     :: [(Texture, TextureObject)]
+    drs =
+      toDrawable
+      (identity :: M44 Double) -- TODO: add result based on solvers composition
+      (options pobj)
+      txTuples
+      <$> concat dms
+      :: [Drawable]
+    
+    obj =
+      Object
+      { transform = defaultTransformable {tslvrs = tsolvers pobj}
+      , drws      = drs
+      , oslvrs    = osolvers pobj
+      , selected  = False
+      , uuid      = puuid   pobj
+      , parent    = pparent pobj
+      }
+
+  return obj
 
 data PreObject
   =  PreObject

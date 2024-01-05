@@ -1,7 +1,12 @@
 module Graphics.RedViz.Project
   ( Project (..)
   , sharedFonts
+  , setProjectUUID
+  , flatten
   ) where
+
+import Data.UUID
+import Data.UUID.V4
 
 import Graphics.RedViz.Object
 import Graphics.RedViz.Camera
@@ -101,3 +106,33 @@ sharedFonts =
   , "models/fnt_Z.gltf"
   , "models/fnt_crosshair.gltf"
   ]    
+
+setProjectUUID :: Project -> IO Project
+setProjectUUID prj0 = do
+  pobjs' <- mapM setUUID (preObjects prj0)
+  return prj0 { preObjects = pobjs' }
+
+setUUID :: PreObject -> IO PreObject
+setUUID pobj0@(PreObject{pchildren = []}) = do
+  genUUID  <- nextRandom :: IO UUID
+  return pobj0 { puuid = genUUID }
+setUUID pobj0@(PreObject{pchildren = [p]}) = do
+  genUUID  <- nextRandom :: IO UUID
+  genUUID' <- nextRandom :: IO UUID
+  return pobj0 { puuid     = genUUID
+               , pchildren = [p { pparent = genUUID
+                                , puuid   = genUUID'}] }
+setUUID pobj0@(PreObject{pchildren = (p:ps)}) = do
+  genUUID  <- nextRandom :: IO UUID
+  p'  <- setUUID p --(p{pparent = genUUID})
+  ps' <- mapM setUUID ps
+  return pobj0 { puuid     = genUUID 
+               , pchildren = p':ps' }
+
+flatten :: PreObject -> [PreObject]
+flatten pobj0@(PreObject{pchildren = []})     = [childFree pobj0]
+flatten pobj0@(PreObject{pchildren = [p]})    = childFree pobj0 : flatten p
+flatten pobj0@(PreObject{pchildren = (p:ps)}) = childFree pobj0 : concat (flatten p : (flatten <$> ps))
+
+childFree :: PreObject -> PreObject
+childFree pobj0 = (pobj0{pchildren = []})
