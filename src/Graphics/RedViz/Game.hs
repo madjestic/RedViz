@@ -1,3 +1,16 @@
+--------------------------------------------------------------------------------
+-- |
+-- Module      :  Game
+-- Copyright   :  (c) Vladimir Lopatin 2024
+-- License     :  BSD-3-Clause
+--
+-- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
+-- Stability   :  provisional
+-- Portability :  portable
+--
+-- A basic camera structure.
+--
+--------------------------------------------------------------------------------
 module Graphics.RedViz.Game where
 
 import Linear.Affine
@@ -37,6 +50,6 @@ initGame =
   }
 
 initSettings :: GameSettings
-initSettings = GameSettings
+initSettings =  GameSettings
   { resX = 1280
   , resY = 720 }

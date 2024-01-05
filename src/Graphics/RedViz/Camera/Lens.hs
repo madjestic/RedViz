@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Camera
--- Copyright   :  (c) Vladimir Lopatin 2022
+-- Copyright   :  (c) Vladimir Lopatin 2024
 -- License     :  BSD-3-Clause
 --
 -- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
@@ -11,8 +11,6 @@
 -- A basic camera structure.
 --
 --------------------------------------------------------------------------------
-
-
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE Arrows #-}
 
@@ -26,9 +24,11 @@ module Graphics.RedViz.Camera.Lens
   , defaultCamController
   , res
   , scale
+  , name
+  , apt
+  , foc
   ) where
 
-import Lens.Micro
 import Lens.Micro.TH
 import Linear                    (V4 (..))
 import Linear.V3
@@ -72,7 +72,6 @@ defaultCamController :: Controllable
 defaultCamController =
   ( Controller
     {_debug = (0,0)
-    -- (transpose (identity :: M44 Double))
     ,_transform =  
       (V4
         (V4 1 0 0 0)

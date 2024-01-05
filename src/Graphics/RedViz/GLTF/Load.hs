@@ -1,3 +1,21 @@
+--------------------------------------------------------------------------------
+-- |
+-- Copyright 2023 IC Rainbow
+-- source: https://hackage.haskell.org/package/keid-resource-gltf
+--
+--------------------------------------------------------------------------------
+-- |
+-- Module      :  GLTF Load
+-- Copyright   :  (c) Vladimir Lopatin 2024
+-- License     :  BSD-3-Clause
+--
+-- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
+-- Stability   :  provisional
+-- Portability :  portable
+--
+-- A basic camera structure.
+--
+--------------------------------------------------------------------------------
 {-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE LambdaCase #-}
@@ -28,7 +46,6 @@ import Codec.GlTF.Mesh qualified as Mesh
 import Codec.GlTF.Root qualified as Root
 import Codec.GlTF.URI qualified as URI
 import Data.ByteString.Unsafe qualified as ByteString
-import Data.Text qualified as T
 import Foreign (sizeOf, peekArray, castPtr)
 import Geomancy (Vec2, Vec4)
 import Geomancy.Vec3 qualified as Vec3
@@ -37,14 +54,10 @@ import RIO.FilePath (takeDirectory, takeExtensions, (</>))
 import RIO.HashMap qualified as HashMap
 import RIO.List qualified as List
 import RIO.Vector qualified as Vector
---import Control.Exception
-
 import Data.Vector (iforM)
-
 import Resource.Compressed.Zstd qualified as Zstd
---import Resource.Gltf.Model (MeshPrimitive, Stuff(..), VertexAttrs(..))
+
 import Graphics.RedViz.GLTF.Model (MeshPrimitive, Stuff(..), VertexAttrs(..))
-import qualified Data.Aeson.Key as T
 
 --import Debug.Trace as DT
 

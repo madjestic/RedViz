@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 -- |
--- Module      :  RedViz
--- Copyright   :  (c) Vladimir Lopatin 2022
+-- Module      :  PGeo
+-- Copyright   :  (c) Vladimir Lopatin 2024
 -- License     :  BSD-3-Clause
 --
 -- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
@@ -41,7 +41,7 @@ module Graphics.RedViz.PGeo
   , toVAO
   ) where
 
-import Lens.Micro
+--import Lens.Micro
 import Lens.Micro.TH
 import Data.Aeson
 import Data.Aeson.TH
@@ -61,7 +61,7 @@ import Graphics.RedViz.VAO
 -- | TODO : replace Vec3 -> Vec4
 type Vec3 = (Double, Double, Double)
 
-type Vec4 = (Double, Double, Double, Double)
+--type Vec4 = (Double, Double, Double, Double)
 
 instance FromVector Vec3 where
   toVertex4 :: Vec3 -> Vertex4 Double

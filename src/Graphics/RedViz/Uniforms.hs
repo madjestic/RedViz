@@ -1,3 +1,16 @@
+--------------------------------------------------------------------------------
+-- |
+-- Module      :  Uniforms
+-- Copyright   :  (c) Vladimir Lopatin 2024
+-- License     :  BSD-3-Clause
+--
+-- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
+-- Stability   :  provisional
+-- Portability :  portable
+--
+-- A basic camera structure.
+--
+--------------------------------------------------------------------------------
 module Graphics.RedViz.Uniforms where
 
 import Data.Foldable as DF
@@ -49,7 +62,7 @@ bindUniforms cam' unis' dr =
       u_xform'  = u_xform  dr
       d'        = descriptor dr :: Descriptor
       u_cam'    = (xform.ctransform) cam'
-      u_mouse'  = (0,0)
+      u_mouse'  = (0,0) :: (Int, Int)
       (Uniforms u_time' u_res' _ u_cam_a' u_cam_f' u_ypr' u_yprS' u_vel' u_accel') = unis'
       (Descriptor _ _ u_prog') = d'
 

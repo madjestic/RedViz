@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Rendering
--- Copyright   :  (c) Vladimir Lopatin 2022
+-- Copyright   :  (c) Vladimir Lopatin 2024
 -- License     :  BSD-3-Clause
 --
 -- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
@@ -11,8 +11,6 @@
 -- Utilities for handling OpenGL buffers and rendering.
 --
 --------------------------------------------------------------------------------
---{-# LANGUAGE DeriveGeneric #-}
-
 module Graphics.RedViz.Rendering
   ( defaultUniforms
   , formatString
@@ -25,31 +23,19 @@ module Graphics.RedViz.Rendering
   ) where
 
 import Control.Monad
-import GHC.Generics
-import GHC.Float
-import Data.Maybe
-import Data.Foldable as DF
 import Data.StateVar as SV
-import Data.Text (Text(..))
-import Data.UUID
+import Data.Text (Text)
 import Foreign.C.Types
 import Foreign.Ptr
 import Graphics.Rendering.OpenGL as GL
-import Linear.Matrix
 import Linear.V2
-import Linear.V3
 import Linear.V4
-import Linear.Projection as LP        (infinitePerspective)
-import Lens.Micro
 import SDL hiding (Texture, normalize)
 
-import Graphics.RedViz.Backend
 import Graphics.RedViz.Camera
 import Graphics.RedViz.Descriptor
 import Graphics.RedViz.Drawable
-import Graphics.RedViz.GLUtil  (readTexture, texture2DWrap)
 import Graphics.RedViz.Object hiding (uuid)
-import Graphics.RedViz.Texture ( Texture(path, uuid) )
 import Graphics.RedViz.Transformable
 import Graphics.RedViz.Uniforms
 import Graphics.RedViz.Widget
@@ -94,7 +80,8 @@ renderWidget cam unis' wgt = case wgt of
 
 
 formatDrw :: Format -> Drawable -> Drawable
-formatDrw fmt dr = dr
+--formatDrw fmt dr = dr
+formatDrw _ dr = dr
 
   
 renderObject :: Camera -> Uniforms -> Object -> IO ()
@@ -105,17 +92,6 @@ renderObject cam unis' obj = do
             bindVertexArrayObject $= Just triangles
             drawElements Triangles numIndices UnsignedInt nullPtr
         ) (drws obj)
-
-loadTex :: FilePath -> IO TextureObject
-loadTex f =
-  do
-    t <- either error id <$> readTexture f
-    texture2DWrap            $= (Repeated, ClampToEdge)
-    textureFilter  Texture2D $= ((Linear', Just Nearest), Linear')
-    blend                    $= Enabled
-    blendFunc                $= (SrcAlpha, OneMinusSrcAlpha)
-    generateMipmap' Texture2D
-    return t
 
 openWindow :: Text -> (CInt, CInt) -> IO SDL.Window
 openWindow title (sizex,sizey) = do
@@ -146,7 +122,8 @@ openWindow title (sizex,sizey) = do
   
 renderOutput :: Window -> GameSettings -> (Game, Maybe Bool) -> IO Bool
 renderOutput _ _ ( _,Nothing) = quit >> return True
-renderOutput window gs (g,_) = do
+--renderOutput window gs (g,_) = do
+renderOutput window _ (g,_) = do
   let
   clearColor $= Color4 0.0 0.0 0.0 1.0
   GL.clear [ColorBuffer, DepthBuffer]

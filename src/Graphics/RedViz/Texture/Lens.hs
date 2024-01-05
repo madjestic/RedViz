@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Texture
--- Copyright   :  (c) Vladimir Lopatin 2023
+-- Copyright   :  (c) Vladimir Lopatin 2024
 -- License     :  BSD3
 --
 -- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
@@ -11,7 +11,6 @@
 -- Utilities for texture handling.
 --
 --------------------------------------------------------------------------------
-
 {-# LANGUAGE TemplateHaskell #-}
 
 module Graphics.RedViz.Texture.Lens
@@ -22,7 +21,6 @@ module Graphics.RedViz.Texture.Lens
   , defaultTexture
   ) where
 
-import Lens.Micro
 import Lens.Micro.Extras
 import Lens.Micro.TH
 import Data.Aeson
@@ -36,7 +34,7 @@ data Texture
      { -- | Binding name in a shader.
        _name :: String
        -- | A filepath to an image file location on disk, relative to project root.
-     , _path :: FilePath -- TODO: replace with Maybe FilePath or Either (FilePath or Generated, maybe a formula?)
+     , _path :: FilePath
        -- | A unique object (texture) ID.
      , _uuid :: UUID
      } deriving Show

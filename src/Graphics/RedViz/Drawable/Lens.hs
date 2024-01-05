@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Drawable
--- Copyright   :  (c) Vladimir Lopatin 2022
+-- Copyright   :  (c) Vladimir Lopatin 2024
 -- License     :  BSD-3-Clause
 --
 -- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
@@ -11,8 +11,6 @@
 -- Drawable data type and related structures.
 --
 --------------------------------------------------------------------------------
-
-
 {-# LANGUAGE TemplateHaskell #-}
 
 module Graphics.RedViz.Drawable.Lens
@@ -22,6 +20,17 @@ module Graphics.RedViz.Drawable.Lens
   , Uniforms (..)
   , toDrawables
   , toDrawable
+  , options
+  , descriptor
+  , u_cam
+  , u_cam_a
+  , u_cam_accel
+  , u_cam_f
+  , u_cam_vel
+  , u_cam_ypr
+  , u_cam_yprS
+  , u_res
+  , u_time
   ) where
 
 import Foreign.C
@@ -32,11 +41,9 @@ import Lens.Micro.Extras
 import Lens.Micro.TH
 
 import Graphics.RedViz.Controllable as Controllable
--- import qualified Graphics.RedViz.Material
 import Graphics.RedViz.Camera.Lens
 import qualified Graphics.RedViz.Object.Lens as Object
 import Graphics.RedViz.Descriptor
--- import Graphics.Rendering.OpenGL (Program)
 import Graphics.RedViz.Backend
 
 --import Debug.Trace    as DT
@@ -83,9 +90,6 @@ toDrawables time0 res0 cam obj = drs
 
 type Time        = Double
 type Res         = (CInt, CInt)
-type CameraM44   = M44 Double
-type ViewAngle   = Double
-type FieldOfView = Double
 
 toDrawable ::
      String
@@ -98,8 +102,8 @@ toDrawable ::
   -> Drawable
 toDrawable name' time' res' cam xformO opts d = dr
   where
-    apt    = _apt cam
-    foc    = _foc cam
+    apt'   = _apt cam
+    foc'   = _foc cam
     xformC = view (controller . Controllable.transform) cam  :: M44 Double
     dr  =
       Drawable
@@ -111,8 +115,8 @@ toDrawable name' time' res' cam xformO opts d = dr
             _u_time  = time'
           , _u_res   = res'
           , _u_cam   = xformC
-          , _u_cam_a = apt
-          , _u_cam_f = foc
+          , _u_cam_a = apt'
+          , _u_cam_f = foc'
           , _u_xform = xformO
           , _u_cam_ypr   = (\(V3 x y z) -> (x,y,z)) $ cam ^. controller . Controllable.ypr
           , _u_cam_yprS  = (\(V3 x y z) -> (x,y,z)) $ cam ^. controller . Controllable.yprS

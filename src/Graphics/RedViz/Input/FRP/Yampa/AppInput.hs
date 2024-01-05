@@ -1,3 +1,17 @@
+--------------------------------------------------------------------------------
+-- |
+-- Module      :  AppInput
+-- Copyright   :  (c) Vladimir Lopatin 2024
+-- License     :  BSD-3-Clause
+--
+-- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
+-- Stability   :  provisional
+-- Portability :  portable
+--
+-- A basic camera structure.
+--
+--------------------------------------------------------------------------------
+
 {-# LANGUAGE MultiWayIf #-}
 module Graphics.RedViz.Input.FRP.Yampa.AppInput
     ( AppInput
@@ -327,9 +341,9 @@ scancode :: SDL.KeyboardEventData -> Scancode
 scancode ev =
   SDL.keysymScancode $ SDL.keyboardEventKeysym ev
 
-keyModifier :: SDL.KeyboardEventData -> SDL.KeyModifier
-keyModifier ev =
-  SDL.keysymModifier $ SDL.keyboardEventKeysym ev
+-- keyModifier :: SDL.KeyboardEventData -> SDL.KeyModifier
+-- keyModifier ev =
+--   SDL.keysymModifier $ SDL.keyboardEventKeysym ev
 
 nextAppInput :: AppInput -> SDL.EventPayload -> AppInput
 -- | quit event

@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Utils
--- Copyright   :  (c) Vladimir Lopatin 2022
+-- Copyright   :  (c) Vladimir Lopatin 2024
 -- License     :  BSD3
 --
 -- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
@@ -11,8 +11,6 @@
 -- Utilities and helper functions for varios aspects of graphics pipeline.
 --
 --------------------------------------------------------------------------------
-
-
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -35,7 +33,6 @@ module Graphics.RedViz.Utils
   , vectorizedCompose
   ) where
 
-import Lens.Micro
 import Lens.Micro.Extras
 import Graphics.Rendering.OpenGL as GL (GLfloat)
 import Data.ByteString.Char8           (pack

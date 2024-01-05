@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Texture
--- Copyright   :  (c) Vladimir Lopatin 2022
+-- Copyright   :  (c) Vladimir Lopatin 2024
 -- License     :  BSD3
 --
 -- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
@@ -11,7 +11,6 @@
 -- Utilities for texture handling.
 --
 --------------------------------------------------------------------------------
-
 {-# LANGUAGE TemplateHaskell #-}
 
 module Graphics.RedViz.Texture 
@@ -21,14 +20,11 @@ module Graphics.RedViz.Texture
   , defaultTexture
   ) where
 
---import Control.Lens
 import Data.Aeson
-import Data.Aeson.Encode.Pretty
 import Data.Aeson.TH
 import Data.Maybe
 import Data.UUID
-import Data.Text    hiding (drop)
-import Graphics.Rendering.OpenGL.GL (TextureObject(..), ($=), blend, blendFunc, BlendingFactor(..), Capability(..), activeTexture, TextureUnit(..), GLuint)
+import Graphics.Rendering.OpenGL.GL (($=), blend, blendFunc, BlendingFactor(..), Capability(..), activeTexture, TextureUnit(..), GLuint)
 import Graphics.Rendering.OpenGL.GL.Texturing
 
 import Graphics.RedViz.Utils (encodeStringUUID)
@@ -40,7 +36,7 @@ data Texture
      { -- | Binding name in a shader.
        name :: String
        -- | A filepath to an image file location on disk, relative to project root.
-     , path :: FilePath -- TODO: replace with Maybe FilePath or Either (FilePath or Generated, maybe a formula?)
+     , path :: FilePath
        -- | A unique object (texture) ID.
      , uuid :: UUID
      } deriving Show
@@ -59,9 +55,6 @@ defaultTexture
     "checkerboard"
     "./textures/checkerboard.png"
     (encodeStringUUID "./textures/checkerboard.png")
-
-comp :: Text -> Text -> Ordering
-comp = keyOrder . fmap pack $ ["name", "path", "uuid"]
 
 loadTexture :: FilePath -> IO TextureObject
 loadTexture f =
@@ -82,7 +75,6 @@ bindTexture hmap tx =
     print $ "tx : " ++ show tx
     print $ "txid : " ++ show txid
     activeTexture            $= TextureUnit txid
-    --activeTexture            $= TextureUnit (DT.trace ("bindTexture.txid : " ++ show txid) txid)
     tx0 <- loadTexture $ path tx --TODO : replace that with a hashmap lookup?
     textureBinding Texture2D $= Just tx0
     return (tx, tx0)

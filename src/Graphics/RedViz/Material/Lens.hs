@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Material
--- Copyright   :  (c) Vladimir Lopatin 2022
+-- Copyright   :  (c) Vladimir Lopatin 2024
 -- License     :  BSD-3-Clause
 --
 -- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
@@ -11,7 +11,6 @@
 -- Utilities for handling Materials.
 --
 --------------------------------------------------------------------------------
-
 {-# LANGUAGE CPP    #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -26,9 +25,12 @@ module Graphics.RedViz.Material.Lens
   , Graphics.RedViz.Material.Lens.read
   , write
   , textures
+  , vertShader
+  , fragShader
+  , geomShader
   ) where  
 
-import Lens.Micro hiding ((.=))
+--import Lens.Micro 
 import Lens.Micro.Extras
 import Lens.Micro.TH
 import Control.Monad (when)
@@ -47,7 +49,6 @@ debug = True
 #else
 debug = False
 #endif
-
 
 data Material
   =  Material

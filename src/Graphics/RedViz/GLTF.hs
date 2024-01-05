@@ -1,6 +1,6 @@
 --------------------------------------------------------------------------------
 -- |
--- Module      :  Drawable
+-- Module      :  GLTF
 -- Copyright   :  (c) Vladimir Lopatin 2024
 -- License     :  BSD-3-Clause
 --
@@ -29,7 +29,6 @@ import Geomancy.Vec3 hiding (dot, normalize)
 import Geomancy.Vec4 hiding (dot, normalize)
 import Graphics.Rendering.OpenGL
 import Lens.Micro
-import Lens.Micro.Extras
 import Linear.V3
 import Text.GLTF.Loader as Gltf hiding (Texture, Material)
 
@@ -57,7 +56,8 @@ fromGltfMat mat =
 
 loadGltf :: FilePath -> IO ([[([GLenum],[GLfloat])]], [Gltf.Material])
 loadGltf fp = do
-  (root, meshPrimitives) <- loadMeshPrimitives False False fp
+--(root, meshPrimitives) <- loadMeshPrimitives False False fp
+  (_, meshPrimitives) <- loadMeshPrimitives False False fp
   let
     mgrs = V.toList <$> V.toList meshPrimitives :: [[Model.MeshPrimitive]]
     positions = (fmap.fmap) (\(_, stuff) -> sPositions stuff) mgrs :: [[V.Vector Packed]]
@@ -74,7 +74,8 @@ loadGltf fp = do
     cs = (fmap.fmap.fmap) fromVec4' colors :: [[[(Float,Float,Float,Float)]]]
     ts = (fmap.fmap.fmap) fromVec2' uvs
     d = (,,) <$$$.> ps <***.> cs <***.> ts
-    verts = (fmap.fmap.concatMap) (\((x,y,z),(cr,cg,cb,ca),(u,v)) -> [x,y,z,cr,cg,cb,u,v]) d
+  --verts = (fmap.fmap.concatMap) (\((x,y,z),(cr,cg,cb,ca),(u,v)) -> [x,y,z,cr,cg,cb,u,v]) d
+    verts = (fmap.fmap.concatMap) (\((x,y,z),(cr,cg,cb,_),(u,v)) -> [x,y,z,cr,cg,cb,u,v]) d
   return $ (zipWith zip idx verts, concat mats)
 
 (<$.>) :: (a -> b) -> [a] -> [b]

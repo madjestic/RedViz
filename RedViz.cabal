@@ -61,8 +61,8 @@ library
                        Graphics.RedViz.VAO
                        Graphics.RedViz.Widget
                        
-  --ghc-options:   -O2 -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans
-  ghc-options:   -O2     
+  --ghc-options:    -O2 -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans -Wunused-imports -Wunused-binds
+  ghc-options:    -O2     
   --ghc-options:     -fprof-auto -fprof-cafs "-with-rtsopts=-N -p -s -hc -i0.1 -xc"
   --ghc-options:     -fprof-auto -fprof-cafs 
   --cpp-options:   -DDEBUG  

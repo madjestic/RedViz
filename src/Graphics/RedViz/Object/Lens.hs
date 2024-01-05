@@ -1,3 +1,16 @@
+--------------------------------------------------------------------------------
+-- |
+-- Module      :  Object
+-- Copyright   :  (c) Vladimir Lopatin 2024
+-- License     :  BSD-3-Clause
+--
+-- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
+-- Stability   :  provisional
+-- Portability :  portable
+--
+-- A basic camera structure.
+--
+--------------------------------------------------------------------------------
 {-# LANGUAGE TemplateHaskell #-}
 
 module Graphics.RedViz.Object.Lens
@@ -16,7 +29,7 @@ module Graphics.RedViz.Object.Lens
   , name
   ) where
 
-import Lens.Micro hiding (transform, pre)
+--import Lens.Micro hiding (transform, pre)
 import Lens.Micro.TH
 import Graphics.Rendering.OpenGL (Program)
 import Linear.Matrix

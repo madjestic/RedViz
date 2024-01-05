@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 -- |
--- Module      :  Camera
--- Copyright   :  (c) Vladimir Lopatin 2022
+-- Module      :  Controllable
+-- Copyright   :  (c) Vladimir Lopatin 2024
 -- License     :  BSD-3-Clause
 --
 -- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
@@ -11,8 +11,6 @@
 -- A structure for a user-controllable object.
 --
 --------------------------------------------------------------------------------
-
-
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -30,13 +28,14 @@ module Graphics.RedViz.Controllable
   , vel
   , device
   , device'
---  , mouse
+  , mouse
   , keyboard
+  , debug
   ) where
 
 import Linear.Matrix
 import Linear.V3
-import Lens.Micro hiding (transform)
+import Lens.Micro
 import Lens.Micro.TH
 
 import Graphics.RedViz.Input.Keyboard

@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Descriptor
--- Copyright   :  (c) Vladimir Lopatin 2022
+-- Copyright   :  (c) Vladimir Lopatin 2024
 -- License     :  BSD-3-Clause
 --
 -- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
@@ -11,13 +11,11 @@
 -- A basic structure for passing to graphics driver.
 --
 --------------------------------------------------------------------------------
-
 module Graphics.RedViz.Descriptor where
 
 import Foreign (sizeOf)  
 import Foreign.Marshal.Array (withArray)  
 import GHC.Ptr
-import Graphics.Rendering.OpenGL (VertexArrayObject, NumArrayIndices, Program)
 import Graphics.Rendering.OpenGL.GL
 
 import Graphics.RedViz.Material as R

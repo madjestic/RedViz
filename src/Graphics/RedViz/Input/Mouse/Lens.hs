@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Mouse
--- Copyright   :  (c) Vladimir Lopatin 2022
+-- Copyright   :  (c) Vladimir Lopatin 2024
 -- License     :  BSD-3-Clause
 --
 -- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
@@ -19,9 +19,11 @@ module Graphics.RedViz.Input.Mouse.Lens
   , pos
   , rpos
   , mmov
+  , rmb
+  , lmb
   ) where
 
-import Lens.Micro
+--import Lens.Micro
 import Lens.Micro.TH
 
 import Linear.V3
