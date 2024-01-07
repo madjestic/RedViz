@@ -11,6 +11,8 @@
 -- A basic camera structure.
 --
 --------------------------------------------------------------------------------
+{-# LANGUAGE CPP #-}
+
 module Graphics.RedViz.Uniforms where
 
 import Data.Foldable as DF
@@ -26,8 +28,17 @@ import GHC.Float
 import Graphics.RedViz.Camera
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.Descriptor
-import Graphics.RedViz.Transformable
+import Graphics.RedViz.LoadShaders
+import Graphics.RedViz.Material
 import Graphics.RedViz.Texture
+import Graphics.RedViz.Transformable
+
+debug :: Bool
+#ifdef DEBUGSHADERS
+debug = True
+#else
+debug = False
+#endif
 
 data Uniforms
   =  Uniforms
@@ -66,7 +77,11 @@ bindUniforms cam' unis' dr =
       (Uniforms u_time' u_res' _ u_cam_a' u_cam_f' u_ypr' u_yprS' u_vel' u_accel') = unis'
       (Descriptor _ _ u_prog') = d'
 
-    currentProgram $= Just u_prog'
+    programDebug <- loadShaders
+          [ ShaderInfo VertexShader   (FileSource (vertShader . material $ dr))   
+          , ShaderInfo FragmentShader (FileSource (fragShader . material $ dr)) ]
+
+    currentProgram $= if debug then Just programDebug else Just u_prog'
 
     let u_mouse0      = Vector2 (realToFrac $ fst u_mouse') (realToFrac $ snd u_mouse') :: Vector2 GLfloat
     location0         <- SV.get (uniformLocation u_prog' "u_mouse'")

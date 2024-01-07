@@ -14,6 +14,8 @@
 
 module Graphics.RedViz.Camera where
 
+import Data.UUID
+
 import Graphics.RedViz.Solvable
 import Graphics.RedViz.Transformable
 import Linear.V3
@@ -28,6 +30,8 @@ data Camera
      , keyboardRS :: V3 Double -- keyboard "rotation sensitivity"
      , keyboardTS :: V3 Double -- keyboard "translation sensitivity"
      , cslvrs     :: [Solvable]
+     , uuid       :: UUID
+     , parent     :: UUID
      } deriving Show
 
 defaultCam :: Camera
@@ -42,6 +46,8 @@ defaultCam =
   , keyboardRS = 0.05
   , keyboardTS = 0.05
   , cslvrs     = []
+  , uuid       = nil
+  , parent     = nil
   }
 
 defaultCamSolver :: Solvable

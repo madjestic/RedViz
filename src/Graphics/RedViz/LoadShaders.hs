@@ -67,35 +67,71 @@ loadShaders infos =
 linkAndCheck :: Program -> IO ()
 linkAndCheck = checked linkProgram linkStatus programInfoLog "link"
 
+-- loadCompileAttach :: Program -> [ShaderInfo] -> IO ()
+-- loadCompileAttach _ [] = return ()
+-- loadCompileAttach program (ShaderInfo shType source : infos) =
+--   createShader shType `bracketOnError` deleteObjectName $ \shader ->
+--   do
+--     -- _ <- DT.trace ("Loading Shader Program" ++ show program ++ show source) $ return ()
+--     src     <- getSource source
+--     matDir    <- doesFileExist "./mat/share/lib.glsl"
+--     shaderDir <- doesFileExist "./shaders/share/lib.glsl"
+
+--     let mfs
+--           | matDir    = Just "./mat/share/lib.glsl"
+--           | shaderDir = Just "./shaders/share/lib.glsl"
+--           | otherwise = Nothing
+
+--     case mfs of
+--       Nothing -> fail "Error : shared shader file does not exist!"
+--       Just fs -> do
+--         include <- getSource (FileSource fs)
+--         let
+--           version   = head (BS.lines src)
+--           shaderSrc = tail (BS.lines src)
+--           src'      = BS.unlines $ version : include : shaderSrc
+         
+--         shaderSourceBS shader $= src'
+--         compileAndCheck shader
+--         attachShader program shader
+--         loadCompileAttach program infos
+
 loadCompileAttach :: Program -> [ShaderInfo] -> IO ()
 loadCompileAttach _ [] = return ()
 loadCompileAttach program (ShaderInfo shType source : infos) =
   createShader shType `bracketOnError` deleteObjectName $ \shader ->
   do
     -- _ <- DT.trace ("Loading Shader Program" ++ show program ++ show source) $ return ()
-    src     <- getSource source
-    matDir    <- doesFileExist "./mat/share/lib.glsl"
-    shaderDir <- doesFileExist "./shaders/share/lib.glsl"
+    src        <- getSource source
+    isLib      <- doesFileExist "./mat/share/lib.glsl"
+    isHgSDFLib <- doesFileExist "./mat/share/hg_sdf.glsl"
+                
+    let
+      mfs
+        | isLib      = Just "./mat/share/lib.glsl"
+        | otherwise  = Nothing
+      mfs'
+        | isHgSDFLib = Just "./mat/share/hg_sdf.glsl"
+        | otherwise  = Nothing
 
-    let mfs
-          | matDir    = Just "./mat/share/lib.glsl"
-          | shaderDir = Just "./shaders/share/lib.glsl"
-          | otherwise = Nothing
+    sharedLib <- case mfs of
+      Just fs -> do getSource (FileSource fs)
+      Nothing -> return ""
 
-    case mfs of
-      Nothing -> fail "Error : shared shader file does not exist!"
-      Just fs -> do
-        include <- getSource (FileSource fs)
+    hgSDFLib  <- case mfs' of
+      Just fs -> do getSource (FileSource fs)
+      Nothing -> return ""
 
-        let
-          version   = head (BS.lines src)
-          shaderSrc = tail (BS.lines src)
-          src'      = BS.unlines $ version : include : shaderSrc
-         
-        shaderSourceBS shader $= src'
-        compileAndCheck shader
-        attachShader program shader
-        loadCompileAttach program infos
+    let
+      version   = head (BS.lines src)
+      shaderSrc = tail (BS.lines src)
+      src'      = BS.unlines $ version : sharedLib : hgSDFLib : shaderSrc
+     
+    shaderSourceBS shader $= src'
+    compileAndCheck shader
+    attachShader program shader
+    loadCompileAttach program infos
+
 
 compileAndCheck :: Shader -> IO ()
 compileAndCheck = checked compileShader compileStatus shaderInfoLog "compile"

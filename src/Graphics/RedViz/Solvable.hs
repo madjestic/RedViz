@@ -30,6 +30,7 @@ data Solvable =
     , cyprS :: V3 Double  -- yaw/pitch/camRoll Sum
     }
   | Parent
+  | ParentToPlayer
     -- | Parent
   --   { sertParent :: Object | Camera}
   | Speed
