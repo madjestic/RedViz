@@ -77,12 +77,9 @@ bindUniforms cam' unis' dr =
       (Uniforms u_time' u_res' _ u_cam_a' u_cam_f' u_ypr' u_yprS' u_vel' u_accel') = unis'
       (Descriptor _ _ u_prog') = d'
 
-    programDebug <- loadShaders
-          [ ShaderInfo VertexShader   (FileSource (vertShader . material $ dr))   
-          , ShaderInfo FragmentShader (FileSource (fragShader . material $ dr)) ]
-
-    currentProgram $= if debug then Just programDebug else Just u_prog'
-
+    program' <- if debug then debugShaders dr else return u_prog'
+    currentProgram $= Just program'
+    
     let u_mouse0      = Vector2 (realToFrac $ fst u_mouse') (realToFrac $ snd u_mouse') :: Vector2 GLfloat
     location0         <- SV.get (uniformLocation u_prog' "u_mouse'")
     uniform location0 $= u_mouse0
@@ -182,3 +179,8 @@ bindUniforms cam' unis' dr =
       where        
         toList' = fmap realToFrac.DF.concat.(fmap DF.toList.DF.toList) :: V4 (V4 Double) -> [GLfloat]
 
+debugShaders :: Drawable -> IO Program
+debugShaders dr = do
+  loadShaders
+    [ ShaderInfo VertexShader   (FileSource (vertShader . material $ dr))   
+    , ShaderInfo FragmentShader (FileSource (fragShader . material $ dr)) ]
