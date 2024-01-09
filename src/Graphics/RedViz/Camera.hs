@@ -19,6 +19,7 @@ import Data.UUID
 import Graphics.RedViz.Solvable
 import Graphics.RedViz.Transformable
 import Linear.V3
+import Linear.V4
 
 data Camera
   =  Camera
@@ -56,4 +57,16 @@ defaultCamSolver =
   { cvel   = (V3 0 0 0) -- velocity
   , cypr   = (V3 0 0 0) -- rotation
   , cyprS  = (V3 0 0 0) -- sum of rotations
+  }
+
+defaultCamTransformable :: Transformable
+defaultCamTransformable =
+  Transformable
+  { xform =  
+      (V4
+        (V4 1 0 0 0)    -- <- . . . x ...
+        (V4 0 1 0 0)    -- <- . . . y ...
+        (V4 0 0 1 10)   -- <- . . . z-component of transform
+        (V4 0 0 0 1))
+  , tslvrs = [Identity]
   }

@@ -78,11 +78,9 @@ renderWidget cam unis' wgt = case wgt of
   where
     wdrs = concatMap drws (fonts wgt)      
 
-
 formatDrw :: Format -> Drawable -> Drawable
 --formatDrw fmt dr = dr
 formatDrw _ dr = dr
-
   
 renderObject :: Camera -> Uniforms -> Object -> IO ()
 renderObject cam unis' obj = do

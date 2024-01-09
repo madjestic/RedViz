@@ -88,11 +88,14 @@ bindUniforms cam' unis' dr =
         resY          = fromIntegral $ fromEnum $ snd u_res' :: Double
         u_res         = Vector2 (realToFrac resX) (realToFrac resY) :: Vector2 GLfloat
 
+    --print u_res
     location1         <- SV.get (uniformLocation u_prog' "u_resolution")
     uniform location1 $= u_res
+    --print $ "u_res : " ++ show (u_res')
     
     location2         <- SV.get (uniformLocation u_prog' "u_time")
     uniform location2 $= (double2Float u_time' :: GLfloat)
+    --print $ "u_time : " ++ show (u_time')
 
     let apt = u_cam_a' -- aperture
         foc = u_cam_f' -- focal length
@@ -106,12 +109,15 @@ bindUniforms cam' unis' dr =
     location3         <- SV.get (uniformLocation u_prog' "persp")
     uniform location3 $= persp
 
+    --putStrLn "+++DEBUG+++"
+    --print $ "camera : " ++ show (u_cam')
     camera            <- newMatrix RowMajor $ toList' u_cam' :: IO (GLmatrix GLfloat)
     location4         <- SV.get (uniformLocation u_prog' "camera")
     uniform location4 $= camera
 
     -- | Compensate world space xform with camera position
     -- = Object Position - Camera Position
+    --print $ "xform  : " ++ show (inv44 (identity & translation .~ u_cam'^.translation) !*! u_xform')
     xform             <- newMatrix RowMajor $ toList' (inv44 (identity & translation .~ u_cam'^.translation) !*! u_xform') :: IO (GLmatrix GLfloat)
     location5         <- SV.get (uniformLocation u_prog' "xform")
     uniform location5 $= xform
