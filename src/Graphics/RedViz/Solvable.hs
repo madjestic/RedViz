@@ -1,6 +1,7 @@
 module Graphics.RedViz.Solvable where
 
 import Linear.V3
+import Codec.GlTF.Prelude (Object)
 
 data CoordSys =
     WorldSpace
@@ -9,48 +10,48 @@ data CoordSys =
 
 data Solvable =
     Identity
-  | Translate
+  | Movable
     { space    :: CoordSys
     , txyz     :: V3 Double -- offset
     , tvel     :: V3 Double -- velocity
-    , kinslv   :: Solvable
+    , kinslv   :: [Solvable]
     } 
-  | Rotate
+  | Turnable
     { space    :: CoordSys
     , cxyz     :: V3 Double -- center of rotation
     , rord     :: RotationOrder
     , rxyz     :: V3 Double
     , avel     :: V3 Double -- angular velocity
-    , kinslv :: Solvable
+    , kinslv   :: [Solvable]
     }
-  | Select
-  | Controller
+  | Selectable
+  | Controllable
     { cvel  :: V3 Double  -- velocity
     , cypr  :: V3 Double  -- yaw/pitch/camRoll ~angular velocity
     , cyprS :: V3 Double  -- yaw/pitch/camRoll Sum
     }
-  | Parent
-  | ParentToPlayer
-    -- | Parent
-  --   { sertParent :: Object | Camera}
-  | Speed
+  | Parentable
+  | ParentableToPlayer
+  | Fadable
     { life :: Double
     , age  :: Double
     , inc  :: Double
     , amp  :: Double
     , func :: Double -> Double
     }
---  deriving Show
+  | Pullable
+    { mass :: Double
+    , acc  :: V3 Double
+    }
 
---instance Show (Double -> Double) where
 instance Show Solvable where
-  show Speed{}      = "Speed"
+  show Fadable{}      = "Fadable"
   show Identity     = "Identity"
-  show Translate{}  = "Translate"
-  show Rotate{}     = "Rotate"
-  show Select       = "Select"
-  show Parent       = "Parent"
-  show Controller{} = "Controller"
+  show Movable{}  = "Movable"
+  show Turnable{}     = "Turnable"
+  show Selectable       = "Selectable"
+  show Parentable       = "Parentable"
+  show Controllable{} = "Controllable"
 
 data RotationOrder =
   XYZ

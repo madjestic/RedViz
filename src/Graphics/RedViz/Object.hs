@@ -27,7 +27,6 @@ data Object
      { transform :: Transformable
      , drws      :: [Drawable]
      , selected  :: Bool
-     , oslvrs    :: [Solvable]
      , uuid      :: UUID
      , parent    :: UUID
      } deriving Show
@@ -38,7 +37,6 @@ initObj =
   { transform = defaultTransformable
   , drws     = []
   , selected = False
-  , oslvrs   = []
   , uuid     = nil
   , parent   = nil
   }
@@ -62,7 +60,6 @@ toObject txTuples' dms' pobj = do
       Object
       { transform = defaultTransformable {tslvrs = tsolvers pobj}
       , drws      = drs
-      , oslvrs    = osolvers pobj
       , selected  = False
       , uuid      = puuid   pobj
       , parent    = pparent pobj
@@ -95,18 +92,18 @@ testPreObject =
     , modelIDXs      = [0]
     , tsolvers       =
       [ Identity
-      -- , Rotate
+      -- , Turnable
       --   { space = ObjectSpace
       --   , cxyz  = V3 0 0 0
       --   , rord  = XYZ
       --   , rxyz  = V3 0 0 (0.5)
       --   , avel  = V3 0 0 0.05 }
-      , Translate
+      , Movable
         { space   = WorldSpace
         , txyz    = V3 1.5 0 0
         , tvel    = V3 0.0 0 0
-        , kinslv = Identity }
-        -- , Rotate
+        , kinslv = [Identity] }
+        -- , Turnable
         -- { space   = ObjectSpace
         -- , cxyz    = V3 0 0 0
         -- , rord    = XYZ
@@ -120,14 +117,14 @@ testPreObject =
         --   -- , amp  = 1.0
         --   -- , func = id }
         -- }
-      -- , Translate
+      -- , Movable
       --  { space = WorldSpace
       --  , txyz  = V3 1.1 0 0
       --  , tvel  = V3 0.0 0 0 }
       ]
     , osolvers    =
       [ Identity
-      , Select
+      , Selectable
       ]
       , options   = defaultBackendOptions
       , pparent   = nil
@@ -141,24 +138,24 @@ testPreObject =
           , modelIDXs      = [1]
           , tsolvers       =
             [ Identity
-            -- , Rotate
+            -- , Turnable
             --   { space = ObjectSpace
             --   , cxyz  = V3 0 0 0
             --   , rord  = XYZ
             --   , rxyz  = V3 0 0 (0.5)
             --   , avel  = V3 0 0 0.05 }
-            , Translate
+            , Movable
               { space   = WorldSpace
               , txyz    = V3 1.5 0 0
               , tvel    = V3 0.0 0 0
-              , kinslv = Identity }
-              , Rotate
+              , kinslv = [Identity] }
+              , Turnable
               { space   = ObjectSpace
               , cxyz    = V3 0 0 0
               , rord    = XYZ
               , rxyz    = V3 0 0 (0.5)
               , avel    = V3 0 0 (0.02)
-              , kinslv  = Identity
+              , kinslv  = [Identity]
                 -- Speed
                 -- { life = 1.0
                 -- , age  = 0.0
@@ -166,15 +163,15 @@ testPreObject =
                 -- , amp  = 1.0
                 -- , func = id }
               }
-            -- , Translate
+            -- , Movable
             --  { space = WorldSpace
             --  , txyz  = V3 1.1 0 0
             --  , tvel  = V3 0.0 0 0 }
-              , Parent 
+              , Parentable 
             ]
           , osolvers  =
             [ Identity
-            , Select
+            , Selectable
             ]
             , options   = defaultBackendOptions
             , pparent   = nil

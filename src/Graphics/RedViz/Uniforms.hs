@@ -88,7 +88,6 @@ bindUniforms cam' unis' dr =
         resY          = fromIntegral $ fromEnum $ snd u_res' :: Double
         u_res         = Vector2 (realToFrac resX) (realToFrac resY) :: Vector2 GLfloat
 
-    --print u_res
     location1         <- SV.get (uniformLocation u_prog' "u_resolution")
     uniform location1 $= u_res
     --print $ "u_res : " ++ show (u_res')
@@ -101,7 +100,7 @@ bindUniforms cam' unis' dr =
         foc = u_cam_f' -- focal length
         proj =
           LP.infinitePerspective
-          (2.0 * atan ( apt/foc/2.0 )) -- FOV
+          (atan ( apt/foc/2.0 )) -- FOV
           (resX/resY)                  -- Aspect
           0.01                         -- Near
 
@@ -109,7 +108,6 @@ bindUniforms cam' unis' dr =
     location3         <- SV.get (uniformLocation u_prog' "persp")
     uniform location3 $= persp
 
-    --putStrLn "+++DEBUG+++"
     --print $ "camera : " ++ show (u_cam')
     camera            <- newMatrix RowMajor $ toList' u_cam' :: IO (GLmatrix GLfloat)
     location4         <- SV.get (uniformLocation u_prog' "camera")

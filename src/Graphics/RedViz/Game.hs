@@ -23,7 +23,7 @@ import Graphics.RedViz.Camera
 import Graphics.RedViz.Uniforms
 
 data Game = Game
-  { tick     :: Integer
+  { tick     :: Double
   , mpos     :: Point V2 CInt
   , quitGame :: Bool
   , cameras  :: [Camera]
@@ -40,7 +40,7 @@ data GameSettings = GameSettings
 initGame :: Game
 initGame =
   Game
-  { tick     = -1
+  { tick     = 0.0
   , mpos     = P (V2 0 0)
   , quitGame = False
   , cameras  = [defaultCam]

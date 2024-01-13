@@ -53,7 +53,7 @@ defaultCam =
 
 defaultCamSolver :: Solvable
 defaultCamSolver =
-  Controller
+  Controllable
   { cvel   = (V3 0 0 0) -- velocity
   , cypr   = (V3 0 0 0) -- rotation
   , cyprS  = (V3 0 0 0) -- sum of rotations
