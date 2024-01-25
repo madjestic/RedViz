@@ -24,8 +24,9 @@ import Linear.V2
 import Foreign.C
 
 import Graphics.RedViz.Backend
-import Graphics.RedViz.Object
+
 import Graphics.RedViz.Drawable
+import Graphics.RedViz.Entity
 
 data Widget
   =  Empty

@@ -24,7 +24,9 @@ import Graphics.RedViz.LoadShaders
 
 data Descriptor =
      Descriptor VertexArrayObject NumArrayIndices Program
-  deriving Show
+
+instance Show Descriptor where
+  show Descriptor{} = "Descriptor{}"
 
 toDescriptorMat :: FilePath -> IO [(Descriptor, R.Material)]
 toDescriptorMat file = do

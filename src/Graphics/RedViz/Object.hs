@@ -28,7 +28,9 @@ data Object
      , drws      :: [Drawable]
      , selected  :: Bool
      , uuid      :: UUID
-     , parent    :: UUID
+     , active    :: Bool
+     , name      :: String
+     , backend   :: BackendOptions
      } deriving Show
 
 initObj :: Object
@@ -38,7 +40,8 @@ initObj =
   , drws     = []
   , selected = False
   , uuid     = nil
-  , parent   = nil
+  , active   = False
+  , name     = "initObj"
   }
 
 toObject :: [(Texture, TextureObject)] -> [[(Descriptor, R.Material)]]-> PreObject -> IO Object
@@ -62,7 +65,9 @@ toObject txTuples' dms' pobj = do
       , drws      = drs
       , selected  = False
       , uuid      = puuid   pobj
-      , parent    = pparent pobj
+      , active    = pactive pobj
+      , name      = pname   pobj
+      , backend   = options pobj
       }
 
   return obj
@@ -71,111 +76,12 @@ data PreObject
   =  PreObject
      { pname      :: String
      , ptype      :: PType
-     , pidx       :: Integer
      , puuid      :: UUID
      , modelIDXs  :: [Int]
      , tsolvers   :: [Solvable] -- transformable solvers
-     , osolvers   :: [Solvable] -- properties solvers
+     , posolvers  :: [Solvable] -- properties solvers
      , options    :: BackendOptions
      , pparent    :: UUID
      , pchildren  :: [PreObject]
+     , pactive    :: Bool
      } deriving Show
-
-testPreObject :: PreObject
-testPreObject = 
-    PreObject
-    {
-      pname          = "pig_object"
-    , ptype          = Default
-    , pidx           = 0
-    , puuid          = nil
-    , modelIDXs      = [0]
-    , tsolvers       =
-      [ Identity
-      -- , Turnable
-      --   { space = ObjectSpace
-      --   , cxyz  = V3 0 0 0
-      --   , rord  = XYZ
-      --   , rxyz  = V3 0 0 (0.5)
-      --   , avel  = V3 0 0 0.05 }
-      , Movable
-        { space   = WorldSpace
-        , txyz    = V3 1.5 0 0
-        , tvel    = V3 0.0 0 0
-        , kinslv = [Identity] }
-        -- , Turnable
-        -- { space   = ObjectSpace
-        -- , cxyz    = V3 0 0 0
-        -- , rord    = XYZ
-        -- , rxyz    = V3 0 0 (0.5)
-        -- , avel    = V3 0 0 (0.1)
-        -- , kinslv  = Identity
-        --   -- Speed
-        --   -- { life = 1.0
-        --   -- , age  = 0.0
-        --   -- , inc  = 0.01
-        --   -- , amp  = 1.0
-        --   -- , func = id }
-        -- }
-      -- , Movable
-      --  { space = WorldSpace
-      --  , txyz  = V3 1.1 0 0
-      --  , tvel  = V3 0.0 0 0 }
-      ]
-    , osolvers    =
-      [ Identity
-      , Selectable
-      ]
-      , options   = defaultBackendOptions
-      , pparent   = nil
-      , pchildren =
-        [ PreObject
-          {
-            pname          = "grid_object"
-          , ptype          = Default
-          , pidx           = 0
-          , puuid          = nil
-          , modelIDXs      = [1]
-          , tsolvers       =
-            [ Identity
-            -- , Turnable
-            --   { space = ObjectSpace
-            --   , cxyz  = V3 0 0 0
-            --   , rord  = XYZ
-            --   , rxyz  = V3 0 0 (0.5)
-            --   , avel  = V3 0 0 0.05 }
-            , Movable
-              { space   = WorldSpace
-              , txyz    = V3 1.5 0 0
-              , tvel    = V3 0.0 0 0
-              , kinslv = [Identity] }
-              , Turnable
-              { space   = ObjectSpace
-              , cxyz    = V3 0 0 0
-              , rord    = XYZ
-              , rxyz    = V3 0 0 (0.5)
-              , avel    = V3 0 0 (0.02)
-              , kinslv  = [Identity]
-                -- Speed
-                -- { life = 1.0
-                -- , age  = 0.0
-                -- , inc  = 0.01
-                -- , amp  = 1.0
-                -- , func = id }
-              }
-            -- , Movable
-            --  { space = WorldSpace
-            --  , txyz  = V3 1.1 0 0
-            --  , tvel  = V3 0.0 0 0 }
-              , Parentable 
-            ]
-          , osolvers  =
-            [ Identity
-            , Selectable
-            ]
-            , options   = defaultBackendOptions
-            , pparent   = nil
-            , pchildren = []
-          }            
-        ]
-    }      

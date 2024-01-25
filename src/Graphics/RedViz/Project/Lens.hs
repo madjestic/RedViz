@@ -33,7 +33,6 @@ module Graphics.RedViz.Project.Lens
   , background
   , PreObject (..)
   , pname
-  , pidx
   , ptype
   , pcname
   , modelIDXs
@@ -55,7 +54,6 @@ module Graphics.RedViz.Project.Lens
   , gui
   ) where
 
---import Lens.Micro hiding (Empty)
 import Lens.Micro.Extras
 import Lens.Micro.TH
 import Data.Aeson
@@ -70,14 +68,13 @@ import Data.UUID
 import Graphics.RedViz.Project.Model
 import Graphics.RedViz.Backend
 
-  --import Debug.Trace as DT
+--import Debug.Trace as DT
 
 data PreObject
   =  PreObject
      {
        _pname          :: String
      , _ptype          :: String
-     , _pidx           :: Integer
      , _uuid           :: UUID
      , _modelIDXs      :: [Int]
      , _presolvers     :: [String]
@@ -125,7 +122,6 @@ data PreGUI
      {
        _fonts   :: [Model]
      , _icons   :: [Model]
---     , _gui     :: FilePath
      } deriving Show
 $(makeLenses ''PreGUI)
 deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''PreGUI
@@ -259,7 +255,6 @@ defaultProject =
     {
       _pname          = "Box"                    
     , _ptype          = ""                       
-    , _pidx           = 0                        
     , _uuid           = nil                      
     , _modelIDXs      = [0]                      
     , _presolvers     = []                       

@@ -8,8 +8,7 @@ module Graphics.RedViz.Project
 import Data.UUID
 import Data.UUID.V4
 
-import Graphics.RedViz.Object
-import Graphics.RedViz.Camera
+import Graphics.RedViz.Entity
 
 data Project
   =  Project
@@ -129,6 +128,8 @@ setUUID pobj0@(PreObject{pchildren = (p:ps)}) = do
   return pobj0 { puuid     = genUUID 
                , pchildren = p':ps' }
 
+-- this is flattening the (pre)object tree into a list of (pre)objects
+-- TODO: pass on tsolvers from parent to children
 flatten :: PreObject -> [PreObject]
 flatten pobj0@(PreObject{pchildren = []})     = [childFree pobj0]
 flatten pobj0@(PreObject{pchildren = [p]})    = childFree pobj0 : flatten p

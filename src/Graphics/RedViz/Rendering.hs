@@ -32,14 +32,14 @@ import Linear.V2
 import Linear.V4
 import SDL hiding (Texture, normalize)
 
-import Graphics.RedViz.Camera
 import Graphics.RedViz.Descriptor
 import Graphics.RedViz.Drawable
-import Graphics.RedViz.Object hiding (uuid)
+import Graphics.RedViz.Entity hiding (uuid)
 import Graphics.RedViz.Transformable
 import Graphics.RedViz.Uniforms
 import Graphics.RedViz.Widget
 import Graphics.RedViz.Game
+import Graphics.RedViz.Backend (BackendOptions(primitiveMode), ptSize)
 
 renderWidget :: Camera -> Uniforms -> Widget -> IO ()
 renderWidget cam unis' wgt = case wgt of
@@ -88,7 +88,8 @@ renderObject cam unis' obj = do
             bindUniforms cam unis' dr {u_xform = xform (transform obj)} 
             let (Descriptor triangles numIndices _) = descriptor dr
             bindVertexArrayObject $= Just triangles
-            drawElements Triangles numIndices UnsignedInt nullPtr
+            GL.pointSize $= (ptSize . backend $ obj)
+            drawElements (primitiveMode . backend $ obj) numIndices UnsignedInt nullPtr
         ) (drws obj)
 
 openWindow :: Text -> (CInt, CInt) -> IO SDL.Window
@@ -126,7 +127,7 @@ renderOutput window _ (g,_) = do
   clearColor $= Color4 0.0 0.0 0.0 1.0
   GL.clear [ColorBuffer, DepthBuffer]
 
-  GL.pointSize $= 10.0
+  --GL.pointSize $= 10.0
   GL.blend $= Enabled
   GL.depthMask $= Enabled
   depthFunc $= Just Less

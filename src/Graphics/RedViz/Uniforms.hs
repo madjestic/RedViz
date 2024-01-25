@@ -25,7 +25,7 @@ import Linear.Projection as LP        (infinitePerspective)
 import Linear.V4
 import GHC.Float
 
-import Graphics.RedViz.Camera
+import Graphics.RedViz.Entity
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.Descriptor
 import Graphics.RedViz.LoadShaders
@@ -72,7 +72,7 @@ bindUniforms cam' unis' dr =
     let
       u_xform'  = u_xform  dr
       d'        = descriptor dr :: Descriptor
-      u_cam'    = (xform.ctransform) cam'
+      u_cam'    = (xform.transform) cam'
       u_mouse'  = (0,0) :: (Int, Int)
       (Uniforms u_time' u_res' _ u_cam_a' u_cam_f' u_ypr' u_yprS' u_vel' u_accel') = unis'
       (Descriptor _ _ u_prog') = d'

@@ -15,20 +15,15 @@
 {-# LANGUAGE CPP    #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
---{-# LANGUAGE InstanceSigs #-}
---{-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 module Graphics.RedViz.Material
   ( Material (..)
---  , name
   , defaultMat
   , Graphics.RedViz.Material.read
   , write
---  , textures
   ) where  
 
---import Control.Lens hiding ((.=))
 import Control.Monad (when)
 import Data.Aeson
 import Data.Aeson.Encode.Pretty

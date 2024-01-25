@@ -1,20 +1,13 @@
---{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
 
 module Graphics.RedViz.Backend where
 
---import Control.Lens hiding (Empty, (.=))
 import Data.Aeson
 import GHC.Generics
 
--- import Data.Aeson (Options(fieldLabelModifier))
--- import Data.Aeson.TH
-
 import Graphics.Rendering.OpenGL
---import Graphics.Rendering.OpenGL.GL.Capability (Capability(..))
---import Graphics.RedViz.Primitives (Primitive(PolyLine))
 
 data Backend
   = OpenGL
@@ -28,9 +21,6 @@ data BackendOptions
      , ptSize        :: Float
      , depthMsk      :: Capability
      } deriving (Generic, Show)
---deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''BackendOptions
--- instance ToJSON Capability where
---   toJSON = show a
 instance FromJSON BackendOptions
 
 instance ToJSON Capability where
@@ -95,9 +85,6 @@ instance FromJSON (Color4 GLfloat) where
 
 defaultBackendOptions :: BackendOptions
 defaultBackendOptions = defOpts
-
-defaultBackendOptions' :: BackendOptions
-defaultBackendOptions' = defOpts'
   
 defOpts :: BackendOptions
 defOpts =
@@ -108,11 +95,20 @@ defOpts =
       , depthMsk      = Enabled
       }
 
-defOpts' :: BackendOptions
-defOpts' =
+linesOpts :: BackendOptions
+linesOpts =
       BackendOptions
       { primitiveMode = Lines
       , bgrColor      = Color4 0.0 0.5 0.0 1.0
       , ptSize        = 1.0
+      , depthMsk      = Enabled
+      }
+
+pointsOpts :: BackendOptions
+pointsOpts =
+      BackendOptions
+      { primitiveMode = Points
+      , bgrColor      = Color4 0.0 0.5 0.0 1.0
+      , ptSize        = 3.0
       , depthMsk      = Enabled
       }     

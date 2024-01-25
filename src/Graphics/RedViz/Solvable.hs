@@ -2,6 +2,7 @@ module Graphics.RedViz.Solvable where
 
 import Linear.V3
 import Codec.GlTF.Prelude (Object)
+import Data.UUID
 
 data CoordSys =
     WorldSpace
@@ -31,7 +32,7 @@ data Solvable =
     , cyprS :: V3 Double  -- yaw/pitch/camRoll Sum
     }
   | Parentable
-  | ParentableToPlayer
+    { parent :: UUID }
   | Fadable
     { life :: Double
     , age  :: Double
@@ -39,19 +40,21 @@ data Solvable =
     , amp  :: Double
     , func :: Double -> Double
     }
-  | Pullable
+  | Attractable
     { mass :: Double
     , acc  :: V3 Double
     }
 
 instance Show Solvable where
-  show Fadable{}      = "Fadable"
-  show Identity     = "Identity"
-  show Movable{}  = "Movable"
-  show Turnable{}     = "Turnable"
-  show Selectable       = "Selectable"
-  show Parentable       = "Parentable"
-  show Controllable{} = "Controllable"
+  show Identity          = "Identity"
+  show Fadable{}         = "Fadable"
+  show Movable{}         = "Movable"
+  show Turnable{}        = "Turnable"
+  show Selectable        = "Selectable"
+  show (Parentable uid)  = "Parentable, uid :" ++ show uid
+  show Controllable{}    = "Controllable"
+  show (Attractable m a) = "Attractable :" ++ show m ++ " " ++ show a
+  show _                 = "Unknown Solver"
 
 data RotationOrder =
   XYZ

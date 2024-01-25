@@ -17,9 +17,8 @@ import Linear.Affine
 import Linear.V2
 import Foreign.C.Types
 
-import Graphics.RedViz.Object
+import Graphics.RedViz.Entity
 import Graphics.RedViz.Widget
-import Graphics.RedViz.Camera
 import Graphics.RedViz.Uniforms
 
 data Game = Game
