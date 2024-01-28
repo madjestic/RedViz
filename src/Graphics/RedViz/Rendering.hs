@@ -120,7 +120,7 @@ openWindow title (sizex,sizey) = do
     return window
   
 renderOutput :: Window -> GameSettings -> (Game, Maybe Bool) -> IO Bool
-renderOutput _ _ ( _,Nothing) = quit >> return True
+renderOutput _ _ ( _,Nothing) = SDL.quit >> return True
 --renderOutput window gs (g,_) = do
 renderOutput window _ (g,_) = do
   let
@@ -133,7 +133,7 @@ renderOutput window _ (g,_) = do
   depthFunc $= Just Less
   cullFace  $= Just Back
 
-  mapM_ (renderObject (head $ cameras g) (uniforms g)) (objs g)
-  mapM_ (renderWidget (head $ cameras g) (uniforms g)) (wgts g)
+  mapM_ (renderObject (head $ cams g) (unis g)) (objs g)
+  mapM_ (renderWidget (head $ cams g) (unis g)) (wgts g)
 
   glSwapWindow window >> return False  

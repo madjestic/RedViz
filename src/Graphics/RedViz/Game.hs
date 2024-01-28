@@ -22,13 +22,13 @@ import Graphics.RedViz.Widget
 import Graphics.RedViz.Uniforms
 
 data Game = Game
-  { tick     :: Double
-  , mpos     :: Point V2 CInt
-  , quitGame :: Bool
-  , cameras  :: [Camera]
-  , uniforms :: Uniforms
-  , objs     :: [Object]
-  , wgts     :: [Widget]
+  { tick :: Double
+  , mpos :: Point V2 CInt
+  , quit :: Bool
+  , cams :: [Camera]
+  , unis :: Uniforms
+  , objs :: [Object]
+  , wgts :: [Widget]
   } deriving Show
 
 data GameSettings = GameSettings
@@ -41,9 +41,9 @@ initGame =
   Game
   { tick     = 0.0
   , mpos     = P (V2 0 0)
-  , quitGame = False
-  , cameras  = [defaultCam]
-  , uniforms = defaultUniforms
+  , quit = False
+  , cams  = [defaultCam]
+  , unis = defaultUniforms
   , objs     = []
   , wgts     = []
   }
