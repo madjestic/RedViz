@@ -11,6 +11,7 @@ data CoordSys =
 
 data Solvable =
     Identity
+  | Constant
   | Movable
     { space    :: CoordSys
     , txyz     :: V3 Double -- offset
