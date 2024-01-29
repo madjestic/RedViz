@@ -5,7 +5,7 @@ import Linear.V4
 
 import Graphics.RedViz.Solvable
 
-data Transformable
+data Transformable -- TODO: move Transformable to Component (Solvable)
   =  Transformable
      { xform  :: M44 Double
      , tslvrs :: [Solvable]

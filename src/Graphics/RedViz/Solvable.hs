@@ -9,7 +9,7 @@ data CoordSys =
   | ObjectSpace
   deriving Show
 
-data Solvable =
+data Solvable = -- TODO: rename Solvable to Component
     Identity
   | Constant
   | Movable
@@ -33,7 +33,8 @@ data Solvable =
     , cyprS :: V3 Double  -- yaw/pitch/camRoll Sum
     }
   | Parentable
-    { parent :: UUID }
+    { parent   :: UUID
+    , parented :: Bool }
   | Fadable
     { life :: Double
     , age  :: Double
@@ -47,15 +48,15 @@ data Solvable =
     }
 
 instance Show Solvable where
-  show Identity          = "Identity"
-  show Fadable{}         = "Fadable"
-  show Movable{}         = "Movable"
-  show Turnable{}        = "Turnable"
-  show Selectable        = "Selectable"
-  show (Parentable uid)  = "Parentable, uid :" ++ show uid
-  show Controllable{}    = "Controllable"
-  show (Attractable m a) = "Attractable :" ++ show m ++ " " ++ show a
-  show _                 = "Unknown Solver"
+  show Identity           = "Identity"
+  show Fadable{}          = "Fadable"
+  show Movable{}          = "Movable"
+  show Turnable{}         = "Turnable"
+  show Selectable         = "Selectable"
+  show (Parentable uid p) = "Parentable, uid :" ++ show uid
+  show Controllable{}     = "Controllable"
+  show (Attractable m a)  = "Attractable :" ++ show m ++ " " ++ show a
+  show _                  = "Unknown Solver"
 
 data RotationOrder =
   XYZ

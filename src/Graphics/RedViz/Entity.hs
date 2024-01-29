@@ -47,7 +47,7 @@ data Entity
      , slvrs      :: [Solvable]
      , uuid       :: UUID
      , parent     :: UUID
-     , parented   :: Bool
+     --, parented   :: Bool
      -- camera
      , apt        :: Double
      , foc        :: Double
@@ -61,7 +61,7 @@ data Entity
      , backend    :: BackendOptions
      } deriving Show
 
-defaultEntity :: Entity
+defaultEntity :: Entity -- TODO: move local properties to Components
 defaultEntity =
   Entity
   { lable      = "defaultEntity"
@@ -69,7 +69,7 @@ defaultEntity =
   , slvrs      = []
   , uuid       = nil
   , parent     = nil
-  , parented   = False
+  --, parented   = False
   -- camera
   , apt        = 50.0
   , foc        = 100.0
