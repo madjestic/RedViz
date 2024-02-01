@@ -7,7 +7,6 @@ import Codec.GlTF.Prelude (Object)
 import Data.UUID
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.Backend (BackendOptions, defaultBackendOptions)
---import Graphics.RedViz.Entity (Entity)
 
 data CoordSys =
     WorldSpace
@@ -73,29 +72,35 @@ data Component = -- TODO: rename Component to Component
 -- TODO: add missing Component instances
 instance Show Component where
   show Identity
-    = "Identity"
+    = "Identity" ++ "\n"
+  show Constant
+    = "Constant" ++ "\n"
   show Fadable{}
-    = "Fadable"
-  show Movable{}
-    = "Movable"
+    = "Fadable" ++ "\n"
+  show (Movable space' txyz' tvel' kinslvs')
+    = "Movable" ++ "\n" 
+      ++ "\t" ++ show space' ++ "\n"
+      ++ "\t" ++ show txyz'  ++ "\n"
+      ++ "\t" ++ show tvel'  ++ "\n"
+      ++ "\t" ++ show kinslvs'
   show Turnable{}
-    = "Turnable"
+    = "Turnable" ++ "\n"
   show (Selectable s)
-    = "Selectable, selected :" ++ show s
+    = "Selectable, selected :" ++ show s ++ "\n"
   show (Parentable uid p)
-    = "Parentable, uid :" ++ show uid
+    = "Parentable, uid :" ++ show uid ++ "\n"
   show Controllable{}
-    = "Controllable"
+    = "Controllable" ++ "\n"
   show (Attractable m a)
-    = "Attractable :" ++ show m ++ " " ++ show a
+    = "Attractable :" ++ show m ++ " " ++ show a ++ "\n"
   show (Renderable ms ds a b) =
     "Renderable :" ++ show ms ++ "\n"  ++ show ds ++ "\n"   
   show (Camerable{})
-    = "Camerable"
-  show (Transformable{})
-    = "Transformable"
+    = "Camerable" ++ "\n"
+  show (Transformable xform' tslvrs)
+    = "Transformable : " ++ show xform' ++ " " ++ show tslvrs ++ "\n"
   show _
-    = "Unknown Solver"
+    = "Unknown Solver" ++ "\n"
 
 data RotationOrder =
   XYZ
@@ -155,5 +160,3 @@ defaultControllable = Controllable
   , keyboardRS = 0.05    -- keyboard "rotation sensitivity"
   , keyboardTS = 0.05    -- keyboard "translation sensitivity"
   }
-
-

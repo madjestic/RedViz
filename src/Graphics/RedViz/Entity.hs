@@ -22,7 +22,7 @@ import Linear.Matrix
 import Lens.Micro
 import Lens.Micro.Extras
 
-import Graphics.RedViz.Component
+import Graphics.RedViz.Component as C
 import Graphics.RedViz.Descriptor
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.Backend (BackendOptions, defaultBackendOptions)
@@ -96,7 +96,7 @@ fromSchema txTuples' dms' sch = do
             xformSolver :: M44 Double -> Component -> M44 Double
             xformSolver mtx0 slv =
               case slv of
-                Identity -> identity
+                Identity -> mtx0
                 Movable cs pos _ _ ->
                   case cs of
                     WorldSpace  -> identity & translation .~ pos
@@ -159,39 +159,39 @@ camerable :: Entity -> Component
 camerable s = case camerables s of [] -> defaultCamerable; _ -> head $ camerables s
 
 camerables :: Entity -> [Component]
-camerables t = filter (\case (Camerable{}) -> True; _ -> False; ) (cmps t)
+camerables t = [ x | x@(Camerable {} ) <- cmps t ]
 
 
 selectable :: Entity -> Component
 selectable s = case selectables s of [] -> Selectable False; _ -> head $ selectables s
 
 selectables :: Entity -> [Component]
-selectables t = filter (\case (Selectable{}) -> True; _ -> False; ) (cmps t)
+selectables t = [ x | x@(Selectable {} ) <- cmps t ]
 
 
 parentable :: Entity -> Component
 parentable s = case parentables s of [] -> defaultParentable; _ -> head $ parentables s
 
 parentables :: Entity -> [Component]
---parentables t = filter (\case (Parentable{}) -> True; _ -> False; ) (cmps t)
-parentables t = [ x | x@(Parentable {} ) <- cmps t ]                  
+parentables t = [ x | x@(Parentable {} ) <- cmps t ]
 
 
 renderable :: Entity -> Component
 renderable s = case renderables s of [] -> defaultRenderable; _ -> head $ renderables s
 
 renderables :: Entity -> [Component]
-renderables t = filter (\case (Renderable{}) -> True; _ -> False; ) (cmps t)
+renderables t = [ x | x@(Renderable {} ) <- cmps t ]
 
 
 transformable :: Entity -> Component
 transformable s = case transformables s of [] -> defaultTransformable; _ -> head $ transformables s
 
 transformables :: Entity -> [Component]
-transformables t = filter (\case (Transformable{}) -> True; _ -> False; ) (cmps t)
+transformables t = [ x | x@(Transformable {} ) <- cmps t ]
+
 
 controllable :: Entity -> Component
 controllable s = case controllables s of [] -> defaultControllable; _ -> head $ controllables s
 
 controllables :: Entity -> [Component]
-controllables t = filter (\case (Controllable{}) -> True; _ -> False; ) (cmps t)
+controllables t = [ x | x@(Controllable {} ) <- cmps t ]
