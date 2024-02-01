@@ -13,17 +13,17 @@ import Graphics.RedViz.Entity
 data Project
   =  Project
      {
-       projname       :: String
-     , resx           :: Int
-     , resy           :: Int
-     , camMode        :: String
-     , models         :: [FilePath]
-     , fontModels     :: [FilePath]
-     , iconModels     :: [FilePath]     
-     , preObjects     :: [PreObject]
-     , preFontObject  :: [PreObject]
-     , preIconObject  :: [PreObject]     
-     , pcameras       :: [Camera]
+       projname   :: String
+     , resx       :: Int
+     , resy       :: Int
+     , camMode    :: String
+     , models     :: [FilePath]
+     , fontModels :: [FilePath]
+     , iconModels :: [FilePath]     
+     , pobjects   :: [Schema]
+     , pfonts     :: [Schema]
+     , picons     :: [Schema]     
+     , pcameras   :: [Schema]
      } deriving Show
 
 sharedFonts :: [FilePath]
@@ -108,32 +108,34 @@ sharedFonts =
 
 setProjectUUID :: Project -> IO Project
 setProjectUUID prj0 = do
-  pobjs' <- mapM setUUID (preObjects prj0)
-  return prj0 { preObjects = pobjs' }
+  pobjs' <- mapM setUUID (pobjects prj0)
+  pcams' <- mapM setUUID (pcameras prj0)
+  return prj0 { pobjects = pobjs'
+              , pcameras = pcams' }
 
-setUUID :: PreObject -> IO PreObject
-setUUID pobj0@(PreObject{pchildren = []}) = do
+setUUID :: Schema -> IO Schema
+setUUID pobj0@(Schema{schildren = []}) = do
   genUUID  <- nextRandom :: IO UUID
-  return pobj0 { puuid = genUUID }
-setUUID pobj0@(PreObject{pchildren = [p]}) = do
+  return pobj0 { suuid = genUUID }
+setUUID pobj0@(Schema{schildren = [p]}) = do
   genUUID  <- nextRandom :: IO UUID
   genUUID' <- nextRandom :: IO UUID
-  return pobj0 { puuid     = genUUID
-               , pchildren = [p { pparent = genUUID
-                                , puuid   = genUUID'}] }
-setUUID pobj0@(PreObject{pchildren = (p:ps)}) = do
+  return pobj0 { suuid     = genUUID
+               , schildren = [p { sparent = genUUID
+                                , suuid   = genUUID'}] }
+setUUID pobj0@(Schema{schildren = (p:ps)}) = do
   genUUID  <- nextRandom :: IO UUID
-  p'  <- setUUID p --(p{pparent = genUUID})
+  p'  <- setUUID p --(p{sparent = genUUID})
   ps' <- mapM setUUID ps
-  return pobj0 { puuid     = genUUID 
-               , pchildren = p':ps' }
+  return pobj0 { suuid     = genUUID 
+               , schildren = p':ps' }
 
 -- this is flattening the (pre)object tree into a list of (pre)objects
 -- TODO: pass on tsolvers from parent to children
-flatten :: PreObject -> [PreObject]
-flatten pobj0@(PreObject{pchildren = []})     = [childFree pobj0]
-flatten pobj0@(PreObject{pchildren = [p]})    = childFree pobj0 : flatten p
-flatten pobj0@(PreObject{pchildren = (p:ps)}) = childFree pobj0 : concat (flatten p : (flatten <$> ps))
+flatten :: Schema -> [Schema]
+flatten pobj0@(Schema{schildren = []})     = [childFree pobj0]
+flatten pobj0@(Schema{schildren = [p]})    = childFree pobj0 : flatten p
+flatten pobj0@(Schema{schildren = (p:ps)}) = childFree pobj0 : concat (flatten p : (flatten <$> ps))
 
-childFree :: PreObject -> PreObject
-childFree pobj0 = (pobj0{pchildren = []})
+childFree :: Schema -> Schema
+childFree pobj0 = (pobj0{schildren = []})

@@ -35,11 +35,13 @@ import SDL hiding (Texture, normalize)
 import Graphics.RedViz.Descriptor
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.Entity hiding (uuid)
-import Graphics.RedViz.Transformable
+import Graphics.RedViz.Component
 import Graphics.RedViz.Uniforms
 import Graphics.RedViz.Widget
 import Graphics.RedViz.Game
 import Graphics.RedViz.Backend (BackendOptions(primitiveMode), ptSize)
+
+import Debug.Trace as DT
 
 renderWidget :: Camera -> Uniforms -> Widget -> IO ()
 renderWidget cam unis' wgt = case wgt of
@@ -51,10 +53,13 @@ renderWidget cam unis' wgt = case wgt of
         let (Descriptor triangles numIndices _) = descriptor dr
         bindVertexArrayObject $= Just triangles
         drawElements Triangles numIndices UnsignedInt nullPtr
-        ) (head idrs) -- cursor font index is 75
+    ) (head idrs) -- cursor font index is 75
+        --) (head (DT.trace ("idrs :" ++ show (length idrs)) idrs)) -- cursor font index is 75
     where
       idrs :: [Drawable]
-      idrs = concatMap drws (icons wgt)
+      idrs = concatMap drws $ concatMap renderables $ icons wgt
+      --idrs = concatMap drws $ DT.trace ("renderable :" ++ show (concatMap renderable $ icons wgt )) $ concatMap renderable $ DT.trace ("icons wgt :" ++ show (length $ icons wgt )) $ icons wgt
+        --where renderable cs = filter (\c -> case c of Objectable {} -> True; _-> False;) cs
   TextField False _ _ _ _   -> do return ()
   TextField _ s _ fmt _ ->
     mapM_
@@ -69,14 +74,14 @@ renderWidget cam unis' wgt = case wgt of
     (\obj -> do
         mapM_
           (\dr -> do
-              bindUniforms cam unis' dr {u_xform = xform (transform obj)} 
+              bindUniforms cam unis' dr {u_xform = xform . transformable $ obj} 
               let (Descriptor triangles numIndices _) = descriptor dr
               bindVertexArrayObject $= Just triangles
               --drawElements (primitiveMode $ doptions dr) numIndices GL.UnsignedInt nullPtr
               drawElements (Lines) numIndices UnsignedInt nullPtr
-          ) (drws (icons'!!1))) objs'
+          ) (drws . renderable $ icons'!!1)) objs'
   where
-    wdrs = concatMap drws (fonts wgt)      
+    wdrs = concatMap drws $ concatMap renderables $ fonts wgt      
 
 formatDrw :: Format -> Drawable -> Drawable
 --formatDrw fmt dr = dr
@@ -85,12 +90,12 @@ formatDrw _ dr = dr
 renderObject :: Camera -> Uniforms -> Object -> IO ()
 renderObject cam unis' obj = do
   mapM_ (\dr -> do
-            bindUniforms cam unis' dr {u_xform = xform (transform obj)} 
+            bindUniforms cam unis' dr {u_xform = xform . transformable $ obj} 
             let (Descriptor triangles numIndices _) = descriptor dr
             bindVertexArrayObject $= Just triangles
-            GL.pointSize $= (ptSize . backend $ obj)
-            drawElements (primitiveMode . backend $ obj) numIndices UnsignedInt nullPtr
-        ) (drws obj)
+            GL.pointSize $= (ptSize . backend . renderable $ obj)
+            drawElements (primitiveMode . backend . renderable $ obj) numIndices UnsignedInt nullPtr
+        ) (drws . renderable $ obj)
 
 openWindow :: Text -> (CInt, CInt) -> IO SDL.Window
 openWindow title (sizex,sizey) = do

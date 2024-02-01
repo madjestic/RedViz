@@ -24,7 +24,6 @@ import Linear.V2
 import Foreign.C
 
 import Graphics.RedViz.Backend
-
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.Entity
 
@@ -39,13 +38,13 @@ data Widget
      }
   |  Cursor
      { active   :: Bool
-     , icons    :: [Object]     
+     , icons    :: [Object] -- ~[Objectable]
      , cpos     :: Point V2 CInt
      , optionsW :: BackendOptions
      }
   |  Selector
      { active  :: Bool
      , icons   :: [Object]
-     , objects :: [Object]
+     , objects :: [Entity] 
      }
   deriving (Generic, Show)

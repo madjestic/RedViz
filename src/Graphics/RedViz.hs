@@ -15,10 +15,8 @@
 {-# LANGUAGE CPP    #-}
 
 module Graphics.RedViz
-
-  (
-    module Graphics.RedViz.Camera
-  , module Graphics.RedViz.Controllable
+  ( --
+    module Graphics.RedViz.Controllable
   , module Graphics.RedViz.Descriptor
   , module Graphics.RedViz.Input.Keyboard
   , module Graphics.RedViz.Input.Mouse
@@ -27,14 +25,12 @@ module Graphics.RedViz
   , module Graphics.RedViz.Project
   , module Graphics.RedViz.Project.Lens  
   , module Graphics.RedViz.Project.Model
-  , module Graphics.RedViz.Project.Utils
   , module Graphics.RedViz.Rendering  
   , module Graphics.RedViz.Utils
   , module Graphics.RedViz.VAO
   , module Graphics.RedViz.FromVector  
   ) where
 
-import           Graphics.RedViz.Camera
 import           Graphics.RedViz.Controllable
 import           Graphics.RedViz.Descriptor
 import           Graphics.RedViz.Input.Keyboard
@@ -44,7 +40,6 @@ import           Graphics.RedViz.PGeo
 import           Graphics.RedViz.Project
 import qualified Graphics.RedViz.Project.Lens
 import           Graphics.RedViz.Project.Model
-import           Graphics.RedViz.Project.Utils
 import           Graphics.RedViz.Rendering
 import           Graphics.RedViz.Utils
 import           Graphics.RedViz.VAO

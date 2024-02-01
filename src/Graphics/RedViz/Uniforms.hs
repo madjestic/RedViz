@@ -26,12 +26,12 @@ import Linear.V4
 import GHC.Float
 
 import Graphics.RedViz.Entity
+import Graphics.RedViz.Component
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.Descriptor
 import Graphics.RedViz.LoadShaders
 import Graphics.RedViz.Material
 import Graphics.RedViz.Texture
-import Graphics.RedViz.Transformable
 
 debug :: Bool
 #ifdef DEBUGSHADERS
@@ -72,7 +72,9 @@ bindUniforms cam' unis' dr =
     let
       u_xform'  = u_xform  dr
       d'        = descriptor dr :: Descriptor
-      u_cam'    = (xform.transform) cam'
+      u_cam'    = xform . transformable $ cam'
+        -- where transformable = case transformables of [] -> defaultTransformable; _ -> head transformables
+        --         where transformables = filter (\c -> case c of (Transformable{}) -> True; _ -> False; ) (cmps cam')
       u_mouse'  = (0,0) :: (Int, Int)
       (Uniforms u_time' u_res' _ u_cam_a' u_cam_f' u_ypr' u_yprS' u_vel' u_accel') = unis'
       (Descriptor _ _ u_prog') = d'

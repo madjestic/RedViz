@@ -17,10 +17,12 @@ module Graphics.RedViz.Entity where
 import Data.UUID
 import Linear.V3
 import Linear.V4 ( V4(V4) )
+import Linear.Quaternion
 import Linear.Matrix
+import Lens.Micro
+import Lens.Micro.Extras
 
-import Graphics.RedViz.Solvable hiding (parent)
-import Graphics.RedViz.Transformable
+import Graphics.RedViz.Component
 import Graphics.RedViz.Descriptor
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.Backend (BackendOptions, defaultBackendOptions)
@@ -31,144 +33,165 @@ import Graphics.Rendering.OpenGL.GL.Texturing
 type Object = Entity
 type Camera = Entity
 
-data PType = Default
-           | Font
-           | Icon
-
-instance Show PType where
-  show Default = "Default"
-  show Font    = "Font"
-  show Icon    = "Icon"
-
 data Entity
   =  Entity
      { lable      :: String
-     , transform  :: Transformable
-     , slvrs      :: [Solvable]
      , uuid       :: UUID
-     , parent     :: UUID
-     --, parented   :: Bool
-     -- camera
-     , apt        :: Double
-     , foc        :: Double
-     , mouseS     :: V3 Double -- mouse    "sensitivity"
-     , keyboardRS :: V3 Double -- keyboard "rotation sensitivity"
-     , keyboardTS :: V3 Double -- keyboard "translation sensitivity"
-     -- object
-     , drws       :: [Drawable]
-     , selected   :: Bool
-     , active     :: Bool
-     , backend    :: BackendOptions
+     , cmps       :: [Component]
      } deriving Show
 
 defaultEntity :: Entity -- TODO: move local properties to Components
 defaultEntity =
   Entity
   { lable      = "defaultEntity"
-  , transform  = defaultTransformable
-  , slvrs      = []
   , uuid       = nil
-  , parent     = nil
-  --, parented   = False
-  -- camera
-  , apt        = 50.0
-  , foc        = 100.0
-  , mouseS     = -0.0025 -- mouse    "sensitivity"
-  , keyboardRS = 0.05    -- keyboard "rotation sensitivity"
-  , keyboardTS = 0.05    -- keyboard "translation sensitivity"
-  -- object
-  , drws       = []
-  , selected   = False
-  , active     = False
-  , backend    = defaultBackendOptions
+  , cmps       = [] 
   } 
 
 initObj :: Entity
 initObj =
   defaultEntity
-  { transform = defaultTransformable
-  , drws     = []
-  , selected = False
-  , uuid     = nil
-  , active   = False
-  , lable    = "initObj"
+  { lable      = "initObj"
+  , uuid       = nil
+  , cmps       =
+    [ Transformable
+      { xform  =  
+        (V4
+         (V4 1 0 0 0)   -- <- . . . x ...
+         (V4 0 1 0 0)   -- <- . . . y ...
+         (V4 0 0 1 0)   -- <- . . . z-component of transform
+         (V4 0 0 0 1))
+      , tslvrs = []
+      }
+    ]
   }
 
-toObject :: [(Texture, TextureObject)] -> [[(Descriptor, R.Material)]]-> PreObject -> IO Entity
-toObject txTuples' dms' pobj = do
-  --print $ (options pobj)
+-- A convenience wrapper to generate an Object Entity.  So far there are only two flavors of Entity:
+-- Object and Camera, both are just Entity type-synonyms.  Distinction is arbitrary.
+fromSchema :: [(Texture, TextureObject)] -> [[(Descriptor, R.Material)]]-> Schema -> IO Entity
+fromSchema txTuples' dms' sch = do
   let
-    dms      = (dms'!!) <$> modelIDXs pobj
-    txs      = concatMap (\(_,m) -> R.textures m) $ concat dms :: [Texture]
-    txTuples = filter (\(tx,_) -> tx `elem` txs) txTuples'     :: [(Texture, TextureObject)]
-    drs =
-      toDrawable
-      (identity :: M44 Double) -- TODO: add result based on solvers composition
-      (options pobj)
-      txTuples
-      <$> concat dms
-      :: [Drawable]
-    
     obj =
       defaultEntity
-      { transform = defaultTransformable {tslvrs = tsolvers pobj}
-      , drws      = drs
-      , selected  = False
-      , uuid      = puuid   pobj
-      , active    = pactive pobj
-      , lable     = pname   pobj
-      , backend   = options pobj
-      , parent    = pparent pobj
+      { lable = slable sch
+      , uuid  = suuid  sch
+      , cmps  = updateComponent <$> scmps  sch      
       }
+      where
+        updateComponent :: Component -> Component
+        updateComponent t0@(Transformable {}) =
+          t0 { xform  = foldr1 (!*!) $ xformSolver (xform t0) <$> tslvrs t0
+             , tslvrs = updateSolver <$> tslvrs t0 }
+          where
+            updateSolver :: Component -> Component
+            updateSolver slv =
+              case slv of
+                Identity             -> slv
+                Movable _ pos _ ss   ->
+                  slv { txyz   = pos }
+                Turnable _ _ _ rxyz _ ss ->
+                  slv { rxyz   = rxyz }
+                _ -> slv                                                        
+          
+            xformSolver :: M44 Double -> Component -> M44 Double
+            xformSolver mtx0 slv =
+              case slv of
+                Identity -> identity
+                Movable cs pos _ _ ->
+                  case cs of
+                    WorldSpace  -> identity & translation .~ pos
+                    ObjectSpace -> undefined
+                Turnable _ _ rord rxyz _ _ -> transform' identity
+                  where
+                    transform' :: M44 Double -> M44 Double
+                    transform' mtx0' = mtx
+                      where
+                        mtx =
+                          mkTransformationMat
+                          rot
+                          tr
+                          where
+                            rot    = 
+                              identity !*!
+                              case rord of
+                                XYZ ->
+                                      fromQuaternion (axisAngle (mtx0'^.(_m33._x)) (rxyz^._x)) -- pitch
+                                  !*! fromQuaternion (axisAngle (mtx0'^.(_m33._y)) (rxyz^._y)) -- yaw
+                                  !*! fromQuaternion (axisAngle (mtx0'^.(_m33._z)) (rxyz^._z)) -- roll
+                            tr     = (identity::M44 Double)^.translation
+                _ -> identity
+        updateComponent r0@(Renderable {}) =
+          r0 { drws =
+               toDrawable
+               (identity :: M44 Double) -- TODO: add result based on solvers composition
+               (backend r0)
+               txTuples
+               <$> concat dms :: [Drawable] }
+          where          
+            dms      = (dms'!!) <$> modelIDXs r0
+            txs      = concatMap (\(_,m) -> R.textures m) $ concat dms :: [Texture]
+            txTuples = filter (\(tx,_) -> tx `elem` txs) txTuples'     :: [(Texture, TextureObject)]
+
+        updateComponent cmp = cmp
 
   return obj
 
-data PreObject
-  =  PreObject
-     { pname      :: String
-     , ptype      :: PType
-     , puuid      :: UUID
-     , modelIDXs  :: [Int]
-     , tsolvers   :: [Solvable] -- transformable solvers
-     , posolvers  :: [Solvable] -- properties solvers
-     , options    :: BackendOptions
-     , pparent    :: UUID
-     , pchildren  :: [PreObject]
-     , pactive    :: Bool
+-- Schema is a convenience step that fascilitates describing and generating hierarchic Entities.
+-- A nested schema gets flattened to a list of entities with Parentable component,
+-- propagating necessary properties from parents to children.
+data Schema
+  =  Schema
+     { slable    :: String
+     , suuid     :: UUID
+     , scmps     :: [Component]
+     , schildren :: [Schema]
+     , sparent   :: UUID
      } deriving Show
 
 defaultCam :: Entity
 defaultCam =
   defaultEntity
-  {
-    lable      = "PlayerCamera"
-  , apt        = 50.0
-  , foc        = 100.0
-  , transform  = defaultCamTransformable { tslvrs = [defaultCamSolver]}
-  , mouseS     = -0.0025
-  , keyboardRS = 0.05
-  , keyboardTS = 0.05
-  , slvrs      = []
+  { lable      = "PlayerCamera"
   , uuid       = nil
-  , parent     = nil
   }
 
-defaultCamSolver :: Solvable
-defaultCamSolver =
-  Controllable
-  { cvel   = (V3 0 0 0) -- velocity
-  , cypr   = (V3 0 0 0) -- rotation
-  , cyprS  = (V3 0 0 0) -- sum of rotations
-  }
+camerable :: Entity -> Component
+camerable s = case camerables s of [] -> defaultCamerable; _ -> head $ camerables s
 
-defaultCamTransformable :: Transformable
-defaultCamTransformable =
-  Transformable
-  { xform =  
-      (V4
-        (V4 1 0 0 0)    -- <- . . . x ...
-        (V4 0 1 0 0)    -- <- . . . y ...
-        (V4 0 0 1 20)    -- <- . . . z-component of transform
-        (V4 0 0 0 1))
-  , tslvrs = [Identity]
-  }
+camerables :: Entity -> [Component]
+camerables t = filter (\case (Camerable{}) -> True; _ -> False; ) (cmps t)
+
+
+selectable :: Entity -> Component
+selectable s = case selectables s of [] -> Selectable False; _ -> head $ selectables s
+
+selectables :: Entity -> [Component]
+selectables t = filter (\case (Selectable{}) -> True; _ -> False; ) (cmps t)
+
+
+parentable :: Entity -> Component
+parentable s = case parentables s of [] -> defaultParentable; _ -> head $ parentables s
+
+parentables :: Entity -> [Component]
+--parentables t = filter (\case (Parentable{}) -> True; _ -> False; ) (cmps t)
+parentables t = [ x | x@(Parentable {} ) <- cmps t ]                  
+
+
+renderable :: Entity -> Component
+renderable s = case renderables s of [] -> defaultRenderable; _ -> head $ renderables s
+
+renderables :: Entity -> [Component]
+renderables t = filter (\case (Renderable{}) -> True; _ -> False; ) (cmps t)
+
+
+transformable :: Entity -> Component
+transformable s = case transformables s of [] -> defaultTransformable; _ -> head $ transformables s
+
+transformables :: Entity -> [Component]
+transformables t = filter (\case (Transformable{}) -> True; _ -> False; ) (cmps t)
+
+controllable :: Entity -> Component
+controllable s = case controllables s of [] -> defaultControllable; _ -> head $ controllables s
+
+controllables :: Entity -> [Component]
+controllables t = filter (\case (Controllable{}) -> True; _ -> False; ) (cmps t)
