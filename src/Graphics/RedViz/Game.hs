@@ -39,13 +39,13 @@ data GameSettings = GameSettings
 initGame :: Game
 initGame =
   Game
-  { tick     = 0.0
-  , mpos     = P (V2 0 0)
+  { tick = 0.0
+  , mpos = P (V2 0 0)
   , quit = False
-  , cams  = [defaultCam]
+  , cams = [defaultEntity]
   , unis = defaultUniforms
-  , objs     = []
-  , wgts     = []
+  , objs = []
+  , wgts = []
   }
 
 initSettings :: GameSettings

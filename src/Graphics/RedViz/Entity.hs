@@ -46,24 +46,6 @@ defaultEntity =
   { lable      = "defaultEntity"
   , uuid       = nil
   , cmps       = [] 
-  } 
-
-initObj :: Entity
-initObj =
-  defaultEntity
-  { lable      = "initObj"
-  , uuid       = nil
-  , cmps       =
-    [ Transformable
-      { xform  =  
-        (V4
-         (V4 1 0 0 0)   -- <- . . . x ...
-         (V4 0 1 0 0)   -- <- . . . y ...
-         (V4 0 0 1 0)   -- <- . . . z-component of transform
-         (V4 0 0 0 1))
-      , tslvrs = []
-      }
-    ]
   }
 
 -- A convenience wrapper to generate an Object Entity.  So far there are only two flavors of Entity:
@@ -147,13 +129,6 @@ data Schema
      , schildren :: [Schema]
      , sparent   :: UUID
      } deriving Show
-
-defaultCam :: Entity
-defaultCam =
-  defaultEntity
-  { lable      = "PlayerCamera"
-  , uuid       = nil
-  }
 
 camerable :: Entity -> Component
 camerable s = case camerables s of [] -> defaultCamerable; _ -> head $ camerables s
