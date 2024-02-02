@@ -42,7 +42,8 @@ data Component = -- TODO: rename Component to Component
     }
   | Parentable
     { parent   :: UUID
-    , parented :: Bool }
+    , parented :: Bool
+    , active   :: Bool }
   | Fadable
     { life :: Double
     , age  :: Double
@@ -67,7 +68,6 @@ data Component = -- TODO: rename Component to Component
     , active     :: Bool
     , backend    :: BackendOptions
     }
-  | Debug
 
 -- TODO: add missing Component instances
 instance Show Component where
@@ -87,8 +87,8 @@ instance Show Component where
     = "Turnable" ++ "\n"
   show (Selectable s)
     = "Selectable, selected :" ++ show s ++ "\n"
-  show (Parentable uid p)
-    = "Parentable, uid :" ++ show uid ++ "\n"
+  show (Parentable uid p a)
+    = "Parentable, uid :" ++ show uid ++ "\n" ++ show p ++ "\n" ++ show a ++ "\n"
   show Controllable{}
     = "Controllable" ++ "\n"
   show (Attractable m a)
@@ -143,7 +143,8 @@ defaultTransformable =
 defaultParentable :: Component
 defaultParentable = Parentable
   { parent   = nil
-  , parented = False }
+  , parented = False
+  , active   = False}
 
 defaultCamerable :: Component
 defaultCamerable = Camerable

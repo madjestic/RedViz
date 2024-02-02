@@ -169,13 +169,6 @@ selectables :: Entity -> [Component]
 selectables t = [ x | x@(Selectable {} ) <- cmps t ]
 
 
-parentable :: Entity -> Component
-parentable s = case parentables s of [] -> defaultParentable; _ -> head $ parentables s
-
-parentables :: Entity -> [Component]
-parentables t = [ x | x@(Parentable {} ) <- cmps t ]
-
-
 renderable :: Entity -> Component
 renderable s = case renderables s of [] -> defaultRenderable; _ -> head $ renderables s
 
@@ -188,6 +181,13 @@ transformable s = case transformables s of [] -> defaultTransformable; _ -> head
 
 transformables :: Entity -> [Component]
 transformables t = [ x | x@(Transformable {} ) <- cmps t ]
+
+-- Parentable is a component of Transformable
+parentable :: Entity -> Component
+parentable s = case parentables s of [] -> defaultParentable; _ -> head $ parentables s
+
+parentables :: Entity -> [Component]
+parentables t = [ x | x@(Parentable {} ) <- tslvrs . transformable $ t ]
 
 
 controllable :: Entity -> Component
