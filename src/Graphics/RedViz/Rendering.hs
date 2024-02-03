@@ -41,7 +41,7 @@ import Graphics.RedViz.Widget
 import Graphics.RedViz.Game
 import Graphics.RedViz.Backend (BackendOptions(primitiveMode), ptSize)
 
-import Debug.Trace as DT
+--import Debug.Trace as DT
 
 renderWidget :: Camera -> Uniforms -> Widget -> IO ()
 renderWidget cam unis' wgt = case wgt of

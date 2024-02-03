@@ -3,7 +3,6 @@ module Graphics.RedViz.Component where
 import Linear.V3
 import Linear.V4
 import Linear.Matrix
-import Codec.GlTF.Prelude (Object)
 import Data.UUID
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.Backend (BackendOptions, defaultBackendOptions)
@@ -93,14 +92,12 @@ instance Show Component where
     = "Controllable" ++ "\n"
   show (Attractable m a)
     = "Attractable :" ++ show m ++ " " ++ show a ++ "\n"
-  show (Renderable ms ds a b) =
+  show (Renderable ms ds _ _) =
     "Renderable :" ++ show ms ++ "\n"  ++ show ds ++ "\n"   
   show (Camerable{})
     = "Camerable" ++ "\n"
   show (Transformable xform' tslvrs)
     = "Transformable : " ++ show xform' ++ " " ++ show tslvrs ++ "\n"
-  show _
-    = "Unknown Solver" ++ "\n"
 
 data RotationOrder =
   XYZ

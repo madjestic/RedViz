@@ -16,16 +16,13 @@ module Graphics.RedViz.Entity where
 
 import Data.UUID
 import Linear.V3
-import Linear.V4 ( V4(V4) )
 import Linear.Quaternion
 import Linear.Matrix
 import Lens.Micro
-import Lens.Micro.Extras
 
 import Graphics.RedViz.Component as C
 import Graphics.RedViz.Descriptor
 import Graphics.RedViz.Drawable
-import Graphics.RedViz.Backend (BackendOptions, defaultBackendOptions)
 import Graphics.RedViz.Material as R
 import Graphics.RedViz.Texture hiding (uuid)
 import Graphics.Rendering.OpenGL.GL.Texturing
@@ -69,9 +66,9 @@ fromSchema txTuples' dms' sch = do
             updateSolver slv =
               case slv of
                 Identity             -> slv
-                Movable _ pos _ ss   ->
+                Movable _ pos _ _   ->
                   slv { txyz   = pos }
-                Turnable _ _ _ rxyz _ ss ->
+                Turnable _ _ _ rxyz _ _ ->
                   slv { rxyz   = rxyz }
                 _ -> slv                                                        
           
@@ -163,6 +160,10 @@ parentable s = case parentables s of [] -> defaultParentable; _ -> head $ parent
 
 parentables :: Entity -> [Component]
 parentables t = [ x | x@(Parentable {} ) <- tslvrs . transformable $ t ]
+
+
+parents :: Object -> [Object] -> [Object]
+parents obj0 = filter (\o -> uuid o == (parent . parentable $ obj0))
 
 
 controllable :: Entity -> Component
