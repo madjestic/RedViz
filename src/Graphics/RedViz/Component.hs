@@ -30,11 +30,11 @@ data Component = -- TODO: rename Component to Component
     , kinslv   :: [Component]
     }
   | Selectable
-    { selected :: Bool}
+    { selected :: Bool }
   | Controllable
-    { cvel  :: V3 Double  -- velocity
-    , cypr  :: V3 Double  -- yaw/pitch/camRoll ~angular velocity
-    , cyprS :: V3 Double  -- yaw/pitch/camRoll Sum
+    { cvel    :: V3 Double -- velocity
+    , cypr    :: V3 Double -- yaw/pitch/camRoll ~angular velocity
+    , cyprS   :: V3 Double -- yaw/pitch/camRoll Sum
     , mouseS     :: Double -- -0.0025 -- mouse    "sensitivity"
     , keyboardRS :: Double -- 0.05    -- keyboard "rotation sensitivity"
     , keyboardTS :: Double -- 0.05    -- keyboard "translation sensitivity"
@@ -81,15 +81,26 @@ instance Show Component where
       ++ "\t" ++ show space' ++ "\n"
       ++ "\t" ++ show txyz'  ++ "\n"
       ++ "\t" ++ show tvel'  ++ "\n"
-      ++ "\t" ++ show kinslvs'
+      ++ "\t" ++ show kinslvs' ++ "\n"
+      ++ "/////////////////////////" ++ "\n"
   show Turnable{}
     = "Turnable" ++ "\n"
   show (Selectable s)
     = "Selectable, selected :" ++ show s ++ "\n"
   show (Parentable uid p a)
-    = "Parentable, uid :" ++ show uid ++ "\n" ++ show p ++ "\n" ++ show a ++ "\n"
-  show Controllable{}
+    = "Parentable, uid :" ++ "\n"
+    ++ "\t" ++ show uid   ++ "\n"
+    ++ "\t" ++ show p     ++ "\n"
+    ++ "\t" ++ show a     ++ "\n"
+  show (Controllable cvel' cypr' cyprS' mouseS' keyboardRS' keyboardTS') -- TODO: add debug info
     = "Controllable" ++ "\n"
+      ++ "\t" ++ show cvel'       ++ "\n"
+      ++ "\t" ++ show cypr'       ++ "\n"
+      ++ "\t" ++ show cyprS'      ++ "\n"
+      ++ "\t" ++ show mouseS'     ++ "\n"      
+      ++ "\t" ++ show keyboardRS' ++ "\n"      
+      ++ "\t" ++ show keyboardTS' ++ "\n"      
+      ++ "//////////////////////////////" ++ "\n"
   show (Attractable m a)
     = "Attractable :" ++ show m ++ " " ++ show a ++ "\n"
   show (Renderable ms ds _ _) =
@@ -112,7 +123,7 @@ defaultCamTransformable =
       (V4
         (V4 1 0 0 0)    -- <- . . . x ...
         (V4 0 1 0 0)    -- <- . . . y ...
-        (V4 0 0 1 20)   -- <- . . . z-component of transform
+        (V4 0 0 1 30)   -- <- . . . z-component of transform
         (V4 0 0 0 1))
   , tslvrs = [ Identity ]
   }

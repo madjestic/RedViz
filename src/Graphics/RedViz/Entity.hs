@@ -32,9 +32,9 @@ type Camera = Entity
 
 data Entity
   =  Entity
-     { lable      :: String
-     , uuid       :: UUID
-     , cmps       :: [Component]
+     { lable :: String
+     , uuid  :: UUID
+     , cmps  :: [Component]
      } deriving Show
 
 defaultEntity :: Entity -- TODO: move local properties to Components
@@ -164,7 +164,6 @@ parentables t = [ x | x@(Parentable {} ) <- tslvrs . transformable $ t ]
 
 parents :: Object -> [Object] -> [Object]
 parents obj0 = filter (\o -> uuid o == (parent . parentable $ obj0))
-
 
 controllable :: Entity -> Component
 controllable s = case controllables s of [] -> defaultControllable; _ -> head $ controllables s
