@@ -35,9 +35,10 @@ data Component = -- TODO: rename Component to Component
     { cvel    :: V3 Double -- velocity
     , cypr    :: V3 Double -- yaw/pitch/camRoll ~angular velocity
     , cyprS   :: V3 Double -- yaw/pitch/camRoll Sum
-    , mouseS     :: Double -- -0.0025 -- mouse    "sensitivity"
-    , keyboardRS :: Double -- 0.05    -- keyboard "rotation sensitivity"
-    , keyboardTS :: Double -- 0.05    -- keyboard "translation sensitivity"
+    , mouseS  :: Double -- -0.0025 -- mouse    "sensitivity"
+    , rotS    :: Double -- 0.05    -- keyboard "rotation sensitivity"
+    , movS    :: Double -- 0.05    -- keyboard "translation sensitivity"
+    , parent  :: UUID
     }
   | Parentable
     { parent   :: UUID
@@ -57,6 +58,12 @@ data Component = -- TODO: rename Component to Component
   | Transformable
     { xform  :: M44 Double
     , tslvrs :: [Component] }
+  | PreTransformable
+    { tord     :: TransformOrder
+    , txyz     :: V3 Double -- offset
+    , rord     :: RotationOrder
+    , rxyz     :: V3 Double
+    }
   | Camerable
     { apt        :: Double -- 50.0
     , foc        :: Double -- 100.0
@@ -92,7 +99,7 @@ instance Show Component where
     ++ "\t" ++ show uid   ++ "\n"
     ++ "\t" ++ show p     ++ "\n"
     ++ "\t" ++ show a     ++ "\n"
-  show (Controllable cvel' cypr' cyprS' mouseS' keyboardRS' keyboardTS') -- TODO: add debug info
+  show (Controllable cvel' cypr' cyprS' mouseS' keyboardRS' keyboardTS' parent') -- TODO: add debug info
     = "Controllable" ++ "\n"
       ++ "\t" ++ show cvel'       ++ "\n"
       ++ "\t" ++ show cypr'       ++ "\n"
@@ -100,6 +107,7 @@ instance Show Component where
       ++ "\t" ++ show mouseS'     ++ "\n"      
       ++ "\t" ++ show keyboardRS' ++ "\n"      
       ++ "\t" ++ show keyboardTS' ++ "\n"      
+      ++ "\t" ++ show parent'     ++ "\n"      
       ++ "//////////////////////////////" ++ "\n"
   show (Attractable m a)
     = "Attractable :" ++ show m ++ " " ++ show a ++ "\n"
@@ -109,12 +117,26 @@ instance Show Component where
     = "Camerable" ++ "\n"
   show (Transformable xform' tslvrs)
     = "Transformable : " ++ show xform' ++ " " ++ show tslvrs ++ "\n"
+  show (PreTransformable tord' txyz' rord' rxyz')
+    = "PreTransformable" ++ "\n"
+      ++ "\t" ++ show tord'  ++ "\n"
+      ++ "\t" ++ show txyz'  ++ "\n"
+      ++ "\t" ++ show rord'  ++ "\n"      
+      ++ "\t" ++ show txyz'  ++ "\n"      
+      ++ "//////////////////////////////" ++ "\n"
+
+
+data TransformOrder =
+    TR
+  | RT
+  deriving Show
 
 data RotationOrder =
   XYZ
+  deriving Show
 
-instance Show RotationOrder where
-  show XYZ = "XYZ"
+-- instance Show RotationOrder where
+--   show XYZ = "XYZ"
 
 defaultCamTransformable :: Component
 defaultCamTransformable =
@@ -162,10 +184,11 @@ defaultCamerable = Camerable
 
 defaultControllable :: Component
 defaultControllable = Controllable
-  { cvel  = V3 0 0 0     
-  , cypr  = V3 0 0 0
-  , cyprS = V3 0 0 0
-  , mouseS     = -0.0025 -- mouse    "sensitivity"
-  , keyboardRS = 0.05    -- keyboard "rotation sensitivity"
-  , keyboardTS = 0.05    -- keyboard "translation sensitivity"
+  { cvel   = V3 0 0 0     
+  , cypr   = V3 0 0 0
+  , cyprS  = V3 0 0 0
+  , mouseS = -0.0025  -- mouse    "sensitivity"
+  , rotS   =  0.05    -- keyboard "rotation sensitivity"
+  , movS   =  0.05    -- keyboard "translation sensitivity"
+  , parent = nil
   }

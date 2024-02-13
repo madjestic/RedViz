@@ -11,6 +11,7 @@
 -- A basic camera structure.
 --
 --------------------------------------------------------------------------------
+{-# LANGUAGE LambdaCase #-}
 
 module Graphics.RedViz.Entity where
 
@@ -26,6 +27,8 @@ import Graphics.RedViz.Drawable
 import Graphics.RedViz.Material as R
 import Graphics.RedViz.Texture hiding (uuid)
 import Graphics.Rendering.OpenGL.GL.Texturing
+
+--import Debug.Trace as DT
 
 type Object = Entity
 type Camera = Entity
@@ -59,13 +62,14 @@ fromSchema txTuples' dms' sch = do
       where
         updateComponent :: Component -> Component
         updateComponent t0@(Transformable {}) =
-          t0 { xform  = foldr1 (!*!) $ xformSolver (xform t0) <$> tslvrs t0
+          --t0 { xform  = foldl1 (!*!) $ xformSolver (xform t0) <$> tslvrs t0
+          t0 { xform  = foldl (!*!) (xform t0) $ xformSolver (xform t0) <$> tslvrs t0
              , tslvrs = updateSolver <$> tslvrs t0 }
           where
             updateSolver :: Component -> Component
             updateSolver slv =
               case slv of
-                Identity             -> slv
+                Identity            -> slv
                 Movable _ pos _ _   ->
                   slv { txyz   = pos }
                 Turnable _ _ _ rxyz _ _ ->
@@ -75,7 +79,31 @@ fromSchema txTuples' dms' sch = do
             xformSolver :: M44 Double -> Component -> M44 Double
             xformSolver mtx0 slv =
               case slv of
-                Identity -> mtx0
+                --Identity -> mtx0
+                Identity   -> identity
+                --C.Constant -> mtx0
+                PreTransformable tord txyz rord rxyz ->
+                  case tord of
+                    C.RT -> rotate' identity !*! mtx0
+                    C.TR -> mtx0 !*! rotate' identity
+                  where
+                    rotate' :: M44 Double -> M44 Double
+                    rotate' mtx0' = mtx
+                      where
+                        mtx =
+                          mkTransformationMat
+                          rot
+                          tr
+                          where
+                            rot    = 
+                              identity !*!
+                              case rord of
+                                XYZ ->
+                                      fromQuaternion (axisAngle (mtx0'^.(_m33._x)) (rxyz^._x)) -- pitch
+                                  !*! fromQuaternion (axisAngle (mtx0'^.(_m33._y)) (rxyz^._y)) -- yaw
+                                  !*! fromQuaternion (axisAngle (mtx0'^.(_m33._z)) (rxyz^._z)) -- roll
+                            tr     = (identity::M44 Double)^.translation + txyz
+
                 Movable cs pos _ _ ->
                   case cs of
                     WorldSpace  -> identity & translation .~ pos
@@ -154,13 +182,12 @@ transformable s = case transformables s of [] -> defaultTransformable; _ -> head
 transformables :: Entity -> [Component]
 transformables t = [ x | x@(Transformable {} ) <- cmps t ]
 
--- Parentable is a component of Transformable
 parentable :: Entity -> Component
-parentable s = case parentables s of [] -> defaultParentable; _ -> head $ parentables s
+parentable s = -- DT.trace ("entity: " ++ show (lable s) ++ " parentable: " ++ show (parentable s)) $
+  case parentables s of [] -> defaultParentable; _ -> head $ parentables s
 
 parentables :: Entity -> [Component]
 parentables t = [ x | x@(Parentable {} ) <- tslvrs . transformable $ t ]
-
 
 parents :: Object -> [Object] -> [Object]
 parents obj0 = filter (\o -> uuid o == (parent . parentable $ obj0))
@@ -169,4 +196,4 @@ controllable :: Entity -> Component
 controllable s = case controllables s of [] -> defaultControllable; _ -> head $ controllables s
 
 controllables :: Entity -> [Component]
-controllables t = [ x | x@(Controllable {} ) <- cmps t ]
+controllables t = [ x | x@(Controllable {} ) <- concatMap tslvrs [y | y@(Transformable {}) <- cmps t] ]
