@@ -59,8 +59,7 @@ data Component = -- TODO: rename Component to Component
     { xform  :: M44 Double
     , tslvrs :: [Component] }
   | PreTransformable
-    { tord     :: TransformOrder
-    , txyz     :: V3 Double -- offset
+    { txyz     :: V3 Double -- offset
     , rord     :: RotationOrder
     , rxyz     :: V3 Double
     }
@@ -117,26 +116,16 @@ instance Show Component where
     = "Camerable" ++ "\n"
   show (Transformable xform' tslvrs)
     = "Transformable : " ++ show xform' ++ " " ++ show tslvrs ++ "\n"
-  show (PreTransformable tord' txyz' rord' rxyz')
+  show (PreTransformable txyz' rord' rxyz')
     = "PreTransformable" ++ "\n"
-      ++ "\t" ++ show tord'  ++ "\n"
       ++ "\t" ++ show txyz'  ++ "\n"
       ++ "\t" ++ show rord'  ++ "\n"      
       ++ "\t" ++ show txyz'  ++ "\n"      
       ++ "//////////////////////////////" ++ "\n"
 
-
-data TransformOrder =
-    TR
-  | RT
-  deriving Show
-
 data RotationOrder =
   XYZ
   deriving Show
-
--- instance Show RotationOrder where
---   show XYZ = "XYZ"
 
 defaultCamTransformable :: Component
 defaultCamTransformable =

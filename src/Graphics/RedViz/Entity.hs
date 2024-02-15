@@ -28,7 +28,7 @@ import Graphics.RedViz.Material as R
 import Graphics.RedViz.Texture hiding (uuid)
 import Graphics.Rendering.OpenGL.GL.Texturing
 
---import Debug.Trace as DT
+import Debug.Trace as DT
 
 type Object = Entity
 type Camera = Entity
@@ -61,31 +61,25 @@ fromSchema txTuples' dms' sch = do
       }
       where
         updateComponent :: Component -> Component
-        updateComponent t0@(Transformable {}) =
-          --t0 { xform  = foldl1 (!*!) $ xformSolver (xform t0) <$> tslvrs t0
+        updateComponent t0@(Transformable {}) = --DT.trace ("xform : " ++ show (xform t0)) $ t0
           t0 { xform  = foldl (!*!) (xform t0) $ xformSolver (xform t0) <$> tslvrs t0
              , tslvrs = updateSolver <$> tslvrs t0 }
           where
             updateSolver :: Component -> Component
-            updateSolver slv =
-              case slv of
-                Identity            -> slv
+            updateSolver c0 =
+              case c0 of
+                Identity            -> c0
                 Movable _ pos _ _   ->
-                  slv { txyz   = pos }
+                  c0 { txyz   = pos }
                 Turnable _ _ _ rxyz _ _ ->
-                  slv { rxyz   = rxyz }
-                _ -> slv                                                        
+                  c0 { rxyz   = rxyz }
+                _ -> c0                                                        
           
             xformSolver :: M44 Double -> Component -> M44 Double
-            xformSolver mtx0 slv =
-              case slv of
-                --Identity -> mtx0
+            xformSolver mtx0 c0 =
+              case c0 of
                 Identity   -> identity
-                --C.Constant -> mtx0
-                PreTransformable tord txyz rord rxyz ->
-                  case tord of
-                    C.RT -> rotate' identity !*! mtx0
-                    C.TR -> mtx0 !*! rotate' identity
+                PreTransformable txyz rord rxyz -> rotate' identity
                   where
                     rotate' :: M44 Double -> M44 Double
                     rotate' mtx0' = mtx

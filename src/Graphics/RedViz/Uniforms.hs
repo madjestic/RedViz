@@ -117,8 +117,8 @@ bindUniforms cam' unis' dr =
 
     -- | Compensate world space xform with camera position
     -- = Object Position - Camera Position
-    --print $ "xform  : " ++ show (inv44 (identity & translation .~ u_cam'^.translation) !*! u_xform')
     xform             <- newMatrix RowMajor $ toList' (inv44 (identity & translation .~ u_cam'^.translation) !*! u_xform') :: IO (GLmatrix GLfloat)
+    --xform             <- newMatrix RowMajor $ toList' u_xform' :: IO (GLmatrix GLfloat)
     location5         <- SV.get (uniformLocation u_prog' "xform")
     uniform location5 $= xform
 
