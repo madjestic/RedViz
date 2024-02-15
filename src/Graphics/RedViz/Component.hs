@@ -176,8 +176,8 @@ defaultControllable = Controllable
   { cvel   = V3 0 0 0     
   , cypr   = V3 0 0 0
   , cyprS  = V3 0 0 0
-  , mouseS = -0.0025  -- mouse    "sensitivity"
-  , rotS   =  0.05    -- keyboard "rotation sensitivity"
-  , movS   =  0.05    -- keyboard "translation sensitivity"
+  , mouseS = -0.0000025  -- mouse    "sensitivity"
+  , rotS   =  0.0005    -- keyboard "rotation sensitivity"
+  , movS   =  0.1    -- keyboard "translation sensitivity"
   , parent = nil
   }
