@@ -23,9 +23,9 @@ data Component = -- TODO: rename Component to Component
     } 
   | Turnable
     { space    :: CoordSys
-    , cxyz     :: V3 Double -- center of rotation
     , rord     :: RotationOrder
-    , rxyz     :: V3 Double
+    , cxyz     :: V3 Double -- center of rotation
+    , rxyz     :: V3 Double -- sum of rotations
     , avel     :: V3 Double -- angular velocity
     , kinslv   :: [Component]
     }
@@ -35,15 +35,14 @@ data Component = -- TODO: rename Component to Component
     { cvel    :: V3 Double -- velocity
     , cypr    :: V3 Double -- yaw/pitch/camRoll ~angular velocity
     , cyprS   :: V3 Double -- yaw/pitch/camRoll Sum
-    , mouseS  :: Double -- -0.0025 -- mouse    "sensitivity"
-    , rotS    :: Double -- 0.05    -- keyboard "rotation sensitivity"
-    , movS    :: Double -- 0.05    -- keyboard "translation sensitivity"
+    , mouseS  :: Double    -- -0.0025 -- mouse    "sensitivity"
+    , rotS    :: Double    -- 0.05    -- keyboard "rotation sensitivity"
+    , movS    :: Double    -- 0.05    -- keyboard "translation sensitivity"
     , parent  :: UUID
     }
   | Parentable
     { parent   :: UUID
-    , parented :: Bool
-    , active   :: Bool }
+    }
   | Fadable
     { life :: Double
     , age  :: Double
@@ -93,11 +92,9 @@ instance Show Component where
     = "Turnable" ++ "\n"
   show (Selectable s)
     = "Selectable, selected :" ++ show s ++ "\n"
-  show (Parentable uid p a)
+  show (Parentable uid)
     = "Parentable, uid :" ++ "\n"
     ++ "\t" ++ show uid   ++ "\n"
-    ++ "\t" ++ show p     ++ "\n"
-    ++ "\t" ++ show a     ++ "\n"
   show (Controllable cvel' cypr' cyprS' mouseS' keyboardRS' keyboardTS' parent') -- TODO: add debug info
     = "Controllable" ++ "\n"
       ++ "\t" ++ show cvel'       ++ "\n"
@@ -162,8 +159,9 @@ defaultTransformable =
 defaultParentable :: Component
 defaultParentable = Parentable
   { parent   = nil
-  , parented = False
-  , active   = False}
+  -- , parented = False
+  -- , active   = False
+  }
 
 defaultCamerable :: Component
 defaultCamerable = Camerable
@@ -179,5 +177,4 @@ defaultControllable = Controllable
   , mouseS = -0.0000025  -- mouse    "sensitivity"
   , rotS   =  0.0005    -- keyboard "rotation sensitivity"
   , movS   =  0.1    -- keyboard "translation sensitivity"
-  , parent = nil
   }

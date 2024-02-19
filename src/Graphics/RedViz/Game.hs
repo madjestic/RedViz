@@ -52,3 +52,23 @@ initSettings :: GameSettings
 initSettings =  GameSettings
   { resX = 1280
   , resY = 720 }
+
+parentabless :: Game -> [Entity]
+parentabless g0 = es
+  where
+    es = filter isParentable $ objs g0 -- ++ cams g0
+      where
+        isParentable e =
+          case parentables e of
+            [] -> False
+            _  -> True
+
+controllabless :: Game -> [Entity]
+controllabless g0 = es
+  where
+    es = filter isControllable $ cams g0 -- ++ objs g0
+      where
+        isControllable e =
+          case controllables e of
+            [] -> False
+            _  -> True

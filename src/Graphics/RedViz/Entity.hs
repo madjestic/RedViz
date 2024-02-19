@@ -73,6 +73,7 @@ fromSchema txTuples' dms' sch = do
                   c0 { txyz   = pos }
                 Turnable _ _ _ rxyz _ _ ->
                   c0 { rxyz   = rxyz }
+                --Parentable {} -> Parentable { parent = suuid sch }
                 _ -> c0                                                        
           
             xformSolver :: M44 Double -> Component -> M44 Double
@@ -102,7 +103,7 @@ fromSchema txTuples' dms' sch = do
                   case cs of
                     WorldSpace  -> identity & translation .~ pos
                     ObjectSpace -> undefined
-                Turnable _ _ rord rxyz _ _ -> transform' identity
+                Turnable _ rord _ rxyz _ _ -> transform' identity
                   where
                     transform' :: M44 Double -> M44 Double
                     transform' mtx0' = mtx
@@ -162,7 +163,6 @@ selectable s = case selectables s of [] -> Selectable False; _ -> head $ selecta
 selectables :: Entity -> [Component]
 selectables t = [ x | x@(Selectable {} ) <- cmps t ]
 
-
 renderable :: Entity -> Component
 renderable s = case renderables s of [] -> defaultRenderable; _ -> head $ renderables s
 
@@ -178,16 +178,18 @@ transformables t = [ x | x@(Transformable {} ) <- cmps t ]
 
 parentable :: Entity -> Component
 parentable s = -- DT.trace ("entity: " ++ show (lable s) ++ " parentable: " ++ show (parentable s)) $
-  case parentables s of [] -> defaultParentable; _ -> head $ parentables s
+  case parentables s of [] -> Parentable nil ; _ -> head $ parentables s
 
 parentables :: Entity -> [Component]
 parentables t = [ x | x@(Parentable {} ) <- tslvrs . transformable $ t ]
+
 
 parents :: Object -> [Object] -> [Object]
 parents obj0 = filter (\o -> uuid o == (parent . parentable $ obj0))
 
 controllable :: Entity -> Component
-controllable s = case controllables s of [] -> defaultControllable; _ -> head $ controllables s
+controllable s = -- DT.trace ("entity: " ++ show (lable s) ++ " controllable: " ++ show (controllable s)) $
+  case controllables s of [] -> error "Not a Controllable" ; _ -> head $ controllables s
 
 controllables :: Entity -> [Component]
-controllables t = [ x | x@(Controllable {} ) <- concatMap tslvrs [y | y@(Transformable {}) <- cmps t] ]
+controllables t = [ x | x@(Controllable {} ) <- tslvrs . transformable $ t ]
