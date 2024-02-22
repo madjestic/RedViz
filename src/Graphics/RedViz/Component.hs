@@ -17,7 +17,6 @@ data Component = -- TODO: rename Component to Component
   | Constant
   | Movable
     { space    :: CoordSys
-    , txyz     :: V3 Double -- offset
     , tvel     :: V3 Double -- velocity
     , kinslv   :: [Component]
     } 
@@ -81,10 +80,9 @@ instance Show Component where
     = "Constant" ++ "\n"
   show Fadable{}
     = "Fadable" ++ "\n"
-  show (Movable space' txyz' tvel' kinslvs')
+  show (Movable space' tvel' kinslvs')
     = "Movable" ++ "\n" 
       ++ "\t" ++ show space' ++ "\n"
-      ++ "\t" ++ show txyz'  ++ "\n"
       ++ "\t" ++ show tvel'  ++ "\n"
       ++ "\t" ++ show kinslvs' ++ "\n"
       ++ "/////////////////////////" ++ "\n"
@@ -177,4 +175,5 @@ defaultControllable = Controllable
   , mouseS = -0.0000025  -- mouse    "sensitivity"
   , rotS   =  0.0005    -- keyboard "rotation sensitivity"
   , movS   =  0.1    -- keyboard "translation sensitivity"
+  , parent = nil
   }

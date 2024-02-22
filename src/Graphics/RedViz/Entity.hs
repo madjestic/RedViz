@@ -69,8 +69,8 @@ fromSchema txTuples' dms' sch = do
             updateSolver c0 =
               case c0 of
                 Identity            -> c0
-                Movable _ pos _ _   ->
-                  c0 { txyz   = pos }
+                Movable _ vel0 _   ->
+                  c0 { tvel   = vel0 }
                 Turnable _ _ _ rxyz _ _ ->
                   c0 { rxyz   = rxyz }
                 --Parentable {} -> Parentable { parent = suuid sch }
@@ -99,9 +99,9 @@ fromSchema txTuples' dms' sch = do
                                   !*! fromQuaternion (axisAngle (mtx0'^.(_m33._z)) (rxyz^._z)) -- roll
                             tr     = (identity::M44 Double)^.translation + txyz
 
-                Movable cs pos _ _ ->
+                Movable cs vel0 _ ->
                   case cs of
-                    WorldSpace  -> identity & translation .~ pos
+                    WorldSpace  -> identity & translation .~ vel0
                     ObjectSpace -> undefined
                 Turnable _ rord _ rxyz _ _ -> transform' identity
                   where
