@@ -32,7 +32,9 @@ toDescriptorMat :: FilePath -> IO [(Descriptor, R.Material)]
 toDescriptorMat file = do
   (stuff, mats) <- loadGltf file -- "models/pighead.gltf"
   mats' <- mapM fromGltfMat mats
-  print mats'
+  -- print file
+  -- print stuff
+  -- print mats'
   ds    <- mapM (\((vs, idx), mat) -> toDescriptor idx vs mat) $ zip (concat stuff) mats'
   return $ zip ds mats'
 
@@ -64,7 +66,7 @@ toDescriptor vs idx mat =
         
     -- | Bind the pointer to the vertex attribute data
     let floatSize  = (fromIntegral $ sizeOf (0.0::GLfloat)) :: GLsizei
-        stride     = 8 * floatSize
+        stride     = 9 * floatSize
 
     -- | Positions
     let vPosition = AttribLocation 0
@@ -82,7 +84,7 @@ toDescriptor vs idx mat =
 
     -- | UV
     let uvCoords = AttribLocation 2
-        uvOffset = 6 * floatSize
+        uvOffset = 7 * floatSize
     vertexAttribPointer uvCoords  $=
         (ToFloat, VertexArrayDescriptor 2 Float stride (bufferOffset uvOffset))
     vertexAttribArray uvCoords    $= Enabled

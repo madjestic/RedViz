@@ -75,7 +75,7 @@ loadGltf fp = do
     ts = (fmap.fmap.fmap) fromVec2' uvs
     d = (,,) <$$$.> ps <***.> cs <***.> ts
   --verts = (fmap.fmap.concatMap) (\((x,y,z),(cr,cg,cb,ca),(u,v)) -> [x,y,z,cr,cg,cb,u,v]) d
-    verts = (fmap.fmap.concatMap) (\((x,y,z),(cr,cg,cb,_),(u,v)) -> [x,y,z,cr,cg,cb,u,v]) d
+    verts = (fmap.fmap.concatMap) (\((x,y,z),(cr,cg,cb,ca),(u,v)) -> [x,y,z,cr,cg,cb,ca,u,v]) d -- TODO: add Alpha!
   return $ (zipWith zip idx verts, concat mats)
 
 (<$.>) :: (a -> b) -> [a] -> [b]
