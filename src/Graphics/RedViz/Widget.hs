@@ -45,6 +45,7 @@ data Widget
   |  Selector
      { active  :: Bool
      , icons   :: [Object]
-     , objects :: [Entity] 
+     , objects :: [Entity]
+     , format  :: Format
      }
   deriving (Generic, Show)

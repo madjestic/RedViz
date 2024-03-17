@@ -41,7 +41,9 @@ import Graphics.RedViz.Widget
 import Graphics.RedViz.Game
 import Graphics.RedViz.Backend (BackendOptions(primitiveMode), ptSize)
 
---import Debug.Trace as DT
+import Lens.Micro
+
+import Debug.Trace as DT
 
 renderWidget :: Camera -> Uniforms -> Widget -> IO ()
 renderWidget cam unis' wgt = case wgt of
@@ -69,17 +71,17 @@ renderWidget cam unis' wgt = case wgt of
         bindVertexArrayObject $= Just triangles
         drawElements Triangles numIndices UnsignedInt nullPtr
         ) $ formatText fmt wdrs s (0,0)
-  Selector _ icons' objs' -> 
+  Selector _ icons' objs' fmt -> 
     mapM_
     (\obj -> do
         mapM_
           (\dr -> do
-              bindUniforms cam unis' dr {u_xform = xform . transformable $ obj} 
+              bindUniforms cam unis' dr { u_xform = u_xform dr & translation .~ (xform . transformable $ obj)^.translation } 
               let (Descriptor triangles numIndices _) = descriptor dr
               bindVertexArrayObject $= Just triangles
               --drawElements (primitiveMode $ doptions dr) numIndices GL.UnsignedInt nullPtr
-              drawElements (Lines) numIndices UnsignedInt nullPtr
-          ) (drws . renderable $ icons'!!1)) objs'
+              drawElements Lines numIndices UnsignedInt nullPtr
+          ) (formatDrws fmt $ drws . renderable $ icons'!!1)) objs'
   where
     wdrs = concatMap drws $ concatMap renderables $ fonts wgt      
 

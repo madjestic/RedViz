@@ -17,13 +17,15 @@ module Graphics.RedViz.Drawable where
 import GHC.Generics
 import Graphics.Rendering.OpenGL (TextureObject)
 import Graphics.RedViz.Backend (BackendOptions)
-import Linear.Matrix (M44, M33, mkTransformationMat, identity, translation)
+import Linear.Matrix (M44, M33, mkTransformationMat, identity, translation, (*!!))
 import Linear.V3
 import Lens.Micro
 
 import Graphics.RedViz.Descriptor
 import Graphics.RedViz.Material as R
 import Graphics.RedViz.Texture
+
+import Debug.Trace as DT
 
 data Drawable
   =  Drawable
@@ -75,9 +77,14 @@ data Format -- move to Format.hs?
      , zoffset   :: Double
      , soffset   :: Double -- scale Offset
      , ssize     :: Double -- scale Size
-     } deriving (Generic, Show)
+     }
+  deriving (Generic, Show)
 
 type CursorPos = (Integer, Integer)
+
+formatDrws :: Format -> [Drawable] -> [Drawable]
+formatDrws fmt@(Format _ _ _ _ _ _ _ ssize) drws =
+  scaleDrw ssize <$> drws
 
 formatText :: Format -> [Drawable] -> [String] -> CursorPos -> [Drawable]
 formatText _ _ [] _  = []
@@ -185,3 +192,10 @@ offsetDrw cpos drw =
       V3 (fromIntegral $ fst cpos) (fromIntegral $ snd cpos) 0.0
       *
       V3 sh sv 0.0
+
+scaleDrw :: Double -> Drawable -> Drawable
+scaleDrw s drw =
+  drw { u_xform = mkTransformationMat rot tr }
+  where
+    rot = s *!! (identity :: M33 Double)
+    tr  = (identity::M44 Double)^.translation
