@@ -18,7 +18,7 @@ data Component = -- TODO: rename Component to Component
   | Movable
     { space    :: CoordSys
     , tvel     :: V3 Double -- velocity
-    , kinslv   :: [Component]
+    , kslvrs   :: [Component]
     } 
   | Turnable
     { space    :: CoordSys
@@ -26,7 +26,7 @@ data Component = -- TODO: rename Component to Component
     , cxyz     :: V3 Double -- center of rotation
     , rxyz     :: V3 Double -- sum of rotations
     , avel     :: V3 Double -- angular velocity
-    , kinslv   :: [Component]
+    , kslvrs   :: [Component]
     }
   | Selectable
     { selected :: Bool }
@@ -104,7 +104,7 @@ instance Show Component where
       ++ "\t" ++ show parent'     ++ "\n"      
       ++ "//////////////////////////////" ++ "\n"
   show (Attractable m a)
-    = "Attractable :" ++ show m ++ " " ++ show a ++ "\n"
+    = "Attractable : " ++ show m ++ " " ++ show a ++ " " ++ "\n"
   show (Renderable ms ds _ _) =
     "Renderable :" ++ show ms ++ "\n"  ++ show ds ++ "\n"   
   show (Camerable{})

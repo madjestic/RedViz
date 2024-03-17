@@ -27,6 +27,7 @@ import Graphics.RedViz.Drawable
 import Graphics.RedViz.Material as R
 import Graphics.RedViz.Texture hiding (uuid)
 import Graphics.Rendering.OpenGL.GL.Texturing
+import Data.Maybe (listToMaybe)
 
 import Debug.Trace as DT
 
@@ -156,7 +157,6 @@ camerable s = case camerables s of [] -> defaultCamerable; _ -> head $ camerable
 camerables :: Entity -> [Component]
 camerables t = [ x | x@(Camerable {} ) <- cmps t ]
 
-
 selectable :: Entity -> Component
 selectable s = case selectables s of [] -> Selectable False; _ -> head $ selectables s
 
@@ -168,7 +168,6 @@ renderable s = case renderables s of [] -> defaultRenderable; _ -> head $ render
 
 renderables :: Entity -> [Component]
 renderables t = [ x | x@(Renderable {} ) <- cmps t ]
-
 
 transformable :: Entity -> Component
 transformable s = case transformables s of [] -> defaultTransformable; _ -> head $ transformables s
@@ -183,7 +182,6 @@ parentable s = -- DT.trace ("entity: " ++ show (lable s) ++ " parentable: " ++ s
 parentables :: Entity -> [Component]
 parentables t = [ x | x@(Parentable {} ) <- tslvrs . transformable $ t ]
 
-
 parents :: Object -> [Object] -> [Object]
 parents obj0 = filter (\o -> uuid o == (parent . parentable $ obj0))
 
@@ -193,3 +191,22 @@ controllable s = -- DT.trace ("entity: " ++ show (lable s) ++ " controllable: " 
 
 controllables :: Entity -> [Component]
 controllables t = [ x | x@(Controllable {} ) <- tslvrs . transformable $ t ]
+
+movable :: Entity -> Component
+movable s =
+  case listToMaybe . movables $ s of Nothing -> error "Not a Movable" ; Just a -> a
+
+movables :: Entity -> [Component]
+movables t = case transformables t of
+  [] -> []
+  _ -> [ x | x@(Movable {} ) <- tslvrs . transformable $ t ]
+
+attractable :: Entity -> Component
+attractable s = -- DT.trace ("entity: " ++ show (lable s) ++ " attractable: " ++ show (attractable s)) $
+  case listToMaybe . attractables $ s of Nothing -> error "Not a Attractable" ; Just a -> a
+
+attractables :: Entity -> [Component]
+attractables t = case movables t of
+  [] -> []
+  _  -> [ x | x@(Attractable {} ) <- kslvrs . movable $ t ]
+
