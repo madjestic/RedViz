@@ -159,8 +159,10 @@ renderOutput window _ (g,_) = do
   GL.depthMask $= Enabled
   depthFunc $= Just Less
   cullFace  $= Just Back
-
+  GL.blendFunc $= (SrcColor, Zero)
   mapM_ (renderObject (head $ cams g) (unis g)) (objs g)
+
+  GL.blendFunc $= (OneMinusDstColor, OneMinusSrcAlpha)
   mapM_ (renderWidget (head $ cams g) (unis g)) (wgts g)
 
   glSwapWindow window >> return False  
