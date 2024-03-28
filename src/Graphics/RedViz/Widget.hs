@@ -48,4 +48,11 @@ data Widget
      , objects :: [Entity]
      , format  :: Format
      }
+  |  InfoField
+     { active   :: Bool
+     , text     :: [String]
+     , fonts    :: [Object]
+     , format   :: Format
+     , optionsW :: BackendOptions
+     }
   deriving (Generic, Show)

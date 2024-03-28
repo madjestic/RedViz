@@ -17,7 +17,8 @@ module Graphics.RedViz.Drawable where
 import GHC.Generics
 import Graphics.Rendering.OpenGL (TextureObject)
 import Graphics.RedViz.Backend (BackendOptions)
-import Linear.Matrix (M44, M33, mkTransformationMat, identity, translation, (*!!))
+import Linear.Matrix (M44, M33, _m33, mkTransformationMat, identity, translation, (*!!), (*!))
+import Linear.Vector ((*^))  
 import Linear.V3
 import Lens.Micro
 
@@ -81,10 +82,6 @@ data Format -- move to Format.hs?
   deriving (Generic, Show)
 
 type CursorPos = (Integer, Integer)
-
-formatDrws :: Format -> [Drawable] -> [Drawable]
-formatDrws fmt@(Format _ _ _ _ _ _ _ ssize) drws =
-  scaleDrw ssize <$> drws
 
 formatText :: Format -> [Drawable] -> [String] -> CursorPos -> [Drawable]
 formatText _ _ [] _  = []
@@ -193,9 +190,13 @@ offsetDrw cpos drw =
       *
       V3 sh sv 0.0
 
+scaleDrws :: Format -> [Drawable] -> [Drawable]
+scaleDrws fmt@(Format _ _ _ _ _ _ _ ssize) drws =
+  scaleDrw ssize <$> drws
+
 scaleDrw :: Double -> Drawable -> Drawable
-scaleDrw s drw =
-  drw { u_xform = mkTransformationMat rot tr }
+scaleDrw s drw = --drw { u_xform = s *!! u_xform drw }
+  drw { u_xform = mkTransformationMat rot tr } -- TODO
   where
-    rot = s *!! (identity :: M33 Double)
-    tr  = (identity::M44 Double)^.translation
+    rot = s *!! u_xform drw^._m33 :: M33 Double --view _m33 ((u_xform drw) :: M44 Double) :: M33 Double
+    tr  = s *^ (u_xform drw::M44 Double)^.translation

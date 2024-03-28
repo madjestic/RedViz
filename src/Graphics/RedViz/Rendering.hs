@@ -30,6 +30,7 @@ import Foreign.Ptr
 import Graphics.Rendering.OpenGL as GL
 import Linear.V2
 import Linear.V4
+import Linear.Metric (norm)
 import SDL hiding (Texture, normalize)
 
 import Graphics.RedViz.Descriptor
@@ -81,7 +82,26 @@ renderWidget cam unis' wgt = case wgt of
               bindVertexArrayObject $= Just triangles
               --drawElements (primitiveMode $ doptions dr) numIndices GL.UnsignedInt nullPtr
               drawElements Lines numIndices UnsignedInt nullPtr
-          ) (formatDrws fmt $ drws . renderable $ icons'!!1)) objs'
+          ) (scaleDrws fmt $ drws . renderable $ icons'!!1)) objs'
+  InfoField False _ _ _ _   -> do return ()
+  InfoField _ s _ fmt _ ->
+    mapM_
+    (\dr -> do
+        -- print $ u_xform dr
+        bindUniforms cam unis' dr 
+        let (Descriptor triangles numIndices _) = descriptor dr
+        bindVertexArrayObject $= Just triangles
+        drawElements Triangles numIndices UnsignedInt nullPtr
+        ) $ scaleDrws fmt $ formatText fmt wdrs
+        --) $ formatText fmt wdrs
+             ([" velocity :" ++ show cam_vel ++ "\n"] ++
+              [" speed    : " ++ show cam_spd ]
+             ) (0,0)
+    where
+      cam_vel = u_cam_vel unis'
+      cam_spd = norm $ (\(x,y,z) -> V3 x y z) . u_cam_vel $ unis'
+
+  _ -> error "ERROR : Unknown widget type!"  
   where
     wdrs = concatMap drws $ concatMap renderables $ fonts wgt      
 

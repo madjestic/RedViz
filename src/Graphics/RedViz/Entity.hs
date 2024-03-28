@@ -187,7 +187,8 @@ parents obj0 = filter (\o -> uuid o == (parent . parentable $ obj0))
 
 controllable :: Entity -> Component
 controllable s = -- DT.trace ("entity: " ++ show (lable s) ++ " controllable: " ++ show (controllable s)) $
-  case controllables s of [] -> error "Not a Controllable" ; _ -> head $ controllables s
+  --case controllables s of [] -> error "Not a Controllable" ; _ -> head $ controllables s
+  case listToMaybe . controllables $ s of Nothing -> error "Not a Controllable"; Just a -> a
 
 controllables :: Entity -> [Component]
 controllables t = [ x | x@(Controllable {} ) <- tslvrs . transformable $ t ]
