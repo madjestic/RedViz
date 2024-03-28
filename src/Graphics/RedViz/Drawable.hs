@@ -191,12 +191,15 @@ offsetDrw cpos drw =
       V3 sh sv 0.0
 
 scaleDrws :: Format -> [Drawable] -> [Drawable]
-scaleDrws fmt@(Format _ _ _ _ _ _ _ ssize) drws =
-  scaleDrw ssize <$> drws
+scaleDrws fmt drws =
+  scaleDrw fmt <$> drws
 
-scaleDrw :: Double -> Drawable -> Drawable
-scaleDrw s drw = --drw { u_xform = s *!! u_xform drw }
-  drw { u_xform = mkTransformationMat rot tr } -- TODO
+scaleDrw :: Format -> Drawable -> Drawable
+scaleDrw fmt drw =
+  drw { u_xform = mkTransformationMat rot tr }
   where
-    rot = s *!! u_xform drw^._m33 :: M33 Double --view _m33 ((u_xform drw) :: M44 Double) :: M33 Double
-    tr  = s *^ (u_xform drw::M44 Double)^.translation
+    ss  = ssize   fmt
+    so  = soffset fmt
+    ss' = ss * 0.01
+    rot = ss' *!! u_xform drw^._m33 :: M33 Double
+    tr  = so * ss' *^ (u_xform drw  :: M44 Double)^.translation

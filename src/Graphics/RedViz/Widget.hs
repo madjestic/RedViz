@@ -40,6 +40,7 @@ data Widget
      { active   :: Bool
      , icons    :: [Object] -- ~[Objectable]
      , cpos     :: Point V2 CInt
+     , format   :: Format     
      , optionsW :: BackendOptions
      }
   |  Selector
