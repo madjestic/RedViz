@@ -38,6 +38,7 @@ data Component = -- TODO: rename Component to Component
     , rotS    :: Double    -- 0.05    -- keyboard "rotation sensitivity"
     , movS    :: Double    -- 0.05    -- keyboard "translation sensitivity"
     , parent  :: UUID
+    , phsx    :: Physics
     }
   | Parentable
     { parent   :: UUID
@@ -72,6 +73,11 @@ data Component = -- TODO: rename Component to Component
     , backend    :: BackendOptions
     }
 
+data Physics =
+    Static
+  | Dynamic
+    deriving Show
+
 -- TODO: add missing Component instances
 instance Show Component where
   show Identity
@@ -93,7 +99,7 @@ instance Show Component where
   show (Parentable uid)
     = "Parentable, uid :" ++ "\n"
     ++ "\t" ++ show uid   ++ "\n"
-  show (Controllable cvel' cypr' cyprS' mouseS' keyboardRS' keyboardTS' parent') -- TODO: add debug info
+  show (Controllable cvel' cypr' cyprS' mouseS' keyboardRS' keyboardTS' parent' phsx') -- TODO: add debug info
     = "Controllable" ++ "\n"
       ++ "\t" ++ show cvel'       ++ "\n"
       ++ "\t" ++ show cypr'       ++ "\n"
@@ -101,7 +107,8 @@ instance Show Component where
       ++ "\t" ++ show mouseS'     ++ "\n"      
       ++ "\t" ++ show keyboardRS' ++ "\n"      
       ++ "\t" ++ show keyboardTS' ++ "\n"      
-      ++ "\t" ++ show parent'     ++ "\n"      
+      ++ "\t" ++ show parent'     ++ "\n"
+      ++ "\t" ++ show phsx'     ++ "\n"      
       ++ "//////////////////////////////" ++ "\n"
   show (Attractable m a)
     = "Attractable : " ++ show m ++ " " ++ show a ++ " " ++ "\n"
