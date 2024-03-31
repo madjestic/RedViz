@@ -27,7 +27,7 @@ import Graphics.RedViz.Drawable
 import Graphics.RedViz.Material as R
 import Graphics.RedViz.Texture hiding (uuid)
 import Graphics.Rendering.OpenGL.GL.Texturing
-import Data.Maybe (listToMaybe)
+import Data.Maybe (listToMaybe, fromMaybe)
 
 import Debug.Trace as DT
 
@@ -152,32 +152,31 @@ data Schema
      } deriving Show
 
 camerable :: Entity -> Component
-camerable s = case camerables s of [] -> defaultCamerable; _ -> head $ camerables s
+camerable s = fromMaybe defaultCamerable (listToMaybe . camerables $ s)
 
 camerables :: Entity -> [Component]
 camerables t = [ x | x@(Camerable {} ) <- cmps t ]
 
 selectable :: Entity -> Component
-selectable s = case selectables s of [] -> Selectable False; _ -> head $ selectables s
+selectable s = fromMaybe (Selectable False) (listToMaybe . selectables $ s)
 
 selectables :: Entity -> [Component]
 selectables t = [ x | x@(Selectable {} ) <- cmps t ]
 
 renderable :: Entity -> Component
-renderable s = case renderables s of [] -> defaultRenderable; _ -> head $ renderables s
+renderable s = fromMaybe defaultRenderable (listToMaybe . renderables $ s)
 
 renderables :: Entity -> [Component]
 renderables t = [ x | x@(Renderable {} ) <- cmps t ]
 
 transformable :: Entity -> Component
-transformable s = case transformables s of [] -> defaultTransformable; _ -> head $ transformables s
+transformable s = fromMaybe defaultTransformable (listToMaybe . transformables $ s)
 
 transformables :: Entity -> [Component]
 transformables t = [ x | x@(Transformable {} ) <- cmps t ]
 
 parentable :: Entity -> Component
-parentable s = -- DT.trace ("entity: " ++ show (lable s) ++ " parentable: " ++ show (parentable s)) $
-  case parentables s of [] -> Parentable nil ; _ -> head $ parentables s
+parentable s = fromMaybe (Parentable nil) (listToMaybe . parentables $ s)
 
 parentables :: Entity -> [Component]
 parentables t = [ x | x@(Parentable {} ) <- tslvrs . transformable $ t ]
@@ -186,16 +185,13 @@ parents :: Object -> [Object] -> [Object]
 parents obj0 = filter (\o -> uuid o == (parent . parentable $ obj0))
 
 controllable :: Entity -> Component
-controllable s = -- DT.trace ("entity: " ++ show (lable s) ++ " controllable: " ++ show (controllable s)) $
-  --case controllables s of [] -> error "Not a Controllable" ; _ -> head $ controllables s
-  case listToMaybe . controllables $ s of Nothing -> error "Not a Controllable"; Just a -> a
+controllable s = fromMaybe (error "Not a Controllable") (listToMaybe . controllables $ s)
 
 controllables :: Entity -> [Component]
 controllables t = [ x | x@(Controllable {} ) <- tslvrs . transformable $ t ]
 
 movable :: Entity -> Component
-movable s =
-  case listToMaybe . movables $ s of Nothing -> error "Not a Movable" ; Just a -> a
+movable s = case listToMaybe . movables $ s of Nothing -> error "Not a Movable" ; Just a -> a
 
 movables :: Entity -> [Component]
 movables t = case transformables t of
@@ -203,8 +199,7 @@ movables t = case transformables t of
   _ -> [ x | x@(Movable {} ) <- tslvrs . transformable $ t ]
 
 attractable :: Entity -> Component
-attractable s = -- DT.trace ("entity: " ++ show (lable s) ++ " attractable: " ++ show (attractable s)) $
-  case listToMaybe . attractables $ s of Nothing -> error "Not a Attractable" ; Just a -> a
+attractable s = fromMaybe (error "Not a Attractable") (listToMaybe . attractables $ s)
 
 attractables :: Entity -> [Component]
 attractables t = case movables t of
