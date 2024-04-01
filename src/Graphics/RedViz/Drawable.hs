@@ -200,6 +200,6 @@ scaleDrw fmt drw =
   where
     ss  = ssize   fmt
     so  = soffset fmt
-    ss' = ss * 0.0075
+    ss' = ss * 0.0025
     rot = ss' *!! u_xform drw^._m33 :: M33 Double
     tr  = so * ss' *^ (u_xform drw  :: M44 Double)^.translation
