@@ -103,8 +103,8 @@ bindUniforms cam' unis' dr =
         proj =
           LP.infinitePerspective
           (atan ( apt/foc/2.0 )) -- FOV
-          (resX/resY)                  -- Aspect
-          0.01                         -- Near
+          (resX/resY)            -- Aspect
+          0.01                   -- Near
 
     persp             <- newMatrix RowMajor $ toList' proj   :: IO (GLmatrix GLfloat)
     location3         <- SV.get (uniformLocation u_prog' "persp")
@@ -117,10 +117,13 @@ bindUniforms cam' unis' dr =
 
     -- | Compensate world space xform with camera position
     -- = Object Position - Camera Position
+    xform0            <- newMatrix RowMajor $ toList' u_xform' :: IO (GLmatrix GLfloat)
+    location5         <- SV.get (uniformLocation u_prog' "xform0")
+    uniform location5 $= xform0
+
     xform             <- newMatrix RowMajor $ toList' (inv44 (identity & translation .~ u_cam'^.translation) !*! u_xform') :: IO (GLmatrix GLfloat)
-    --xform             <- newMatrix RowMajor $ toList' u_xform' :: IO (GLmatrix GLfloat)
-    location5         <- SV.get (uniformLocation u_prog' "xform")
-    uniform location5 $= xform
+    location6         <- SV.get (uniformLocation u_prog' "xform")
+    uniform location6 $= xform
 
     let sunP = Vector3 299999999999.0 0.0 0.0 :: Vector3 GLfloat
     location7 <- SV.get (uniformLocation u_prog' "sunP")

@@ -45,7 +45,7 @@ import Graphics.RedViz.Backend (BackendOptions(primitiveMode), ptSize)
 import Lens.Micro
 
 import Debug.Trace as DT
-import Data.Maybe (listToMaybe)
+import Data.Maybe (listToMaybe, fromMaybe)
 
 renderWidget :: Camera -> Uniforms -> Widget -> IO ()
 renderWidget cam unis' wgt = case wgt of
@@ -57,13 +57,10 @@ renderWidget cam unis' wgt = case wgt of
         let (Descriptor triangles numIndices _) = descriptor dr
         bindVertexArrayObject $= Just triangles
         drawElements Triangles numIndices UnsignedInt nullPtr
-    ) (case listToMaybe idrs of Nothing -> error "No Cursor : empty list!"; Just a -> a) -- cursor font index is 75
-        --) (head (DT.trace ("idrs :" ++ show (length idrs)) idrs)) -- cursor font index is 75
+    ) (fromMaybe (error "No Cursor : empty list!") (listToMaybe idrs) ) -- cursor font index is 75
     where
       idrs :: [Drawable]
       idrs = scaleDrws fmt $ concatMap drws $ concatMap renderables $ icons wgt
-      --idrs = concatMap drws $ DT.trace ("renderable :" ++ show (concatMap renderable $ icons wgt )) $ concatMap renderable $ DT.trace ("icons wgt :" ++ show (length $ icons wgt )) $ icons wgt
-        --where renderable cs = filter (\c -> case c of Objectable {} -> True; _-> False;) cs
   TextField False _ _ _ _   -> do return ()
   TextField _ s _ fmt _ ->
     mapM_
@@ -88,13 +85,11 @@ renderWidget cam unis' wgt = case wgt of
   InfoField _ s _ fmt _ ->
     mapM_
     (\dr -> do
-        -- print $ u_xform dr
         bindUniforms cam unis' dr 
         let (Descriptor triangles numIndices _) = descriptor dr
         bindVertexArrayObject $= Just triangles
         drawElements Triangles numIndices UnsignedInt nullPtr
         ) $ scaleDrws fmt $ formatText fmt wdrs
-        --) $ formatText fmt wdrs
              (["  velocity :" ++ show cam_vel ++ "\n"] ++
               ["  speed    : " ++ show cam_spd ]
              ) (0,0)
@@ -149,7 +144,6 @@ openWindow title (sizex,sizey) = do
   
 renderOutput :: Window -> GameSettings -> (Game, Maybe Bool) -> IO Bool
 renderOutput _ _ ( _,Nothing) = SDL.quit >> return True
---renderOutput window gs (g,_) = do
 renderOutput window _ (g,_) = do
   let
   clearColor $= Color4 0.0 0.0 0.0 1.0
