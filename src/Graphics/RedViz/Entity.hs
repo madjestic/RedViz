@@ -199,10 +199,15 @@ movables t = case transformables t of
   _ -> [ x | x@(Movable {} ) <- tslvrs . transformable $ t ]
 
 attractable :: Entity -> Component
-attractable s = fromMaybe (error "Not a Attractable") (listToMaybe . attractables $ s)
+attractable s = fromMaybe defaultAttractable (listToMaybe . attractables $ s)
 
 attractables :: Entity -> [Component]
 attractables t = case movables t of
   [] -> []
   _  -> [ x | x@(Attractable {} ) <- kslvrs . movable $ t ]
 
+measurable :: Entity -> Component
+measurable s = fromMaybe (error "Not a Measurable") (listToMaybe . measurables $ s)
+
+measurables :: Entity -> [Component]
+measurables t = [ x | x@(Measurable {} ) <- tslvrs . transformable $ t ]

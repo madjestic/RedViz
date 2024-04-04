@@ -38,7 +38,7 @@ data Component = -- TODO: rename Component to Component
     , rotS    :: Double    -- 0.05    -- keyboard "rotation sensitivity"
     , movS    :: Double    -- 0.05    -- keyboard "translation sensitivity"
     , parent  :: UUID
-    , phsx    :: Physics
+    , phys    :: Physics
     }
   | Parentable
     { parent   :: UUID
@@ -53,7 +53,11 @@ data Component = -- TODO: rename Component to Component
   | Attractable
     { mass :: Double
     , acc  :: V3 Double
+    , fr   :: Double -- rotation    force scalar
+    , ft   :: Double -- translation force scalar
     }
+  | Measurable
+    { mass :: Double }
   | Transformable
     { xform  :: M44 Double
     , tslvrs :: [Component] }
@@ -86,6 +90,10 @@ instance Show Component where
     = "Constant" ++ "\n"
   show Fadable{}
     = "Fadable" ++ "\n"
+  show (Measurable m')
+    = "Measurable" ++ "\n"
+    ++ "\t" ++ show m' ++ "\n"
+    ++ "/////////////////////////" ++ "\n"
   show (Movable space' tvel' kinslvs')
     = "Movable" ++ "\n" 
       ++ "\t" ++ show space' ++ "\n"
@@ -110,7 +118,7 @@ instance Show Component where
       ++ "\t" ++ show parent'     ++ "\n"
       ++ "\t" ++ show phsx'     ++ "\n"      
       ++ "//////////////////////////////" ++ "\n"
-  show (Attractable m a)
+  show (Attractable m a fr ft)
     = "Attractable : " ++ show m ++ " " ++ show a ++ " " ++ "\n"
   show (Renderable ms ds _ _) =
     "Renderable :" ++ show ms ++ "\n"  ++ show ds ++ "\n"   
@@ -183,4 +191,13 @@ defaultControllable = Controllable
   , rotS   =  0.0005    -- keyboard "rotation sensitivity"
   , movS   =  0.1    -- keyboard "translation sensitivity"
   , parent = nil
+  , phys   = Static
   }
+
+defaultAttractable = Attractable
+  { mass = 0.0
+  , acc  = V3 0 0 0
+  , fr   = 1.0
+  , ft   = 1.0
+  }
+
