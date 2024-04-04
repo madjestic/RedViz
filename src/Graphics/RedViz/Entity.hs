@@ -210,4 +210,4 @@ measurable :: Entity -> Component
 measurable s = fromMaybe (error "Not a Measurable") (listToMaybe . measurables $ s)
 
 measurables :: Entity -> [Component]
-measurables t = [ x | x@(Measurable {} ) <- tslvrs . transformable $ t ]
+measurables t = [ x | x@(Measurable {} ) <- cmps t ]
