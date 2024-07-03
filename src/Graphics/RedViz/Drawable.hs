@@ -16,7 +16,7 @@ module Graphics.RedViz.Drawable where
 
 import GHC.Generics
 import Graphics.Rendering.OpenGL (TextureObject)
-import Graphics.RedViz.Backend (BackendOptions)
+import Graphics.RedViz.Backend (Options)
 import Linear.Matrix (M44, M33, _m33, mkTransformationMat, identity, translation, (*!!), (*!))
 import Linear.Vector ((*^))  
 import Linear.V3
@@ -33,13 +33,13 @@ data Drawable
      { descriptor :: Descriptor
      , material   :: Material
      , dtxs       :: [(Int, (Texture, TextureObject))]
-     , doptions   :: BackendOptions
+     , doptions   :: Options
      , u_xform    :: M44 Double
      } deriving Show
 
 toDrawable
   :: M44 Double
-  -> BackendOptions
+  -> Options
   -> [(Texture, TextureObject)]
   -> (Descriptor, R.Material)
   -> Drawable

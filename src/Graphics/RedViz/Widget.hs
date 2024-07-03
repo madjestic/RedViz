@@ -34,14 +34,14 @@ data Widget
      , text     :: [String]
      , fonts    :: [Object]
      , format   :: Format
-     , optionsW :: BackendOptions
+     , optionsW :: Options
      }
   |  Cursor
      { active   :: Bool
      , icons    :: [Object] -- ~[Objectable]
      , cpos     :: Point V2 CInt
      , format   :: Format     
-     , optionsW :: BackendOptions
+     , optionsW :: Options
      }
   |  Selector
      { active  :: Bool
@@ -54,6 +54,6 @@ data Widget
      , text     :: [String]
      , fonts    :: [Object]
      , format   :: Format
-     , optionsW :: BackendOptions
+     , optionsW :: Options
      }
   deriving (Generic, Show)

@@ -4,7 +4,7 @@
 
 module Graphics.RedViz.Backend where
 
-import Data.Aeson
+import Data.Aeson hiding (Options)
 import GHC.Generics
 
 import Graphics.Rendering.OpenGL
@@ -13,20 +13,62 @@ data Backend
   = OpenGL
   | Vulkan
 
-data BackendOptions
-  =  BackendOptions
+data Options -- TODO: rename to Options?
+  =  Options
      {
        primitiveMode :: PrimitiveMode -- Triangles | Points
      , bgrColor      :: Color4 GLfloat
      , ptSize        :: Float
      , depthMsk      :: Capability
+     , blendFunc     :: (BlendingFactor, BlendingFactor)
      } deriving (Generic, Show)
-instance FromJSON BackendOptions
+instance FromJSON Options
 
 instance ToJSON Capability where
   toJSON c = case c of
     Enabled  -> "Enabled"
     Disabled -> "Disabled"
+
+instance ToJSON BlendingFactor where
+  toJSON c =
+    case c of
+      Zero		    -> "Zero"
+      One		    -> "One"
+      SrcColor		    -> "SrcColor"
+      OneMinusSrcColor	    -> "OneMinusSrcColor"
+      DstColor		    -> "DstColor"
+      OneMinusDstColor	    -> "OneMinusDstColor"
+      SrcAlpha		    -> "SrcAlpha"
+      OneMinusSrcAlpha	    -> "OneMinusSrcAlpha"
+      DstAlpha		    -> "DstAlpha"
+      OneMinusDstAlpha	    -> "OneMinusDstAlpha"
+      ConstantColor	    -> "ConstantColor"
+      OneMinusConstantColor -> "OneMinusConstantColor"	
+      ConstantAlpha	    -> "ConstantAlpha"
+      OneMinusConstantAlpha -> "OneMinusConstantAlpha"	
+      SrcAlphaSaturate	    -> "SrcAlphaSaturate"
+      _ -> "Blending Factor Undefined"
+
+instance FromJSON BlendingFactor where
+  parseJSON (String o) =
+    case o of
+      "Zero"                  -> return Zero                 
+      "One"                   -> return One                  
+      "SrcColor"              -> return SrcColor             
+      "OneMinusSrcColor"      -> return OneMinusSrcColor     
+      "DstColor"              -> return DstColor             
+      "OneMinusDstColor"      -> return OneMinusDstColor     
+      "SrcAlpha"              -> return SrcAlpha             
+      "OneMinusSrcAlpha"      -> return OneMinusSrcAlpha     
+      "DstAlpha"              -> return DstAlpha             
+      "OneMinusDstAlpha"      -> return OneMinusDstAlpha     
+      "ConstantColor"         -> return ConstantColor        
+      "OneMinusConstantColor" -> return OneMinusConstantColor
+      "ConstantAlpha"         -> return ConstantAlpha        
+      "OneMinusConstantAlpha" -> return OneMinusConstantAlpha
+      "SrcAlphaSaturate"      -> return SrcAlphaSaturate     
+      _ -> error $ "Invalid BlendingFactor: " ++ show o
+  parseJSON _ = error "Json format not exptected"
 
 instance FromJSON Capability where
   parseJSON (String o) =
@@ -36,7 +78,7 @@ instance FromJSON Capability where
       _ -> error $ "Invalid Capability: " ++ show o
   parseJSON _ = error "Json format not exptected"
 
-instance ToJSON BackendOptions
+instance ToJSON Options
 
 instance ToJSON PrimitiveMode where
   toJSON p = case p of
@@ -83,32 +125,36 @@ instance FromJSON (Color4 GLfloat) where
       return $ Color4 red green blue alpha
   parseJSON _ = error "Json format not exptected"
 
-defaultBackendOptions :: BackendOptions
-defaultBackendOptions = defOpts
+defaultOptions :: Options
+defaultOptions = defOpts
   
-defOpts :: BackendOptions
+defOpts :: Options
 defOpts =
-      BackendOptions
+      Options
       { primitiveMode = Triangles
       , bgrColor      = Color4 0.5 0.0 0.0 1.0
       , ptSize        = 1.0
       , depthMsk      = Enabled
+      --, blendFunc     = (SrcColor, Zero)
+      , blendFunc     = (SrcColor, OneMinusSrcAlpha)
       }
 
-linesOpts :: BackendOptions
+linesOpts :: Options
 linesOpts =
-      BackendOptions
+      Options
       { primitiveMode = Lines
       , bgrColor      = Color4 0.0 0.5 0.0 1.0
       , ptSize        = 1.0
       , depthMsk      = Enabled
+      , blendFunc     = (SrcColor, Zero)
       }
 
-pointsOpts :: BackendOptions
+pointsOpts :: Options
 pointsOpts =
-      BackendOptions
+      Options
       { primitiveMode = Points
       , bgrColor      = Color4 0.0 0.5 0.0 1.0
       , ptSize        = 3.0
       , depthMsk      = Enabled
+      , blendFunc     = (SrcColor, Zero)
       }     

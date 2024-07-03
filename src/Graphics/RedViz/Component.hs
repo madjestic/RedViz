@@ -5,7 +5,7 @@ import Linear.V4
 import Linear.Matrix
 import Data.UUID
 import Graphics.RedViz.Drawable
-import Graphics.RedViz.Backend (BackendOptions, defaultBackendOptions)
+import Graphics.RedViz.Backend (Options, defaultOptions)
 
 data CoordSys =
     WorldSpace
@@ -74,7 +74,7 @@ data Component = -- TODO: rename Component to Component
     { modelIDXs  :: [Int]
     , drws       :: [Drawable]
     , active     :: Bool
-    , backend    :: BackendOptions
+    , backend    :: Options
     }
 
 data Physics =
@@ -154,7 +154,7 @@ defaultRenderable = Renderable
   { modelIDXs = []
   , drws      = []
   , active    = False
-  , backend   = defaultBackendOptions
+  , backend   = defaultOptions
   }
 
 defaultTransformable :: Component

@@ -310,7 +310,7 @@ accessBuffer getAccessor getBufferView getBuffer expectAttribute expectComponent
 
   unexpected (UnexpectedAttributeType aix) expectAttribute type'
   unexpected (UnexpectedComponentType aix) expectComponent componentType
-  let strideSize = sizeOf (error "strideSize.sizeOf" :: a)
+  let strideSize = (sizeOf (error "strideSize.sizeOf" :: a):: Int)
   case BufferView.byteStride bv of
     Nothing ->
       pure ()

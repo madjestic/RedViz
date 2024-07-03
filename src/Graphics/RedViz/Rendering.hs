@@ -40,7 +40,7 @@ import Graphics.RedViz.Component
 import Graphics.RedViz.Uniforms
 import Graphics.RedViz.Widget
 import Graphics.RedViz.Game
-import Graphics.RedViz.Backend (BackendOptions(primitiveMode), ptSize)
+import Graphics.RedViz.Backend as BO (Options(primitiveMode), ptSize, blendFunc)
 
 import Lens.Micro
 
@@ -97,7 +97,7 @@ renderWidget cam unis' wgt = case wgt of
       cam_vel = u_cam_vel unis'
       cam_spd = norm $ (\(x,y,z) -> V3 x y z) . u_cam_vel $ unis'
 
-  _ -> error "ERROR : Unknown widget type!"  
+  --_ -> error "ERROR : Unknown widget type!"  
   where
     wdrs = concatMap drws $ concatMap renderables $ fonts wgt      
 
@@ -108,6 +108,7 @@ formatDrw _ dr = dr
 renderObject :: Camera -> Uniforms -> Object -> IO ()
 renderObject cam unis' obj = do
   mapM_ (\dr -> do
+            GL.blendFunc $= (BO.blendFunc . backend . renderable $ obj)
             bindUniforms cam unis' dr {u_xform = xform . transformable $ obj} 
             let (Descriptor triangles numIndices _) = descriptor dr
             bindVertexArrayObject $= Just triangles
@@ -141,21 +142,21 @@ openWindow title (sizex,sizey) = do
     _ <- SDL.glCreateContext window
     
     return window
-  
+
+-- TODO: I need separate pipelines for this
 renderOutput :: Window -> GameSettings -> (Game, Maybe Bool) -> IO Bool
 renderOutput _ _ ( _,Nothing) = SDL.quit >> return True
 renderOutput window _ (g,_) = do
   let
-  clearColor $= Color4 0.0 0.0 0.0 1.0
+  clearColor   $= Color4 0.0 0.0 0.0 1.0
   GL.clear [ColorBuffer, DepthBuffer]
 
   --GL.pointSize $= 10.0
-  GL.blend $= Enabled
+  GL.blend     $= Enabled
   GL.depthMask $= Enabled
-  depthFunc $= Just Less
-  cullFace  $= Just Back
-  GL.blendFunc $= (SrcColor, Zero)
-  mapM_ (renderObject (head $ cams g) (unis g)) (objs g)
+  depthFunc    $= Just Less
+  cullFace     $= Just Back
+  mapM_ (renderObject (head $ cams g) (unis g)) (objs g)--(tail $ objs g)
 
   GL.blendFunc $= (OneMinusDstColor, OneMinusSrcAlpha)
   mapM_ (renderWidget (head $ cams g) (unis g)) (wgts g)

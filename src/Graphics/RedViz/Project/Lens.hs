@@ -66,7 +66,7 @@ import Data.Text ( Text, pack )
 import Data.UUID
 
 import Graphics.RedViz.Project.Model
-import Graphics.RedViz.Backend
+import Graphics.RedViz.Backend as B
 
 --import Debug.Trace as DT
 
@@ -81,7 +81,7 @@ data PreObject
      , _presolverAttrs :: [[Double]]
      , _solvers        :: [String]
      , _solverAttrs    :: [[Double]]
-     , _options        :: BackendOptions     
+     , _options        :: B.Options     
      } deriving Show
 
 $(makeLenses ''PreObject)
@@ -98,7 +98,7 @@ data ProjectCamera
      , _pKeyboardTS :: Double
      } deriving Show
 $(makeLenses ''ProjectCamera)
-deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''ProjectCamera
+deriveJSON TH.defaultOptions {fieldLabelModifier = drop 1} ''ProjectCamera
 
 defaultPCam :: ProjectCamera
 defaultPCam =
@@ -124,7 +124,7 @@ data PreGUI
      , _icons   :: [Model]
      } deriving Show
 $(makeLenses ''PreGUI)
-deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''PreGUI
+deriveJSON TH.defaultOptions {fieldLabelModifier = drop 1} ''PreGUI
 
 data Project
   =  Project
@@ -140,7 +140,7 @@ data Project
      , _cameras    :: [ProjectCamera]
      } deriving Show
 $(makeLenses ''Project)
-deriveJSON defaultOptions {fieldLabelModifier = drop 1} ''Project
+deriveJSON TH.defaultOptions {fieldLabelModifier = drop 1} ''Project
 
 emptyPreGUI :: PreGUI
 emptyPreGUI = PreGUI [] []
@@ -262,7 +262,7 @@ defaultProject =
     , _solvers        = ["rotate", "translate"]  
     , _solverAttrs    = [[0,0,0,0,0,1000],
                          [1000,0,0]]
-    , _options        =  defaultBackendOptions
+    , _options        =  B.defaultOptions
     }       
   ]
   []

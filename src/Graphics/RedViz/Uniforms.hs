@@ -24,6 +24,7 @@ import Linear.Matrix
 import Linear.Projection as LP        (infinitePerspective)
 import Linear.V4
 import GHC.Float
+import Control.Concurrent
 
 import Graphics.RedViz.Entity
 import Graphics.RedViz.Component
@@ -102,7 +103,7 @@ bindUniforms cam' unis' dr =
         foc = u_cam_f' -- focal length
         proj =
           LP.infinitePerspective
-          (atan ( apt/foc/2.0 )) -- FOV
+          (atan ( apt/foc/1.2 )) -- FOV
           (resX/resY)            -- Aspect
           0.01                   -- Near
 
@@ -190,6 +191,7 @@ bindUniforms cam' unis' dr =
 
 debugShaders :: Drawable -> IO Program
 debugShaders dr = do
+  threadDelay 10000
   loadShaders
     [ ShaderInfo VertexShader   (FileSource (vertShader . material $ dr))   
     , ShaderInfo FragmentShader (FileSource (fragShader . material $ dr)) ]
