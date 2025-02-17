@@ -16,15 +16,11 @@
 -- A basic camera structure.
 --
 --------------------------------------------------------------------------------
-{-# LANGUAGE ImportQualifiedPost #-}
-{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TupleSections #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE ImportQualifiedPost #-}
 
 module Graphics.RedViz.GLTF.Load
   ( loadMeshPrimitives
@@ -99,9 +95,9 @@ loadMeshPrimitives
   :: (
    --  MonadReader env m
    --, HasLogFunc env
-     MonadThrow m
+       MonadThrow m
      , MonadUnliftIO m
-   --, MonadIO m
+     , MonadIO m
      )
   => Bool
   -> Bool
@@ -310,7 +306,7 @@ accessBuffer getAccessor getBufferView getBuffer expectAttribute expectComponent
 
   unexpected (UnexpectedAttributeType aix) expectAttribute type'
   unexpected (UnexpectedComponentType aix) expectComponent componentType
-  let strideSize = (sizeOf (error "strideSize.sizeOf" :: a):: Int)
+  let strideSize = Foreign.sizeOf (error "strideSize.sizeOf" :: Int)
   case BufferView.byteStride bv of
     Nothing ->
       pure ()

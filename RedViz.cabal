@@ -1,120 +1,95 @@
-cabal-version:       3.0
-name:                RedViz
-version:             0.3.0.0
-synopsis:            a library for realtime interactive 3D visualizations
-description:         a library for realtime graphics and interactive 3D visualizations.
-homepage:            https://github.com/madjestic/RedViz
-license:             BSD-3-Clause
-license-file:        LICENSE
-author:              madjestic
-maintainer:          madjestic13@gmail.com
-copyright:           Vladimir Lopatin
-category:            Graphics
-extra-source-files:  CHANGELOG.md, README.md
+cabal-version:      3.4
+name:               RedViz
+version:            0.4.0.0
+synopsis:           a library for realtime interactive 3D visualizations
+description:        a library for realtime graphics and interactive 3D visualizations.
+license:            BSD-3-Clause
+license-file:       LICENSE
+author:             madiestic
+maintainer:         madjestic13@gmail.com
+copyright:          Vladimir Lopatin
+build-type:         Simple
+extra-doc-files:    CHANGELOG.md
+                  , README.md
+-- extra-source-files:
+
+common warnings
+    ghc-options:      -Wall
+                      -fprint-potential-instances
+                      -Wcompat -Widentities
+                      -Wincomplete-record-updates
+                      -Wincomplete-uni-patterns
+                      -Wpartial-fields
+                      -Wredundant-constraints
+                      -O2
 
 library
-  exposed-modules:     
+    import:           warnings
+    exposed-modules:
                        Graphics.RedViz
-                       Graphics.RedViz.Backend
-                       Graphics.RedViz.Controllable
-                       Graphics.RedViz.Descriptor
-                       Graphics.RedViz.Drawable
-                       --Graphics.RedViz.Drawable.Lens
-                       Graphics.RedViz.FromVector
-                       Graphics.RedViz.Game
-                       Graphics.RedViz.GLTF
-                       Graphics.RedViz.GLTF.Load
-                       Graphics.RedViz.GLTF.Model
-                       Graphics.RedViz.GLUtil
-                       Graphics.RedViz.GLUtil.JuicyTextures
-                       Graphics.RedViz.GLUtil.Textures
-                       Graphics.RedViz.GLUtil.TypeMapping
-                       Graphics.RedViz.Input
-                       Graphics.RedViz.Input.Keyboard
-                       Graphics.RedViz.Input.Mouse
-                       Graphics.RedViz.Input.Mouse.Lens
-                       Graphics.RedViz.Input.FRP.Yampa.Update
-                       Graphics.RedViz.Input.FRP.Yampa.Update.Mouse
-                       Graphics.RedViz.Input.FRP.Yampa.Update.Keyboard
-                       Graphics.RedViz.Input.FRP.Yampa
-                       Graphics.RedViz.Input.FRP.Yampa.AppInput
-                       Graphics.RedViz.LoadShaders
-                       Graphics.RedViz.Material
-                       Graphics.RedViz.Material.Lens
-                       Graphics.RedViz.PGeo
-                       Graphics.RedViz.Primitives
-                       Graphics.RedViz.Project.Model
-                       Graphics.RedViz.Project.Lens
-                       Graphics.RedViz.Project
-                       --Graphics.RedViz.Project.Utils
-                       Graphics.RedViz.Rendering
-                       Graphics.RedViz.Texture
-                       Graphics.RedViz.Texture.Lens
-                       Graphics.RedViz.Uniforms
-                       Graphics.RedViz.Utils
-                       Graphics.RedViz.VAO
-                       Graphics.RedViz.Widget
-                       Graphics.RedViz.Component
-                       Graphics.RedViz.Entity
-                       
-  --ghc-options:    -O2 -Wall -Werror -Wcompat -Widentities -Wno-unused-top-binds -Wno-orphans -Wunused-imports -Wunused-binds
-  ghc-options:    -O2     
-  --ghc-options:     -fprof-auto -fprof-cafs "-with-rtsopts=-N -p -s -hc -i0.1 -xc"
-  --ghc-options:     -fprof-auto -fprof-cafs 
-  --cpp-options:   -DDEBUG  
-  build-depends:       base
-                     , aeson               
-                     , aeson-pretty
-                     , array
-                     , bearriver
-                     , bytestring           
-                     , containers
-                     , directory
-                     , geomancy                     
-                     , gltf-codec
-                     , gltf-loader
-                     , gl-block
-                     , JuicyPixels
-                     , ilist               
-                     , keid-core
-                     , microlens
-                     , microlens-th            
-                     , linear              
-                     , locators            
-                     , massiv          
-                     , OpenGL              
-                     , random
-                     , rio
-                     , scientific          
-                     , simple-affine-space 
-                     , sdl2
-                     , sort
-                     , split
-                     , store
-                     , StateVar
-                     , text                
-                     , uuid                
-                     , vector
-                     
-  hs-source-dirs:      src
-  default-language:    Haskell2010
+                     , Graphics.RedViz.Backend
+                     , Graphics.RedViz.Component
+                     , Graphics.RedViz.Controllable
+                     , Graphics.RedViz.Descriptor
+                     , Graphics.RedViz.Drawable
+                     , Graphics.RedViz.Entity
+                     , Graphics.RedViz.FromVector
+                     , Graphics.RedViz.GLTF
+                     , Graphics.RedViz.GLTF.Model
+                     , Graphics.RedViz.GLTF.Load
+                     , Graphics.RedViz.GLUtil.JuicyTextures
+                     , Graphics.RedViz.GLUtil.Textures
+                     , Graphics.RedViz.GLUtil.TypeMapping
+                     , Graphics.RedViz.Game
+                     , Graphics.RedViz.Input.Keyboard
+                     , Graphics.RedViz.Input.Mouse
+                     , Graphics.RedViz.LoadShaders
+                     , Graphics.RedViz.Material
+                     , Graphics.RedViz.PGeo
+                     , Graphics.RedViz.Project
+                     , Graphics.RedViz.Project.Lens
+                     , Graphics.RedViz.Project.Model
+                     , Graphics.RedViz.Rendering
+                     , Graphics.RedViz.Texture
+                     , Graphics.RedViz.Uniforms
+                     , Graphics.RedViz.Utils
+                     , Graphics.RedViz.VAO
+                     , Graphics.RedViz.Widget
 
-  default-extensions:
-                     ImportQualifiedPost
-                     BlockArguments
-                     LambdaCase
-                     NamedFieldPuns
-                     OverloadedStrings
-                     RankNTypes
-                     RecordWildCards
-                     ScopedTypeVariables
-                     TupleSections
-                     TypeApplications
-                     DerivingStrategies
-                     DerivingVia
-                     DeriveGeneric
-    
+    other-modules:
+                    Paths_RedViz
+    build-depends:  base ^>=4.18.2.1
+                  , bytestring
+                  , containers
+                  , geomancy
+                  , gl-block
+                  , gltf-codec
+                  , keid-core
+                  , rio
+                  , vector
+                  , aeson
+                  , aeson-pretty
+                  , OpenGL
+                  , linear
+                  , array
+                  , JuicyPixels
+                  , directory
+                  , microlens
+                  , ilist
+                  , locators
+                  , uuid
+                  , simple-affine-space
+                  , random
+                  , microlens-th
+                  , text
+                  , gltf-loader
+                  , massiv
+                  , store
+                  , sort
+                  , StateVar
+                  , sdl2 >=2.5.5.0
 
-source-repository head
-  type:     git
-  location: https://github.com/madjestic/RedViz
+    hs-source-dirs: src
+    --default-extensions:
+    ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
+    default-language: GHC2021

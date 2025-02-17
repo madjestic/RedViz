@@ -7,7 +7,7 @@ module Graphics.RedViz.Backend where
 import Data.Aeson hiding (Options)
 import GHC.Generics
 
-import Graphics.Rendering.OpenGL
+import Graphics.Rendering.OpenGL hiding (blendFunc)
 
 data Backend
   = OpenGL

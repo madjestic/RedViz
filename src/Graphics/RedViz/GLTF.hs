@@ -14,49 +14,51 @@
 {-# LANGUAGE ImportQualifiedPost #-}
 
 module Graphics.RedViz.GLTF where
+
 import Graphics.RedViz.GLTF.Load (loadMeshPrimitives)
 import Graphics.RedViz.GLTF.Model as Model
 import Graphics.RedViz.Material as R
 
-import Codec.GlTF.Material as Gltf
+import Codec.GlTF.Material as GltfM
+import Text.GLTF.Loader    as Gltf hiding (Texture, Material (..))
+
 import Data.Coerce (coerce)
 import Data.Maybe
 import Data.Vector qualified as V hiding (head, length)
 import Data.Word
-import Data.Text (unpack)
+import Data.Text (pack, unpack)
 import Geomancy.Vec2 hiding (dot, normalize)
 import Geomancy.Vec3 hiding (dot, normalize)
 import Geomancy.Vec4 hiding (dot, normalize)
-import Graphics.Rendering.OpenGL
 import Lens.Micro
 import Linear.V3
-import Text.GLTF.Loader as Gltf hiding (Texture, Material)
+import Graphics.Rendering.OpenGL (GLenum, GLfloat)
 
-defaultGltfMat :: Gltf.Material
-defaultGltfMat = Gltf.Material
-  { emissiveFactor = (0,0,0)
-  , alphaMode      = MaterialAlphaMode {unMaterialAlphaMode = "OPAQUE"}
-  , alphaCutoff    = 0.5
-  , doubleSided    = False
+defaultGltfMat :: GltfM.Material
+defaultGltfMat =  GltfM.Material
+  { emissiveFactor       = (0,0,0)
+  , alphaMode            = MaterialAlphaMode {unMaterialAlphaMode = pack $ "OPAQUE"}
+  , alphaCutoff          = 0.5
+  , doubleSided          = False
   , pbrMetallicRoughness = Nothing
   , normalTexture        = Nothing
   , occlusionTexture     = Nothing
   , emissiveTexture      = Nothing
-  , name                 = Just "test"
+  , GltfM.name           = Just . pack $ "test"
   , extensions           = Nothing
   , extras               = Nothing
   }
 
-fromGltfMat :: Gltf.Material -> IO R.Material
+fromGltfMat :: GltfM.Material -> IO R.Material
 fromGltfMat mat =
   R.read 
-  $ case Gltf.name mat of
+  $ case GltfM.name mat of
       Nothing -> "./mat/checkerboard/checkerboard"
       Just s  -> "./mat/" ++ unpack s ++ "/" ++ unpack s
 
-loadGltf :: FilePath -> IO ([[([GLenum],[GLfloat])]], [Gltf.Material])
+loadGltf :: FilePath -> IO ([[([GLenum], [Float])]], [GltfM.Material])
 loadGltf fp = do
---(root, meshPrimitives) <- loadMeshPrimitives False False fp
+  --(root, meshPrimitives) <- loadMeshPrimitives False False fp
   (_, meshPrimitives) <- loadMeshPrimitives False False fp
   let
     mgrs = V.toList <$> V.toList meshPrimitives :: [[Model.MeshPrimitive]]
@@ -67,8 +69,8 @@ loadGltf fp = do
     uvs       = (fmap.fmap) vaTexCoord <$> (fmap.fmap) V.toList attrs 
     colors    = (fmap.fmap) vaRGBA     <$> (fmap.fmap) V.toList attrs
     --normals   = (fmap.fmap.fmap) vaNormal   $ (fmap.fmap) V.toList attrs
-    matTuples = (fmap.fmap) (\(maybeMatTuple, _) -> fromMaybe (0, defaultGltfMat) maybeMatTuple) mgrs :: [[(Int, Gltf.Material)]]
-    mats      = (fmap.fmap) snd matTuples :: [[Gltf.Material]]
+    matTuples = (fmap.fmap) (\(maybeMatTuple, _) -> fromMaybe (0, defaultGltfMat) maybeMatTuple) mgrs :: [[(Int, GltfM.Material)]]
+    mats      = (fmap.fmap) snd matTuples :: [[GltfM.Material]]
 
     ps = (fmap.fmap) (fromVec3' . unPacked) <$> ((fmap.fmap) V.toList positions) :: [[[(Float,Float,Float)]]]
     cs = (fmap.fmap.fmap) fromVec4' colors :: [[[(Float,Float,Float,Float)]]]

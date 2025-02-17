@@ -24,7 +24,7 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as BS
 import System.Directory
 import Graphics.Rendering.OpenGL
--- import Debug.Trace as DT
+import Debug.Trace as DT
 
 --------------------------------------------------------------------------------
 
@@ -72,7 +72,7 @@ loadCompileAttach _ [] = return ()
 loadCompileAttach program (ShaderInfo shType source : infos) =
   createShader shType `bracketOnError` deleteObjectName $ \shader ->
   do
-    -- _ <- DT.trace ("Loading Shader Program" ++ show program ++ show source) $ return ()
+    --_ <- DT.trace ("Loading Shader Program" ++ show program ++ show source) $ return ()
     src        <- getSource source
     isLib      <- doesFileExist "./mat/share/lib.glsl"
     isHgSDFLib <- doesFileExist "./mat/share/hg_sdf.glsl"
@@ -80,18 +80,20 @@ loadCompileAttach program (ShaderInfo shType source : infos) =
     let
       mfs
         | isLib      = Just "./mat/share/lib.glsl"
-        | otherwise  = Nothing
+        | otherwise  = DT.trace "warning: ./mat/share/lib.glsl not found"
+                       $ Nothing
       mfs'
         | isHgSDFLib = Just "./mat/share/hg_sdf.glsl"
-        | otherwise  = Nothing
+        | otherwise  = DT.trace "warning: ./mat/share/hg_sdf.glsl not found"
+                       $ Nothing
 
     sharedLib <- case mfs of
       Just fs -> do getSource (FileSource fs)
-      Nothing -> return ""
+      Nothing -> return . BS.pack $ ""
 
     hgSDFLib  <- case mfs' of
       Just fs -> do getSource (FileSource fs)
-      Nothing -> return ""
+      Nothing -> return . BS.pack $ ""
 
     let
       version   = head (BS.lines src)
