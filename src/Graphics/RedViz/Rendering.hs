@@ -30,7 +30,7 @@ import Foreign.Ptr
 import Graphics.Rendering.OpenGL as GL
 import Linear.V2
 import Linear.V4
-import Linear.Metric (norm)
+--import Linear.Metric (norm)
 import SDL hiding (Texture, normalize)
 
 import Graphics.RedViz.Descriptor
@@ -44,7 +44,7 @@ import Graphics.RedViz.Backend as BO (Options(primitiveMode), ptSize, blendFunc)
 
 import Lens.Micro
 
-import Debug.Trace as DT
+--import Debug.Trace as DT
 import Data.Maybe (listToMaybe, fromMaybe)
 
 renderWidget :: Camera -> Uniforms -> Widget -> IO ()
@@ -146,7 +146,7 @@ openWindow title (sizex,sizey) = do
 -- TODO: I need separate pipelines for this
 renderOutput :: Window -> GameSettings -> (Game, Maybe Bool) -> IO Bool
 renderOutput _ _ ( _,Nothing) = SDL.quit >> return True
-renderOutput window _ (g,_) = do
+renderOutput window _ (g, Just skipSwap) = do -- Just skipSwap window swap
   let
   clearColor   $= Color4 0.0 0.0 0.0 1.0
   GL.clear [ColorBuffer, DepthBuffer]
@@ -156,9 +156,29 @@ renderOutput window _ (g,_) = do
   GL.depthMask $= Enabled
   depthFunc    $= Just Less
   cullFace     $= Just Back
-  mapM_ (renderObject (head $ cams g) (unis g)) (objs g)--(tail $ objs g)
+  mapM_ (renderObject (head $ cams g) (unis g)) (objs g)
 
   GL.blendFunc $= (OneMinusDstColor, OneMinusSrcAlpha)
   mapM_ (renderWidget (head $ cams g) (unis g)) (wgts g)
 
-  glSwapWindow window >> return False  
+  if skipSwap then return False else glSwapWindow window >> return False
+
+renderDebug :: Window -> GameSettings -> (Game, Maybe Bool) -> IO Bool
+renderDebug _ _ ( _,Nothing) = SDL.quit >> return True
+renderDebug window _ (g, Just skipSwap) = do
+  let
+  clearColor   $= Color4 0.0 0.0 0.0 1.0
+  GL.clear [ColorBuffer, DepthBuffer]
+
+  --GL.pointSize $= 10.0
+  GL.blend     $= Enabled
+  GL.depthMask $= Enabled
+  depthFunc    $= Just Less
+  cullFace     $= Just Back
+  mapM_ (renderObject (head $ cams g) (unis g)) (objs g)
+
+  GL.blendFunc $= (OneMinusDstColor, OneMinusSrcAlpha)
+  --mapM_ (renderWidget (head $ cams g) (unis g)) (wgts g)
+
+  if skipSwap then glSwapWindow window >> return False else return False
+  
