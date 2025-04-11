@@ -12,19 +12,22 @@
 --
 --------------------------------------------------------------------------------
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module Graphics.RedViz.Uniforms where
 
 import Data.Foldable as DF
 import Data.StateVar as SV
-import Foreign.C.Types
-import Graphics.Rendering.OpenGL
+import Graphics.Rendering.OpenGL hiding (get)
 import Lens.Micro
 import Linear.Matrix
 import Linear.Projection as LP        (infinitePerspective)
 import Linear.V4
 import GHC.Float
 import Control.Concurrent
+import Data.Binary as DB
+import GHC.Generics
 
 import Graphics.RedViz.Entity
 import Graphics.RedViz.Component
@@ -33,6 +36,7 @@ import Graphics.RedViz.Descriptor
 import Graphics.RedViz.LoadShaders
 import Graphics.RedViz.Material
 import Graphics.RedViz.Texture
+import Graphics.RedViz.Utils ()
 
 debug :: Bool
 #ifdef DEBUGSHADERS
@@ -44,7 +48,7 @@ debug = False
 data Uniforms
   =  Uniforms
      { u_time  :: Double
-     , u_res   :: (CInt, CInt)
+     , u_res   :: (Int, Int)
      , u_cam   :: M44 Double
      , u_cam_a :: Double
      , u_cam_f :: Double
@@ -52,7 +56,8 @@ data Uniforms
      , u_cam_yprS  :: (Double, Double, Double)
      , u_cam_vel   :: (Double, Double, Double)
      , u_cam_accel :: (Double, Double, Double)
-     } deriving Show
+     , u_scale :: Float
+     } deriving (Show, Generic, Binary)
 
 defaultUniforms :: Uniforms
 defaultUniforms = 
@@ -65,7 +70,8 @@ defaultUniforms =
   , u_cam_ypr   = (0,0,0)
   , u_cam_yprS  = (0,0,0)
   , u_cam_vel   = (0,0,0)
-  , u_cam_accel = (0,0,0) }
+  , u_cam_accel = (0,0,0)
+  , u_scale = 1.0 }
 
 bindUniforms :: Camera -> Uniforms -> Drawable -> IO ()  
 bindUniforms cam' unis' dr =  
@@ -77,7 +83,7 @@ bindUniforms cam' unis' dr =
         -- where transformable = case transformables of [] -> defaultTransformable; _ -> head transformables
         --         where transformables = filter (\c -> case c of (Transformable{}) -> True; _ -> False; ) (cmps cam')
       u_mouse'  = (0,0) :: (Int, Int)
-      (Uniforms u_time' u_res' _ u_cam_a' u_cam_f' u_ypr' u_yprS' u_vel' u_accel') = unis'
+      (Uniforms u_time' u_res' _ u_cam_a' u_cam_f' u_ypr' u_yprS' u_vel' u_accel' u_scale') = unis'
       (Descriptor _ _ u_prog') = d'
 
     program' <- if debug then debugShaders dr else return u_prog'
@@ -179,7 +185,10 @@ bindUniforms cam' unis' dr =
     location12 <- SV.get (uniformLocation u_prog' "transform")
     uniform location12 $= transform
 
-    -- | Allocate Textures
+    location13        <- SV.get (uniformLocation u_prog' "u_scale")
+    uniform location13 $= ( u_scale' :: GLfloat)
+
+          -- | Allocate Textures
     texture Texture2D        $= Enabled
     mapM_ allocateTextures (dtxs dr) -- TODO: this is ignored, should bind an appropriate texture
 

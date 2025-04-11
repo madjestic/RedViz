@@ -12,21 +12,27 @@
 --
 --------------------------------------------------------------------------------
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 module Graphics.RedViz.Drawable where
 
-import GHC.Generics
-import Graphics.Rendering.OpenGL (TextureObject)
+import Graphics.Rendering.OpenGL (TextureObject (..))
 import Graphics.RedViz.Backend (Options)
 import Linear.Matrix (M44, M33, _m33, mkTransformationMat, identity, translation, (*!!), (*!))
 import Linear.Vector ((*^))  
 import Linear.V3
 import Lens.Micro
+import GHC.Generics
+import Data.Binary
+import Data.Hashable
 
 import Graphics.RedViz.Descriptor
 import Graphics.RedViz.Material as R
 import Graphics.RedViz.Texture
 
-import Debug.Trace as DT
+--import Debug.Trace as DT
+
+instance Hashable TextureObject where
+  hashWithSalt salt (TextureObject tid) = hashWithSalt salt tid
 
 data Drawable
   =  Drawable
@@ -35,7 +41,29 @@ data Drawable
      , dtxs       :: [(Int, (Texture, TextureObject))]
      , doptions   :: Options
      , u_xform    :: M44 Double
-     } deriving Show
+     } deriving (Show, Eq, Generic, Hashable)
+
+instance Binary TextureObject where
+  put (TextureObject v) = do
+    put v 
+  get = do
+    v <- get
+    return $ TextureObject v
+
+instance Binary Drawable where
+  put (Drawable d m dt dop u) = do
+    put d
+    put m
+    put dt
+    put dop
+    put u
+  get = do
+    d   <- get
+    m   <- get
+    dt  <- get
+    dop <- get
+    u   <- get
+    return $ Drawable d m dt dop u
 
 toDrawable
   :: M44 Double
@@ -66,7 +94,7 @@ data Alignment =
    TL |TC |TR
   |CL |CC |CR
   |BL |BC |BR
-  deriving (Generic, Show)
+  deriving (Show, Generic, Binary)
 
 data Format -- move to Format.hs?
   =  Format
@@ -79,7 +107,7 @@ data Format -- move to Format.hs?
      , soffset   :: Double -- scale Offset
      , ssize     :: Double -- scale Size
      }
-  deriving (Generic, Show)
+  deriving (Show, Generic, Binary)
 
 type CursorPos = (Integer, Integer)
 

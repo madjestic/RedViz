@@ -15,6 +15,9 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveGeneric  #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Graphics.RedViz.Utils
   ( toIdxVAO
@@ -31,12 +34,15 @@ module Graphics.RedViz.Utils
   , fromUUID
   , encodeStringUUID
   , vectorizedCompose
+  , hashUUID
   ) where
 
 import Lens.Micro.Extras
 import Graphics.Rendering.OpenGL as GL (GLfloat)
 import Data.ByteString.Char8           (pack
                                        ,unpack)
+import Foreign.C.Types
+import Data.Binary
 import Data.Set                  as DS (fromList, toList)
 import Data.List.Index                 (indexed)
 import Data.List                       (elemIndex)
@@ -54,7 +60,19 @@ import Linear.Matrix
 import Linear.Metric             as LM
 import System.Random
 
+import Data.Binary --(decode,encode,Binary)
+import Crypto.Hash.SHA256 (hashlazy)
+import Data.UUID.Types
+import GHC.Generics
+import Data.ByteString.Lazy (fromStrict)
+
+import Data.Hashable
 -- import Debug.Trace as DT
+
+-- instance Binary CInt where
+--   put x = do put x
+--   get = do x <- get
+--            return x
 
 instance VectorSpace (V3 Double) Double where
   zeroVector                   = (V3 0 0 0)
@@ -191,3 +209,15 @@ genSeedUUID seed =
       g0      = mkStdGen seed -- RNG from seed
       (u1, _) = random g0
   in u1
+
+data Foo = Foo Int String
+    deriving (Eq,Ord,Show,Generic,Binary)
+
+--hash' :: Hashable a => a -> 
+
+-- hashUUID :: IO ()
+-- hashUUID = print (decode @UUID (fromStrict (hashlazy (encode (Foo 1 "hello")))))
+
+hashUUID :: Hashable a => a -> UUID
+hashUUID a = (decode @UUID (fromStrict (hashlazy (encode $ hash a))))
+  

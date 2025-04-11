@@ -2,13 +2,56 @@ module Graphics.RedViz.Project
   ( Project (..)
   , sharedFonts
   , setProjectUUID
+  , setProjectUUID'
+  , setUUID'
+  , nextRandomD
   , flatten
+  , wordToFloat
+  , floatToWord32
+  , wordToDouble
+  , doubleToWord32
+  , intToWord8
   ) where
 
 import Data.UUID
 import Data.UUID.V4
+import Data.Binary (decode,encode,Binary)
+  
+import Data.Maybe
+import Data.ByteString.Lazy as BSL hiding (concat)
+import Data.ByteString as BS hiding (concat)
+import Data.Word (Word32, Word8)
+import Data.Array.ST (newArray, readArray, MArray, STUArray)
+import Data.Array.Base (castSTUArray)
+import GHC.ST (runST, ST)
+import Data.Hashable
 
 import Graphics.RedViz.Entity
+import Graphics.RedViz.Utils
+
+-------------------------------------------------------------------------------
+
+wordToFloat :: Word32 -> Float
+wordToFloat x = runST (cast x)
+
+floatToWord32 :: Float -> Word32
+floatToWord32 x = runST (cast x)
+
+wordToDouble :: Word32 -> Double
+wordToDouble x = runST (cast x)
+
+doubleToWord32 :: Double -> Word32
+doubleToWord32 x = runST (cast x)
+
+intToWord8 :: Int -> Word8
+intToWord8 x = 0 -- runST (cast x)
+
+{-# INLINE cast #-}
+cast :: (MArray (STUArray s) a (ST s),
+         MArray (STUArray s) b (ST s)) => a -> ST s b
+cast x = newArray (0 :: Int, 0) x >>= castSTUArray >>= flip readArray 0
+
+-------------------------------------------------------------------------------  
 
 data Project
   =  Project
@@ -106,6 +149,34 @@ sharedFonts =
   , "models/fnt_crosshair.gltf"
   ]    
 
+-- Deterministic UUIDs
+setProjectUUID' :: Project -> Project
+setProjectUUID' prj0 = 
+  prj0 { pobjects = pobjs'
+       , pcameras = pcams' }
+  where
+    pobjs' = setUUID' <$> pobjects prj0
+    pcams' = setUUID' <$> pcameras prj0
+
+setUUID' :: Schema -> Schema
+setUUID' pobj0@(Schema{schildren = []}) =
+  pobj0 { suuid = nextRandomD pobj0}
+setUUID' pobj0@(Schema{schildren = [p]}) =
+  pobj0 { suuid     = nextRandomD pobj0
+        , schildren = [p { sparent = nextRandomD pobj0
+                         , suuid   = nextRandomD p }] }
+setUUID' pobj0@(Schema{schildren = (p:ps)}) =
+  pobj0 { suuid     = nextRandomD pobj0
+        , schildren = p':ps' }
+  where
+    p'  = setUUID' p
+    ps' = setUUID' <$> ps
+
+nextRandomD :: Schema -> UUID
+nextRandomD = 
+  hashUUID
+
+-- Non-deterministic UUIDs
 setProjectUUID :: Project -> IO Project
 setProjectUUID prj0 = do
   pobjs' <- mapM setUUID (pobjects prj0)

@@ -11,11 +11,12 @@
 -- Utilities for handling Materials.
 --
 --------------------------------------------------------------------------------
-
 {-# LANGUAGE CPP    #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module Graphics.RedViz.Material
   ( Material (..)
@@ -31,6 +32,9 @@ import Data.Aeson.TH
 import Data.Maybe                (fromMaybe)
 import qualified Data.ByteString.Lazy as B
 import Data.Text    hiding (drop)
+import GHC.Generics
+import Data.Binary
+import Data.Hashable
 
 import Graphics.RedViz.Texture as T hiding (name)
 
@@ -40,6 +44,21 @@ debug = True
 #else
 debug = False
 #endif
+
+instance Binary Material where
+  put (Material n v f g t) = do
+    put n
+    put v 
+    put f 
+    put g 
+    put t
+  get = do
+    n <- get 
+    v <- get 
+    f <- get 
+    g <- get 
+    t <- get
+    return $ Material n v f g t
 
 data Material
   =  Material
@@ -52,7 +71,7 @@ data Material
        -- | Paths to texture bindings and other 'Texture' data.
      , geomShader :: Maybe FilePath
      , textures   :: [Texture]  
-     } deriving Show
+     } deriving (Show, Eq, Generic, Hashable)
 deriveJSON defaultOptions ''Material
 
 defaultMat :: Material

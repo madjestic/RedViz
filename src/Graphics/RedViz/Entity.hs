@@ -12,6 +12,8 @@
 --
 --------------------------------------------------------------------------------
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module Graphics.RedViz.Entity where
 
@@ -20,6 +22,9 @@ import Linear.V3
 import Linear.Quaternion
 import Linear.Matrix
 import Lens.Micro
+import Data.Binary
+import GHC.Generics
+--import Data.ByteString as BS 
 
 import Graphics.RedViz.Component as C
 import Graphics.RedViz.Descriptor
@@ -28,6 +33,7 @@ import Graphics.RedViz.Material as R
 import Graphics.RedViz.Texture hiding (uuid)
 import Graphics.Rendering.OpenGL.GL.Texturing
 import Data.Maybe (listToMaybe, fromMaybe)
+import Data.Hashable
 
 import Debug.Trace as DT
 
@@ -39,7 +45,21 @@ data Entity
      { lable :: String
      , uuid  :: UUID
      , cmps  :: [Component]
-     } deriving Show
+     } deriving (Show, Generic, Binary)
+
+-- TODO: finish merge/match Entities
+mergeEntity :: Entity -> Entity -> Entity
+mergeEntity e0 eS@entitySave = 
+  case (uuid e0) == (uuid eS) of
+    True  -> e0 { lable = lable eS
+                , cmps  = zipWith mergeComponents (cmps e0) (cmps eS)}
+    False -> error "mismatching Entity IDs found"
+-- instance Show Entity where
+--   show :: Entity -> String
+--   show (Entity l u c) =    "\n" ++
+--     "lable :" ++ show l ++ "\n" ++
+--     "UUID  :" ++ show u ++
+--     "\n\n"
 
 defaultEntity :: Entity -- TODO: move local properties to Components
 defaultEntity =
@@ -142,6 +162,19 @@ fromSchema txTuples' dms' sch = do
 -- Schema is a convenience step that fascilitates describing and generating hierarchic Entities.
 -- A nested schema gets flattened to a list of entities with Parentable component,
 -- propagating necessary properties from parents to children.
+
+-- instance Hashable Game where
+--   hashWithSalt salt (Game t m q me p c u o w) = hashWithSalt salt t
+
+-- instance Hashable Schema where
+--      hashWithSalt salt schema = hashWithSalt salt (slable schema, suuid schema, scmps schema, schildren schema, sparent schema)
+
+-- hashToUUID :: Schema -> UUID
+-- hashToUUID =
+--   case (fromByteString . BS.pack . hash) of
+--     Just s -> s
+--     Nothing -> nil
+
 data Schema
   =  Schema
      { slable    :: String
@@ -149,7 +182,7 @@ data Schema
      , scmps     :: [Component]
      , schildren :: [Schema]
      , sparent   :: UUID
-     } deriving Show
+     } deriving (Eq, Show, Generic, Binary, Hashable)
 
 camerable :: Entity -> Component
 camerable s = fromMaybe defaultCamerable (listToMaybe . camerables $ s)

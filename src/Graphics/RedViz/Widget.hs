@@ -12,6 +12,7 @@
 --
 --------------------------------------------------------------------------------
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module Graphics.RedViz.Widget
   ( Alignment (..)
@@ -22,10 +23,13 @@ import GHC.Generics
 import SDL (Point)
 import Linear.V2
 import Foreign.C
+import Data.Binary
+--import GHC.Generics
 
 import Graphics.RedViz.Backend
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.Entity
+import Graphics.RedViz.Utils ()
 
 data Widget
   =  Empty
@@ -39,7 +43,7 @@ data Widget
   |  Cursor
      { active   :: Bool
      , icons    :: [Object] -- ~[Objectable]
-     , cpos     :: Point V2 CInt
+     , cpos     :: Point V2 Int
      , format   :: Format     
      , optionsW :: Options
      }
@@ -56,4 +60,4 @@ data Widget
      , format   :: Format
      , optionsW :: Options
      }
-  deriving (Generic, Show)
+  deriving (Show, Generic, Binary)

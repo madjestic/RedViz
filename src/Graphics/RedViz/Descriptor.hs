@@ -11,37 +11,77 @@
 -- A basic structure for passing to graphics driver.
 --
 --------------------------------------------------------------------------------
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 module Graphics.RedViz.Descriptor where
 
 import Foreign (sizeOf)  
 import Foreign.Marshal.Array (withArray)  
 import GHC.Ptr
-import Graphics.Rendering.OpenGL.GL
+import Graphics.Rendering.OpenGL.GL hiding (get)
+import GHC.Generics
+import Data.Binary
+import Data.Hashable
 
 import Graphics.RedViz.Material as R
 import Graphics.RedViz.GLTF
 import Graphics.RedViz.LoadShaders
 
+import Graphics.Rendering.OpenGL.GL.VertexArrayObjects (VertexArrayObject (..))
+import Graphics.Rendering.OpenGL.GL.Shaders.Program (Program (..))
+
+instance Hashable VertexArrayObject where
+  hashWithSalt = hashWithSalt
+
+instance Binary VertexArrayObject where
+  put (VertexArrayObject v) = do
+    put v
+  get = do
+    v <- get
+    return (VertexArrayObject v)
+
+instance Hashable Program where
+  hashWithSalt = hashWithSalt
+
+instance Binary Program where
+  put (Program v) = do
+    put v
+  get = do
+    v <- get
+    return (Program v)
+
 data Descriptor =
      Descriptor VertexArrayObject NumArrayIndices Program
+     deriving (Eq, Generic, Hashable)
+
+instance Binary Descriptor where
+  put (Descriptor t i p) = do
+    put t
+    put i 
+    put p 
+  get = do
+    t <- get 
+    i <- get 
+    p <- get
+    return (Descriptor t i p)
 
 instance Show Descriptor where
-  show Descriptor{} = "Descriptor{}"
+  show (Descriptor t i p) =
+    "Descriptor: " ++ "\n" ++
+    "\t" ++ show t ++ "\n" ++
+    "\t" ++ show i ++ "\n" ++
+    "\t" ++ show p ++ "\n"
 
 toDescriptorMat :: FilePath -> IO [(Descriptor, R.Material)]
 toDescriptorMat file = do
   (stuff, mats) <- loadGltf file -- "models/pighead.gltf"
   mats' <- mapM fromGltfMat mats
-  -- print file
-  -- print stuff
-  -- print mats'
   ds    <- mapM (\((vs, idx), mat) -> toDescriptor idx vs mat) $ zip (concat stuff) mats'
   return $ zip ds mats'
 
 toDescriptor :: [GLfloat] -> [GLenum] -> R.Material -> IO Descriptor
 toDescriptor vs idx mat =  
   do
-    -- print $ mat
     -- | VAO
     triangles <- genObjectName
     bindVertexArrayObject $= Just triangles

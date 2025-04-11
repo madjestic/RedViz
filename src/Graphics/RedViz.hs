@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  RedViz
--- Copyright   :  (c) Vladimir Lopatin 2022
+-- Copyright   :  (c) Vladimir Lopatin 2025
 -- License     :  BSD-3-Clause
 --
 -- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>

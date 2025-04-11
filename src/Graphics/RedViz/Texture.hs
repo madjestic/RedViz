@@ -12,6 +12,8 @@
 --
 --------------------------------------------------------------------------------
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module Graphics.RedViz.Texture 
   ( Texture (..)
@@ -26,10 +28,27 @@ import Data.Maybe
 import Data.UUID
 import Graphics.Rendering.OpenGL.GL (($=), blend, blendFunc, BlendingFactor(..), Capability(..), activeTexture, TextureUnit(..), GLuint)
 import Graphics.Rendering.OpenGL.GL.Texturing
+import GHC.Generics
+import Data.Binary
+import Data.Hashable
 
 import Graphics.RedViz.Utils (encodeStringUUID)
 import Graphics.RedViz.GLUtil.Textures (texture2DWrap)
 import Graphics.RedViz.GLUtil.JuicyTextures
+
+instance Binary Texture where
+  put (Texture n p u) = do
+    put n
+    put p 
+    put u 
+  get = do
+    n <- get 
+    p <- get 
+    u <- get 
+    return $ Texture n p u
+
+instance Eq Texture where
+  t0 == t1 = uuid t0 == uuid t1
 
 data Texture
   =  Texture
@@ -39,11 +58,8 @@ data Texture
      , path :: FilePath
        -- | A unique object (texture) ID.
      , uuid :: UUID
-     } deriving Show
+     } deriving (Show, Generic, Hashable)
 deriveJSON defaultOptions ''Texture
-
-instance Eq Texture where
-  t0 == t1 = uuid t0 == uuid t1
 
 instance Ord Texture where
   compare t0 t1  = compare (uuid t0) (uuid t1)

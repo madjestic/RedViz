@@ -15,23 +15,53 @@ module Graphics.RedViz.Game where
 
 import Linear.Affine
 import Linear.V2
-import Foreign.C.Types
+import Data.Binary as DB
+import Data.ByteString.Lazy as DBL (writeFile, readFile)
+import Data.Functor
 
 import Graphics.RedViz.Entity
 import Graphics.RedViz.Widget
 import Graphics.RedViz.Uniforms
+       
+instance Binary Game where
+  put (Game t m q c u o w) = do
+    put t
+    put m
+    put q
+    -- put me
+    -- put p
+    put c 
+    put u
+    put o
+    put w
+  get = do 
+    t  <- get 
+    m  <- get 
+    q  <- get 
+    c  <- get 
+    u  <- get 
+    o  <- get 
+    w  <- get
+    return $ Game t m q c u o w
 
 data Game = Game
   { tick  :: Integer
-  , mpos  :: Point V2 CInt
+  , mpos  :: Point V2 Int
   , quit  :: Bool
-  , menu  :: Bool
-  , pause :: Bool
   , cams  :: [Camera]
   , unis  :: Uniforms
   , objs  :: [Object]
   , wgts  :: [Widget]
   } deriving Show
+
+saveGame :: FilePath -> Game -> IO ()
+saveGame fp game0 = do
+  DBL.writeFile fp (encode game0)
+
+loadGame :: FilePath -> IO Game
+loadGame fp = do
+  --DBL.readFile fp >>= return . decode
+  DBL.readFile fp <&> decode
 
 data GameSettings = GameSettings
   { resX :: Int 
@@ -44,8 +74,6 @@ initGame =
   { tick  = 0
   , mpos  = P (V2 0 0)
   , quit  = False
-  , menu  = False
-  , pause = False
   , cams  = [defaultEntity]
   , unis  = defaultUniforms
   , objs  = []
