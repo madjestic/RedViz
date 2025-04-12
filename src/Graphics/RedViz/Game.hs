@@ -22,11 +22,21 @@ import Data.Functor
 import Graphics.RedViz.Entity
 import Graphics.RedViz.Widget
 import Graphics.RedViz.Uniforms
-       
+
+data Game = Game
+  { tick  :: Integer
+  --, mpos  :: Point V2 Int
+  , quit  :: Bool
+  , cams  :: [Camera]
+  , unis  :: Uniforms
+  , objs  :: [Object]
+  , wgts  :: [Widget]
+  } deriving Show
+  
 instance Binary Game where
-  put (Game t m q c u o w) = do
+  put (Game t q c u o w) = do
     put t
-    put m
+    --put m
     put q
     -- put me
     -- put p
@@ -36,23 +46,13 @@ instance Binary Game where
     put w
   get = do 
     t  <- get 
-    m  <- get 
+    --m  <- get 
     q  <- get 
     c  <- get 
     u  <- get 
     o  <- get 
     w  <- get
-    return $ Game t m q c u o w
-
-data Game = Game
-  { tick  :: Integer
-  , mpos  :: Point V2 Int
-  , quit  :: Bool
-  , cams  :: [Camera]
-  , unis  :: Uniforms
-  , objs  :: [Object]
-  , wgts  :: [Widget]
-  } deriving Show
+    return $ Game t q c u o w
 
 saveGame :: FilePath -> Game -> IO ()
 saveGame fp game0 = do
@@ -72,7 +72,7 @@ initGame :: Game
 initGame =
   Game
   { tick  = 0
-  , mpos  = P (V2 0 0)
+  --, mpos  = P (V2 0 0)
   , quit  = False
   , cams  = [defaultEntity]
   , unis  = defaultUniforms
