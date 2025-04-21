@@ -42,7 +42,14 @@ data Widget
      }
   |  Cursor
      { active   :: Bool
-     , icons    :: [Object] -- ~[Objectable]
+     , icons    :: [Object]
+     , cpos     :: Point V2 Int
+     , format   :: Format     
+     , optionsW :: Options
+     }
+  |  Gizmo
+     { active   :: Bool
+     , icons    :: [Object]
      , cpos     :: Point V2 Int
      , format   :: Format     
      , optionsW :: Options

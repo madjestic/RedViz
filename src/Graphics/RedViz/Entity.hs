@@ -146,7 +146,7 @@ fromSchema txTuples' dms' sch = do
         updateComponent r0@(Renderable {}) =
           r0 { drws =
                toDrawable
-               (identity :: M44 Double) -- TODO: add result based on solvers composition
+               (identity :: M44 Double)
                (backend r0)
                txTuples
                <$> concat dms :: [Drawable] }

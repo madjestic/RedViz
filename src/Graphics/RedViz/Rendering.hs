@@ -32,6 +32,8 @@ import Linear.V2
 import Linear.V4
 --import Linear.Metric (norm)
 import SDL hiding (Texture, normalize)
+import Lens.Micro
+import Data.Maybe (listToMaybe, fromMaybe)
 
 import Graphics.RedViz.Descriptor
 import Graphics.RedViz.Drawable
@@ -42,25 +44,35 @@ import Graphics.RedViz.Widget
 import Graphics.RedViz.Game
 import Graphics.RedViz.Backend as BO (Options(primitiveMode), ptSize, blendFunc)
 
-import Lens.Micro
-
 --import Debug.Trace as DT
-import Data.Maybe (listToMaybe, fromMaybe)
 
 renderWidget :: Camera -> Uniforms -> Widget -> IO ()
 renderWidget cam unis' wgt = case wgt of
   Empty                   -> do return ()
   Cursor  False _ _ _ _   -> do return ()
-  Cursor  _ _ _ fmt _ ->
+  Cursor  _ _ _ fmt _ -> 
     (\dr -> do
+        GL.blendFunc $= (OneMinusDstColor, OneMinusSrcAlpha) 
         bindUniforms cam unis' (formatDrw (format wgt) dr) 
         let (Descriptor triangles numIndices _) = descriptor dr
         bindVertexArrayObject $= Just triangles
         drawElements Triangles numIndices UnsignedInt nullPtr
-    ) (fromMaybe (error "No Cursor : empty list!") (listToMaybe idrs) ) -- cursor font index is 75
+    ) (fromMaybe (error "No Cursor : empty list!") (listToMaybe idrs) ) -- listToMaybe == head! (first element!), duh!
     where
       idrs :: [Drawable]
       idrs = scaleDrws fmt $ concatMap drws $ concatMap renderables $ icons wgt
+  Gizmo  False _ _ _ _ -> do return ()
+  Gizmo  _ _ _ fmt _ -> 
+    (\dr -> do
+        GL.blendFunc $= (SrcColor, OneMinusSrcAlpha)
+        bindUniforms cam unis' (formatDrw (format wgt) dr) 
+        let (Descriptor triangles numIndices _) = descriptor dr
+        bindVertexArrayObject $= Just triangles
+        drawElements Triangles numIndices UnsignedInt nullPtr
+    ) (fromMaybe (error "No Gizmo : empty list!") (listToMaybe idrs) ) -- cursor font index is 75
+    where
+      idrs :: [Drawable]
+      idrs = concatMap drws $ concatMap renderables $ icons wgt
   TextField False _ _ _ _   -> do return ()
   TextField _ s _ fmt _ ->
     mapM_
@@ -146,7 +158,7 @@ openWindow title (sizex,sizey) = do
 -- TODO: I need separate pipelines for this
 renderOutput :: Window -> GameSettings -> (Game, Maybe Bool) -> IO Bool
 renderOutput _ _ ( _,Nothing) = SDL.quit >> return True
-renderOutput window _ (g, Just skipSwap) = do -- Just skipSwap window swap
+renderOutput window _ (game0, Just skipSwap) = do -- Just skipSwap window swap
   let
   clearColor   $= Color4 0.0 0.0 0.0 1.0
   GL.clear [ColorBuffer, DepthBuffer]
@@ -156,29 +168,7 @@ renderOutput window _ (g, Just skipSwap) = do -- Just skipSwap window swap
   GL.depthMask $= Enabled
   depthFunc    $= Just Less
   cullFace     $= Just Back
-  mapM_ (renderObject (head $ cams g) (unis g)) (objs g)
-
-  GL.blendFunc $= (OneMinusDstColor, OneMinusSrcAlpha)
-  mapM_ (renderWidget (head $ cams g) (unis g)) (wgts g)
+  mapM_ (renderObject (head $ cams game0) (unis game0)) (objs game0)
+  mapM_ (renderWidget (head $ cams game0) (unis game0)) (wgts game0)
 
   if skipSwap then return False else glSwapWindow window >> return False
-
-renderDebug :: Window -> GameSettings -> (Game, Maybe Bool) -> IO Bool
-renderDebug _ _ ( _,Nothing) = SDL.quit >> return True
-renderDebug window _ (g, Just skipSwap) = do
-  let
-  clearColor   $= Color4 0.0 0.0 0.0 1.0
-  GL.clear [ColorBuffer, DepthBuffer]
-
-  --GL.pointSize $= 10.0
-  GL.blend     $= Enabled
-  GL.depthMask $= Enabled
-  depthFunc    $= Just Less
-  cullFace     $= Just Back
-  mapM_ (renderObject (head $ cams g) (unis g)) (objs g)
-
-  GL.blendFunc $= (OneMinusDstColor, OneMinusSrcAlpha)
-  --mapM_ (renderWidget (head $ cams g) (unis g)) (wgts g)
-
-  if skipSwap then glSwapWindow window >> return False else return False
-  
