@@ -13,8 +13,6 @@
 --------------------------------------------------------------------------------
 module Graphics.RedViz.Game where
 
-import Linear.Affine
-import Linear.V2
 import Data.Binary as DB
 import Data.ByteString.Lazy as DBL (writeFile, readFile)
 import Data.Functor
