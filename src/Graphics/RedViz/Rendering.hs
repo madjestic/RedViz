@@ -213,7 +213,7 @@ renderObject gs cam unis' obj = do
   mapM_ (\dr -> do
             GL.blendFunc $= (BO.blendFunc . backend . renderable $ obj)
             bindUniforms cam unis' dr {u_xform = xform . transformable $ obj} 
-            render gs obj dr False  -- render objects with shadows
+            render gs obj dr True  -- render objects with shadows
             --render gs obj dr False
         ) (drws . renderable $ obj)
 
