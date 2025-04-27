@@ -190,7 +190,7 @@ bindUniforms cam' unis' dr =
 
           -- | Allocate Textures
     texture Texture2D        $= Enabled
-    mapM_ allocateTextures (dtxs dr) -- TODO: this is ignored, should bind an appropriate texture
+    mapM_ allocateTextures $ dtxs dr
 
     -- | Unload buffers
     bindVertexArrayObject         $= Nothing

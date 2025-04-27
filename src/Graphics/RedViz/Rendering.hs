@@ -35,6 +35,7 @@ import Lens.Micro
 import Data.Maybe (listToMaybe, fromMaybe)
 import qualified Data.ByteString.Char8 as BS
 import Linear as L
+import Data.List
 
 import Graphics.RedViz.Descriptor
 import Graphics.RedViz.Drawable
@@ -119,13 +120,11 @@ formatDrw :: Format -> Drawable -> Drawable
 --formatDrw fmt dr = dr
 formatDrw _ dr = dr
 
-type Shadow = Bool
-
-render :: GameSettings -> Object -> Drawable -> Shadow -> IO ()
-render gs obj dr inShadow = do
+render :: GameSettings -> Object -> Drawable -> IO ()
+render gs obj dr = do
   let (Descriptor triangles numIndices program) = descriptor dr
 
-  when inShadow $ do
+  when True $ do
     let
       lightRayDirection   = L.normalize $ V3 (-1) (-1) (-1 :: GLfloat)
       lightDir            = negate lightRayDirection -- Towards the light
@@ -150,12 +149,14 @@ render gs obj dr inShadow = do
     depthMapFBO <- genObjectName
     bindFramebuffer Framebuffer $= depthMapFBO
     framebufferTexture2D Framebuffer DepthAttachment Texture2D depthMap  0
+
     drawBuffer $= NoBuffers
     readBuffer $= NoBuffers
     status <- get (framebufferStatus Framebuffer)
     unless (status == Complete) $ error "FBO not complete"
     bindFramebuffer Framebuffer $= defaultFramebufferObject
-    -- // 1. first render to depth map
+
+    -- first render to depth map
     viewport $= (Position 0 0, Size shadow_width shadow_height)
     fbo <- genObjectName
     bindFramebuffer Framebuffer $= fbo
@@ -164,27 +165,25 @@ render gs obj dr inShadow = do
     depthProgram <- createShaderProgram depthVertexShaderSrc Nothing-- (Just mainFragmentShaderSrc)
     currentProgram $= Just depthProgram
 
+    -- assign uniforms
     lightVPLoc <- SV.get (uniformLocation depthProgram "lightViewProjection")
     lightViewProjection' <- m44GLfloatToGLmatrixGLfloat lightViewProjection
     uniform lightVPLoc $= lightViewProjection'
 
-    drawElements Triangles numIndices UnsignedInt nullPtr
+    drawElements (primitiveMode $ doptions dr) numIndices UnsignedInt nullPtr
 
     -- main pass using shadow map from shadow pass
-    bindFramebuffer Framebuffer $= defaultFramebufferObject
     viewport $= (Position 0 0, Size (fromIntegral $ resX gs) (fromIntegral $ resY gs))
+    bindFramebuffer Framebuffer $= defaultFramebufferObject
     GL.clear [ColorBuffer, DepthBuffer]
     --currentProgram $= Just program
     mainProgram  <- createShaderProgram mainVertexShaderSrc (Just mainFragmentShaderSrc)
     currentProgram $= Just mainProgram
 
+    -- assign uniforms
     mvpLoc <- SV.get (uniformLocation mainProgram "modelViewProjection")
     modelViewProjection' <- m44GLfloatToGLmatrixGLfloat modelViewProjection
-    uniform mvpLoc $= (modelViewProjection')
-
-    lightVPLoc' <- SV.get (uniformLocation mainProgram "lightViewProjection")
-    lightViewProjection' <- m44GLfloatToGLmatrixGLfloat lightViewProjection
-    uniform lightVPLoc' $= ( lightViewProjection')
+    uniform mvpLoc $= modelViewProjection'
 
     lightDirLoc <- get (uniformLocation mainProgram "lightDir")
     uniform lightDirLoc $= v3GLfloatToVertex3GLfloat lightDir
@@ -192,12 +191,12 @@ render gs obj dr inShadow = do
     activeTexture $= TextureUnit 0
     textureBinding Texture2D $= Just depthMap
     shadowMapLoc <- uniformLocation mainProgram "shadowMap"
-    uniform shadowMapLoc $= (0 :: GLint)
-    GL.pointSize $= 10
-    drawElements Triangles numIndices UnsignedInt nullPtr
+    let maxTexId = fromMaybe 0 . listToMaybe . reverse . sort $ fst <$> dtxs dr
+    uniform shadowMapLoc $= (fromIntegral maxTexId + 1 :: GLint)
+    drawElements (primitiveMode $ doptions dr) numIndices UnsignedInt nullPtr
 
-  unless inShadow $ do
-    --mapM_ allocateTextures (dtxs dr)
+  --when True $ do
+    mapM_ allocateTextures $ dtxs dr ++ [(maxTexId + 1, (undefined, depthMap))] -- add shadow map (depthMap) texture to the binding call
     bindFramebuffer Framebuffer $= defaultFramebufferObject
     viewport $= (Position 0 0, Size (fromIntegral $ resX gs) (fromIntegral $ resY gs))
     GL.clear [ColorBuffer, DepthBuffer]
@@ -213,7 +212,7 @@ renderObject gs cam unis' obj = do
   mapM_ (\dr -> do
             GL.blendFunc $= (BO.blendFunc . backend . renderable $ obj)
             bindUniforms cam unis' dr {u_xform = xform . transformable $ obj} 
-            render gs obj dr True  -- render objects with shadows
+            render gs obj dr  -- render object with shadows
             --render gs obj dr False
         ) (drws . renderable $ obj)
 
