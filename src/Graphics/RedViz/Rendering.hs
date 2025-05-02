@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Rendering
--- Copyright   :  (c) Vladimir Lopatin 2024
+-- Copyright   :  (c) Vladimir Lopatin 2025
 -- License     :  BSD-3-Clause
 --
 -- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
@@ -36,6 +36,9 @@ import Data.Maybe (listToMaybe, fromMaybe)
 import qualified Data.ByteString.Char8 as BS
 import Linear as L
 import Data.List
+import Foreign.Marshal.Array (withArray)
+import Foreign.Storable
+import Graphics.RedViz.Utils (encodeStringUUID, word32ToInt, intToWord32)
 
 import Graphics.RedViz.Descriptor
 import Graphics.RedViz.Drawable
@@ -45,7 +48,10 @@ import Graphics.RedViz.Uniforms
 import Graphics.RedViz.Widget
 import Graphics.RedViz.Game
 import Graphics.RedViz.Backend as BO (Options(primitiveMode), ptSize, blendFunc)
-import Graphics.RedViz.Texture (allocateTextures)
+import Graphics.RedViz.Texture as T
+import Data.List (sortBy)
+import Data.Ord (comparing, Down (..))
+--import Render.Pass.Offscreen (depthTexture)
 
 --import Debug.Trace as DT
 
@@ -120,100 +126,152 @@ formatDrw :: Format -> Drawable -> Drawable
 --formatDrw fmt dr = dr
 formatDrw _ dr = dr
 
-render :: GameSettings -> Object -> Drawable -> IO ()
-render gs obj dr = do
-  let (Descriptor triangles numIndices program) = descriptor dr
+renderWithShadows :: GameSettings -> Object -> Drawable -> IO ()
+renderWithShadows gs obj dr = do
+  -- print $ (\(Descriptor triangles numIndices program) -> triangles) $ descriptor dr
+  -- | Define geometry
 
-  when True $ do
-    let
-      lightRayDirection   = L.normalize $ V3 (-1) (-1) (-1 :: GLfloat)
-      lightDir            = negate lightRayDirection -- Towards the light
-      lightView           = L.lookAt (V3 0 0 10) (V3 (0) (0) 0) (V3 0 1 0) :: M44 GLfloat
-      lightProjection     = L.ortho (-20) 20 (-20) 20 5 15
+  let planeVertices = [
+          Vector3 (-10) (-10) 0, Vector3 10 (-10) 0, Vector3 10 10 0,
+          Vector3 (-10) (-10) 0, Vector3 10 10 0, Vector3 (-10) 10 0 :: Vector3 GLfloat ]
+      triangleVertices = [
+            Vector3 0 0 3, Vector3 1 0 3, Vector3 1 1 3
+          , Vector3 0 0 3, Vector3 1 1 3, Vector3 0 1 3
+            :: Vector3 GLfloat ]
+  
+  -- Create VBOs
+  planeVBO <- genObjectName
+  bindBuffer ArrayBuffer $= Just planeVBO
+  withArray planeVertices $ \ptr ->
+      bufferData ArrayBuffer $= (fromIntegral $ length planeVertices * sizeOf (undefined :: Vector3 GLfloat), ptr, StaticDraw)
+  
+  triangleVBO <- genObjectName
+  bindBuffer ArrayBuffer $= Just triangleVBO
+  withArray triangleVertices $ \ptr ->
+      bufferData ArrayBuffer $= (fromIntegral $ length triangleVertices * sizeOf (undefined :: Vector3 GLfloat), ptr, StaticDraw)
+  
+  -- -- Create VAO
+  -- Create VAO for plane
+  planeVAO <- genObjectName
+  bindVertexArrayObject $= Just planeVAO
+  bindBuffer ArrayBuffer $= Just planeVBO
+  vertexAttribPointer (AttribLocation 0) $= (ToFloat, VertexArrayDescriptor 3 Float 0 nullPtr)
+  vertexAttribArray (AttribLocation 0) $= Enabled
+   
+  -- Create VAO for triangle
+  triangleVAO <- genObjectName
+  bindVertexArrayObject $= Just triangleVAO
+  bindBuffer ArrayBuffer $= Just triangleVBO
+  vertexAttribPointer (AttribLocation 0) $= (ToFloat, VertexArrayDescriptor 3 Float 0 nullPtr)
+  vertexAttribArray (AttribLocation 0) $= Enabled
+  
+  -- Create depth texture and FBO
+  let shadowMapSize = Size 1024 1024
+      shadowMapSize'= TextureSize2D 1024 1024
+  depthTexture <- genObjectName
+  activeTexture $= TextureUnit 0
+  textureBinding Texture2D $= Just depthTexture
+  texImage2D Texture2D NoProxy 0 DepthComponent32f shadowMapSize' 0 (PixelData DepthComponent Float nullPtr)
+  textureFilter Texture2D $= ((Nearest, Nothing), Nearest)
+  textureWrapMode Texture2D S $= (Repeated, Repeat)
+  textureWrapMode Texture2D T $= (Repeated, Repeat)
+  
+  fbo <- genObjectName
+  bindFramebuffer Framebuffer $= fbo
+  framebufferTexture2D Framebuffer DepthAttachment Texture2D depthTexture 0
+  drawBuffer $= NoBuffers
+  readBuffer $= NoBuffers
+  status <- get (framebufferStatus Framebuffer)
+  unless (status == Complete) $ error "FBO not complete"
+  bindFramebuffer Framebuffer $= defaultFramebufferObject
+  
+  -- Compile shaders
+  depthProgram <- createShaderProgram depthVertexShaderSrc Nothing
+  mainProgram  <- createShaderProgram mainVertexShaderSrc (Just mainFragmentShaderSrc)
+  
+  let (Descriptor triangles numIndices program) = descriptor dr
+  -- Define matrices
+      lightRayDirection = L.normalize $ V3 (-1) (-1) (-1 :: GLfloat)
+      lightDir = negate lightRayDirection -- Towards the light
+      lightView = L.lookAt (V3 0 0 10) (V3 (-2) (0.3) 0) (V3 0 1 0) :: M44 GLfloat
+      lightProjection = L.ortho (-20) 20 (-20) 20 5 15
       lightViewProjection = lightProjection !*! lightView
-      --lightViewProjection = identity
-      cameraView          = L.lookAt (V3 5 5 5) (V3 0 0 0) (V3 0 1 0) :: M44 GLfloat
-      cameraProjection    = L.perspective (pi/4) ((fromIntegral $ resX gs)/(fromIntegral $ resY gs)) 0.1 100
+      cameraView = L.lookAt (V3 4 5 5) (V3 0 0 0) (V3 0 1 0) :: M44 GLfloat
+      cameraProjection = L.perspective (pi/4) (800/600) 0.1 100
       modelViewProjection = cameraProjection !*! cameraView
 
-    -- shadow pass
-    let shadow_width  = 1024
-        shadow_height = 1024
-    depthMap <- genObjectName
-    textureBinding Texture2D $= Just depthMap
-    texImage2D Texture2D NoProxy 0 DepthComponent32f (TextureSize2D shadow_width shadow_height)  0 (PixelData DepthComponent Float nullPtr)
-    textureFilter Texture2D $= ((Nearest, Nothing), Nearest)
-    textureWrapMode Texture2D S $= (Repeated, ClampToEdge)
-    textureWrapMode Texture2D T $= (Repeated, ClampToEdge)
-     
-    depthMapFBO <- genObjectName
-    bindFramebuffer Framebuffer $= depthMapFBO
-    framebufferTexture2D Framebuffer DepthAttachment Texture2D depthMap  0
+  -- Depth pass
+  bindFramebuffer Framebuffer $= fbo
+  viewport $= (Position 0 0, shadowMapSize)
+  GL.clear [DepthBuffer]
+  currentProgram $= Just depthProgram
+  lightVPLoc <- SV.get (uniformLocation depthProgram "lightViewProjection")
+  lightViewProjection' <- m44GLfloatToGLmatrixGLfloat lightViewProjection
+  uniform lightVPLoc $= lightViewProjection'
 
-    drawBuffer $= NoBuffers
-    readBuffer $= NoBuffers
-    status <- get (framebufferStatus Framebuffer)
-    unless (status == Complete) $ error "FBO not complete"
-    bindFramebuffer Framebuffer $= defaultFramebufferObject
+  bindVertexArrayObject $= Just triangles
+  drawElements Triangles numIndices UnsignedInt nullPtr
 
-    -- first render to depth map
-    viewport $= (Position 0 0, Size shadow_width shadow_height)
-    fbo <- genObjectName
-    bindFramebuffer Framebuffer $= fbo
-    GL.clear [DepthBuffer]
-    bindVertexArrayObject $= Just triangles
-    depthProgram <- createShaderProgram depthVertexShaderSrc Nothing-- (Just mainFragmentShaderSrc)
-    currentProgram $= Just depthProgram
+  objectTypeLoc <- uniformLocation mainProgram "objectType"
 
-    -- assign uniforms
-    lightVPLoc <- SV.get (uniformLocation depthProgram "lightViewProjection")
-    lightViewProjection' <- m44GLfloatToGLmatrixGLfloat lightViewProjection
-    uniform lightVPLoc $= lightViewProjection'
+  bindFramebuffer Framebuffer $= defaultFramebufferObject
+  viewport $= (Position 0 0, Size 800 600)
+  GL.clear [ColorBuffer, DepthBuffer]
+ 
+  -- | Debug Shadowmap Projection pass
 
-    drawElements (primitiveMode $ doptions dr) numIndices UnsignedInt nullPtr
+  depthMask $= Disabled -- TODO: enable
+  currentProgram $= Just mainProgram
+  mvpLoc <- SV.get (uniformLocation mainProgram "modelViewProjection")
+  modelViewProjection' <- m44GLfloatToGLmatrixGLfloat modelViewProjection
+  uniform mvpLoc $= (modelViewProjection')
 
-    -- main pass using shadow map from shadow pass
-    viewport $= (Position 0 0, Size (fromIntegral $ resX gs) (fromIntegral $ resY gs))
-    bindFramebuffer Framebuffer $= defaultFramebufferObject
-    GL.clear [ColorBuffer, DepthBuffer]
-    --currentProgram $= Just program
-    mainProgram  <- createShaderProgram mainVertexShaderSrc (Just mainFragmentShaderSrc)
-    currentProgram $= Just mainProgram
+  lightVPLoc' <- SV.get (uniformLocation mainProgram "lightViewProjection")
+  lightViewProjection' <- m44GLfloatToGLmatrixGLfloat lightViewProjection
+  uniform lightVPLoc' $= lightViewProjection'
 
-    -- assign uniforms
-    mvpLoc <- SV.get (uniformLocation mainProgram "modelViewProjection")
-    modelViewProjection' <- m44GLfloatToGLmatrixGLfloat modelViewProjection
-    uniform mvpLoc $= modelViewProjection'
-
-    lightDirLoc <- get (uniformLocation mainProgram "lightDir")
-    uniform lightDirLoc $= v3GLfloatToVertex3GLfloat lightDir
-    
-    activeTexture $= TextureUnit 0
-    textureBinding Texture2D $= Just depthMap
-    shadowMapLoc <- uniformLocation mainProgram "shadowMap"
-    let maxTexId = fromMaybe 0 . listToMaybe . reverse . sort $ fst <$> dtxs dr
-    uniform shadowMapLoc $= (fromIntegral maxTexId + 1 :: GLint)
-    drawElements (primitiveMode $ doptions dr) numIndices UnsignedInt nullPtr
-
-  --when True $ do
-    mapM_ allocateTextures $ dtxs dr ++ [(maxTexId + 1, (undefined, depthMap))] -- add shadow map (depthMap) texture to the binding call
-    bindFramebuffer Framebuffer $= defaultFramebufferObject
-    viewport $= (Position 0 0, Size (fromIntegral $ resX gs) (fromIntegral $ resY gs))
-    GL.clear [ColorBuffer, DepthBuffer]
-    bindVertexArrayObject $= Just triangles
-    --mainProgram <- createShaderProgram mainVertexShaderSrc' (Just mainFragmentShaderSrc)
-    --currentProgram $= Just mainProgram
-    currentProgram $= Just program
-    GL.pointSize $= 10
-    drawElements Triangles numIndices UnsignedInt nullPtr
+  lightDirLoc <- get (uniformLocation mainProgram "lightDir")
+  uniform lightDirLoc $= v3GLfloatToVertex3GLfloat lightDir
   
+  activeTexture $= TextureUnit 0
+  textureBinding Texture2D $= Just depthTexture
+  shadowMapLoc <- uniformLocation mainProgram "shadowMap" -- not here
+  uniform shadowMapLoc  $= (0 :: GLint)
+
+  uniform objectTypeLoc $= (0 :: GLint)  -- Plane: use shading
+  bindVertexArrayObject $= Just planeVAO
+  drawArrays Triangles 0 6  -- Draw plane
+
+  print "mainProgram"
+  get (activeUniforms mainProgram) >>= print 
+  
+  -- | End of Debug pass --
+
+  -- | Main Pass --
+  print "Secondary Pass:"
+  currentProgram $= Just program
+  let depthTexture' = T.Texture "shadowMap" "" (encodeStringUUID "shadowMap")
+      maxTexId = fromMaybe 0 . listToMaybe . sortBy (comparing Down) $ fst <$> dtxs dr
+  mapM_ (allocateTextures program) $ dtxs dr ++ [(maxTexId+1, (depthTexture', depthTexture))] -- add shadow map (depthMap) texture to the binding call
+  currentProgram $= Just program
+
+  bindFramebuffer Framebuffer $= defaultFramebufferObject
+  viewport $= (Position 0 0, Size (fromIntegral $ resX gs) (fromIntegral $ resY gs))
+  bindVertexArrayObject $= Just triangles
+  drawElements Triangles numIndices UnsignedInt nullPtr
+  -- | End of Main Pass
+
 renderObject :: GameSettings -> Camera -> Uniforms -> Object -> IO ()
 renderObject gs cam unis' obj = do
   mapM_ (\dr -> do
             GL.blendFunc $= (BO.blendFunc . backend . renderable $ obj)
             bindUniforms cam unis' dr {u_xform = xform . transformable $ obj} 
-            render gs obj dr  -- render object with shadows
-            --render gs obj dr False
+            renderWithShadows gs obj dr  -- render object with shadows
+
+            -- let (Descriptor triangles numIndices _) = descriptor dr
+            -- bindVertexArrayObject $= Just triangles
+            -- drawElements (primitiveMode . backend . renderable $ obj) numIndices UnsignedInt nullPtr
+
         ) (drws . renderable $ obj)
 
 openWindow :: Text -> (CInt, CInt) -> IO SDL.Window
@@ -263,7 +321,6 @@ depthVertexShaderSrc = unlines [
     "in vec3 position;",
     "void main() {",
     "    gl_Position = lightViewProjection * vec4(position, 1.0);",
-    --"    gl_Position = vec4(position, 1.0);",
     "}"
     ]
 
@@ -277,7 +334,6 @@ mainVertexShaderSrc = unlines [
     "void main() {",
     "    gl_Position = modelViewProjection * vec4(position, 1.0);",
     "    lightSpacePos = lightViewProjection * vec4(position, 1.0);",
-    --"    gl_Position = vec4(position, 1.0);",
     "}"
     ]
 
@@ -291,7 +347,6 @@ mainVertexShaderSrc' = unlines [
     "void main() {",
     "    gl_Position   =  vec4(position, 1.0);",
     "    lightSpacePos =  vec4(position, 1.0);",
-    --"    gl_Position = vec4(position, 1.0);",
     "}"
     ]
 
@@ -317,8 +372,6 @@ mainFragmentShaderSrc = unlines [
     "        float diffuse = max(dot(normal, lightDir), 0.0);",
     "        float intensity = shadow > 0.5 ? 0.2 : diffuse;",
     "        color = vec4(intensity, intensity, intensity, 1.0);",
-    "        color = vec4(1,0,0,1.0);",
-    "        color = vec4(texture(shadowMap, projCoords.xy),1.0).r;",
     "    }",
     "}"
     ]

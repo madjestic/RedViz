@@ -34,4 +34,4 @@ readTexInfo f k = readImage f >>= either (return . Left) aux
 -- | Load a 'TextureObject' from an image file. Supported formats
 -- include @png@, @jpeg@, @bmp@, and @gif@.
 readTexture :: FilePath -> IO (Either String TextureObject)
-readTexture f = readTexInfo f loadTexture
+readTexture f = readTexInfo f genTexture

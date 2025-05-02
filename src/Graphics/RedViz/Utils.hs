@@ -35,8 +35,16 @@ module Graphics.RedViz.Utils
   , encodeStringUUID
   , vectorizedCompose
   , hashUUID
+  , intToWord32
+  , word32ToInt
+  , wordToFloat
+  , floatToWord32
+  , wordToDouble
+  , doubleToWord32
+  , intToWord8
   ) where
 
+import GHC.ST (runST, ST)
 import Lens.Micro.Extras
 import Graphics.Rendering.OpenGL as GL (GLfloat)
 import Data.ByteString.Char8           (pack
@@ -65,6 +73,9 @@ import Crypto.Hash.SHA256 (hashlazy)
 import Data.UUID.Types
 import GHC.Generics
 import Data.ByteString.Lazy (fromStrict)
+
+import Data.Array.ST (newArray, readArray, MArray, STUArray)
+import Data.Array.Base (castSTUArray)
 
 import Data.Hashable
 -- import Debug.Trace as DT
@@ -220,4 +231,31 @@ data Foo = Foo Int String
 
 hashUUID :: Hashable a => a -> UUID
 hashUUID a = (decode @UUID (fromStrict (hashlazy (encode $ hash a))))
+  
+word32ToInt :: Word32 -> Int
+word32ToInt x = runST (cast x)
+
+intToWord32 :: Int -> Word32
+intToWord32 x = runST (cast x)
+
+wordToFloat :: Word32 -> Float
+wordToFloat x = runST (cast x)
+
+floatToWord32 :: Float -> Word32
+floatToWord32 x = runST (cast x)
+
+wordToDouble :: Word32 -> Double
+wordToDouble x = runST (cast x)
+
+doubleToWord32 :: Double -> Word32
+doubleToWord32 x = runST (cast x)
+
+intToWord8 :: Int -> Word8
+intToWord8 x = 0 -- runST (cast x)
+
+{-# INLINE cast #-}
+cast :: (MArray (STUArray s) a (ST s),
+         MArray (STUArray s) b (ST s)) => a -> ST s b
+cast x = newArray (0 :: Int, 0) x >>= castSTUArray >>= flip readArray 0
+
   

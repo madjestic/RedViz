@@ -29,30 +29,6 @@ import Data.Hashable
 import Graphics.RedViz.Entity
 import Graphics.RedViz.Utils
 
--------------------------------------------------------------------------------
-
-wordToFloat :: Word32 -> Float
-wordToFloat x = runST (cast x)
-
-floatToWord32 :: Float -> Word32
-floatToWord32 x = runST (cast x)
-
-wordToDouble :: Word32 -> Double
-wordToDouble x = runST (cast x)
-
-doubleToWord32 :: Double -> Word32
-doubleToWord32 x = runST (cast x)
-
-intToWord8 :: Int -> Word8
-intToWord8 x = 0 -- runST (cast x)
-
-{-# INLINE cast #-}
-cast :: (MArray (STUArray s) a (ST s),
-         MArray (STUArray s) b (ST s)) => a -> ST s b
-cast x = newArray (0 :: Int, 0) x >>= castSTUArray >>= flip readArray 0
-
--------------------------------------------------------------------------------  
-
 data Project
   =  Project
      {

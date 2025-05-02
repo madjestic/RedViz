@@ -19,6 +19,7 @@ module Graphics.RedViz.Uniforms where
 
 import Data.Foldable as DF
 import Data.StateVar as SV
+import Data.Maybe
 import Graphics.Rendering.OpenGL hiding (get)
 import Lens.Micro
 import Linear.Matrix
@@ -35,8 +36,13 @@ import Graphics.RedViz.Drawable
 import Graphics.RedViz.Descriptor
 import Graphics.RedViz.LoadShaders
 import Graphics.RedViz.Material
-import Graphics.RedViz.Texture
-import Graphics.RedViz.Utils ()
+import Graphics.RedViz.Texture as T
+import Graphics.RedViz.Utils (intToWord32)
+import Graphics.RedViz.GLUtil (readTexture, texture2DWrap) 
+import Data.Maybe (listToMaybe)
+import Graphics.RedViz.Texture (defaultTexture, loadTexture)
+import Graphics.Rendering.OpenGL (TextureObject(TextureObject))
+
 
 debug :: Bool
 #ifdef DEBUGSHADERS
@@ -173,7 +179,7 @@ bindUniforms cam' unis' dr =
     location11        <- SV.get (uniformLocation u_prog' "accel")
     uniform location11 $= accel
 
-    -- || Set Transform Matrix
+    -- | Set Transform Matrix
     let tr :: [GLfloat]
         tr =
           [ 1, 0, 0, 0
@@ -188,15 +194,42 @@ bindUniforms cam' unis' dr =
     location13        <- SV.get (uniformLocation u_prog' "u_scale")
     uniform location13 $= ( u_scale' :: GLfloat)
 
-          -- | Allocate Textures
-    texture Texture2D        $= Enabled
-    mapM_ allocateTextures $ dtxs dr
+    -- | Allocate Textures
+    mapM_ (allocateTextures program') (dtxs dr)
+
+    -- || Debug Shaders Texture Allocations:
+    -- program <- loadShaders [
+    --     ShaderInfo VertexShader   (FileSource "mat/checkerboard/src/shader.vert"),
+    --     ShaderInfo FragmentShader (FileSource "mat/checkerboard/src/shader.frag")]
+    -- currentProgram $= Just program
+    -- defTO <- loadTexture (path defaultTexture :: FilePath)
+    -- --print $ (\(_,(tex,_)) -> T.name tex) <$> dtxs dr
+    -- let dtx0 = fromMaybe (0,(defaultTexture, defTO)) (listToMaybe $ dtxs dr)
+    --     dtx1 = fromMaybe dtx0 (listToMaybe . drop 1 $ dtxs dr)
+
+    -- activeTexture            $= TextureUnit ((\(txid,(_,_)) -> intToWord32 txid) dtx0)
+    -- textureBinding Texture2D $= Just ((\(_,(_,to)) -> to) dtx0)
+    -- location <- SV.get (uniformLocation program' $ (\(_,(tex,_)) -> T.name tex) dtx0)
+    -- uniform location $= TextureUnit ((\(txid,(_,_)) -> intToWord32 txid) dtx0)
+    
+    -- activeTexture            $= TextureUnit ((\(txid,(_,_)) -> intToWord32 txid) dtx1)
+    -- textureBinding Texture2D $= Just ((\(_,(_,to)) -> to) dtx1)
+    -- location <- SV.get (uniformLocation program' $ (\(_,(tex,_)) -> T.name tex) dtx1)
+    -- uniform location $= TextureUnit ((\(txid,(_,_)) -> intToWord32 txid) dtx1)
 
     -- | Unload buffers
     bindVertexArrayObject         $= Nothing
     bindBuffer ElementArrayBuffer $= Nothing
       where        
         toList' = fmap realToFrac.DF.concat.(fmap DF.toList.DF.toList) :: V4 (V4 Double) -> [GLfloat]
+
+loadTex :: FilePath -> IO TextureObject
+loadTex f =
+  do
+    t <- either error id <$> readTexture f
+    textureFilter Texture2D $= ((Linear', Nothing), Linear')
+    texture2DWrap $= (Repeated, ClampToEdge)
+    return t
 
 debugShaders :: Drawable -> IO Program
 debugShaders dr = do

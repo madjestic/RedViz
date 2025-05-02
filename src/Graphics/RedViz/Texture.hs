@@ -20,21 +20,27 @@ module Graphics.RedViz.Texture
   , allocateTextures
   , bindTexture
   , defaultTexture
+  , loadTexture
   ) where
 
 import Data.Aeson
 import Data.Aeson.TH
 import Data.Maybe
 import Data.UUID
-import Graphics.Rendering.OpenGL.GL (($=), blend, blendFunc, BlendingFactor(..), Capability(..), activeTexture, TextureUnit(..), GLuint)
+import Data.Proxy
+import Graphics.Rendering.OpenGL.GL (($=), blend, blendFunc, BlendingFactor(..), Capability(..), activeTexture, TextureUnit(..), GLuint, DataType (..))
 import Graphics.Rendering.OpenGL.GL.Texturing
+import Graphics.Rendering.OpenGL.GL.Shaders.Uniform
+import Graphics.Rendering.OpenGL.GL.Shaders.Program
 import GHC.Generics
-import Data.Binary
+import Data.Binary as B
 import Data.Hashable
+import Data.StateVar as SV
 
-import Graphics.RedViz.Utils (encodeStringUUID)
-import Graphics.RedViz.GLUtil.Textures (texture2DWrap)
+import Graphics.RedViz.Utils (encodeStringUUID, word32ToInt, intToWord32)
+import Graphics.RedViz.GLUtil.Textures
 import Graphics.RedViz.GLUtil.JuicyTextures
+import Control.Concurrent (threadDelay)
 
 instance Binary Texture where
   put (Texture n p u) = do
@@ -42,9 +48,9 @@ instance Binary Texture where
     put p 
     put u 
   get = do
-    n <- get 
-    p <- get 
-    u <- get 
+    n <- B.get 
+    p <- B.get 
+    u <- B.get 
     return $ Texture n p u
 
 instance Eq Texture where
@@ -90,17 +96,20 @@ bindTexture hmap tx =
     texture Texture2D        $= Enabled
     print $ "tx : " ++ show tx
     print $ "txid : " ++ show txid
-    activeTexture            $= TextureUnit txid
-    tx0 <- loadTexture $ path tx --TODO : replace that with a hashmap lookup?
+    activeTexture $= TextureUnit txid
+    tx0 <- case path tx of
+      "shadowMap" -> freshTexture 512 512 TexMono (Proxy :: Proxy Word8)
+      _ -> loadTexture $ path tx --TODO : replace that with a hashmap lookup?
     textureBinding Texture2D $= Just tx0
     return (tx, tx0)
       where
         txid = fromMaybe 0 (lookup (uuid tx) hmap)
     
 
-allocateTextures :: (Int, (Texture, TextureObject)) -> IO ()
-allocateTextures (txid, (_, txo)) =
+allocateTextures :: Program -> (Int, (Texture, TextureObject)) -> IO ()
+allocateTextures program' (txid, (tex, txo)) =
   do
-    activeTexture $= TextureUnit (fromIntegral txid)
+    activeTexture $= TextureUnit (intToWord32 txid)
     textureBinding Texture2D $= Just txo
-    return ()
+    location <- SV.get (uniformLocation program' $ name tex)
+    uniform location $= TextureUnit (intToWord32 txid)
