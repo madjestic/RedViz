@@ -28,6 +28,7 @@ import Data.Text (Text)
 import Foreign.C.Types
 import Foreign.Ptr
 import Graphics.Rendering.OpenGL as GL
+import Graphics.GL.Functions
 import Linear.V2
 import Linear.V4
 import SDL hiding (Texture, normalize)
@@ -51,6 +52,7 @@ import Graphics.RedViz.Backend as BO (Options(primitiveMode), ptSize, blendFunc)
 import Graphics.RedViz.Texture as T
 import Data.List (sortBy)
 import Data.Ord (comparing, Down (..))
+import Graphics.GL (glDeleteTextures)
 --import Render.Pass.Offscreen (depthTexture)
 
 --import Debug.Trace as DT
@@ -126,49 +128,63 @@ formatDrw :: Format -> Drawable -> Drawable
 --formatDrw fmt dr = dr
 formatDrw _ dr = dr
 
-renderWithShadows :: GameSettings -> Object -> Drawable -> IO ()
-renderWithShadows gs obj dr = do
+renderDrawable :: Maybe Program -> Maybe (Int, (Texture, TextureObject)) -> GameSettings -> Object -> Drawable -> IO ()
+renderDrawable Nothing _ gs obj dr = do 
+  let (Descriptor triangles numIndices program) = descriptor dr
+  -- | Main Pass
+  currentProgram $= Just program
+  mapM_ (bindTextures program) $ dtxs dr
+  currentProgram $= Just program
+
+  bindFramebuffer Framebuffer $= defaultFramebufferObject
+  viewport $= (Position 0 0, Size (fromIntegral $ resX gs) (fromIntegral $ resY gs))
+  bindVertexArrayObject $= Just triangles
+  drawElements Triangles numIndices UnsignedInt nullPtr
+  -- | End of Main Pass
+  
+renderDrawable (Just depthProgram) (Just (txid, (depthTexture', depthTexture))) gs obj dr = do
   -- print $ (\(Descriptor triangles numIndices program) -> triangles) $ descriptor dr
   -- | Define geometry
 
-  let planeVertices = [
-          Vector3 (-10) (-10) 0, Vector3 10 (-10) 0, Vector3 10 10 0,
-          Vector3 (-10) (-10) 0, Vector3 10 10 0, Vector3 (-10) 10 0 :: Vector3 GLfloat ]
-      triangleVertices = [
-            Vector3 0 0 3, Vector3 1 0 3, Vector3 1 1 3
-          , Vector3 0 0 3, Vector3 1 1 3, Vector3 0 1 3
-            :: Vector3 GLfloat ]
+  -- let planeVertices = [
+  --         Vector3 (-10) (-10) 0, Vector3 10 (-10) 0, Vector3 10 10 0,
+  --         Vector3 (-10) (-10) 0, Vector3 10 10 0, Vector3 (-10) 10 0 :: Vector3 GLfloat ]
+  --     triangleVertices = [
+  --           Vector3 0 0 3, Vector3 1 0 3, Vector3 1 1 3
+  --         , Vector3 0 0 3, Vector3 1 1 3, Vector3 0 1 3
+  --           :: Vector3 GLfloat ]
   
-  -- Create VBOs
-  planeVBO <- genObjectName
-  bindBuffer ArrayBuffer $= Just planeVBO
-  withArray planeVertices $ \ptr ->
-      bufferData ArrayBuffer $= (fromIntegral $ length planeVertices * sizeOf (undefined :: Vector3 GLfloat), ptr, StaticDraw)
+  -- -- Create VBOs
+  -- planeVBO <- genObjectName
+  -- bindBuffer ArrayBuffer $= Just planeVBO
+  -- withArray planeVertices $ \ptr ->
+  --     bufferData ArrayBuffer $= (fromIntegral $ length planeVertices * sizeOf (undefined :: Vector3 GLfloat), ptr, StaticDraw)
   
-  triangleVBO <- genObjectName
-  bindBuffer ArrayBuffer $= Just triangleVBO
-  withArray triangleVertices $ \ptr ->
-      bufferData ArrayBuffer $= (fromIntegral $ length triangleVertices * sizeOf (undefined :: Vector3 GLfloat), ptr, StaticDraw)
+  -- triangleVBO <- genObjectName
+  -- bindBuffer ArrayBuffer $= Just triangleVBO
+  -- withArray triangleVertices $ \ptr ->
+  --     bufferData ArrayBuffer $= (fromIntegral $ length triangleVertices * sizeOf (undefined :: Vector3 GLfloat), ptr, StaticDraw)
   
-  -- -- Create VAO
-  -- Create VAO for plane
-  planeVAO <- genObjectName
-  bindVertexArrayObject $= Just planeVAO
-  bindBuffer ArrayBuffer $= Just planeVBO
-  vertexAttribPointer (AttribLocation 0) $= (ToFloat, VertexArrayDescriptor 3 Float 0 nullPtr)
-  vertexAttribArray (AttribLocation 0) $= Enabled
+  -- -- -- Create VAO
+  -- -- Create VAO for plane
+  -- planeVAO <- genObjectName
+  -- bindVertexArrayObject $= Just planeVAO
+  -- bindBuffer ArrayBuffer $= Just planeVBO
+  -- vertexAttribPointer (AttribLocation 0) $= (ToFloat, VertexArrayDescriptor 3 Float 0 nullPtr)
+  -- vertexAttribArray (AttribLocation 0) $= Enabled
    
-  -- Create VAO for triangle
-  triangleVAO <- genObjectName
-  bindVertexArrayObject $= Just triangleVAO
-  bindBuffer ArrayBuffer $= Just triangleVBO
-  vertexAttribPointer (AttribLocation 0) $= (ToFloat, VertexArrayDescriptor 3 Float 0 nullPtr)
-  vertexAttribArray (AttribLocation 0) $= Enabled
+  -- -- Create VAO for triangle
+  -- triangleVAO <- genObjectName
+  -- bindVertexArrayObject $= Just triangleVAO
+  -- bindBuffer ArrayBuffer $= Just triangleVBO
+  -- vertexAttribPointer (AttribLocation 0) $= (ToFloat, VertexArrayDescriptor 3 Float 0 nullPtr)
+  -- vertexAttribArray (AttribLocation 0) $= Enabled
   
-  -- Create depth texture and FBO
+  -- | Create depth texture and FBO
+
   let shadowMapSize = Size 1024 1024
       shadowMapSize'= TextureSize2D 1024 1024
-  depthTexture <- genObjectName
+  --depthTexture <- genObjectName
   activeTexture $= TextureUnit 0
   textureBinding Texture2D $= Just depthTexture
   texImage2D Texture2D NoProxy 0 DepthComponent32f shadowMapSize' 0 (PixelData DepthComponent Float nullPtr)
@@ -183,11 +199,10 @@ renderWithShadows gs obj dr = do
   readBuffer $= NoBuffers
   status <- get (framebufferStatus Framebuffer)
   unless (status == Complete) $ error "FBO not complete"
-  bindFramebuffer Framebuffer $= defaultFramebufferObject
   
   -- Compile shaders
-  depthProgram <- createShaderProgram depthVertexShaderSrc Nothing
-  mainProgram  <- createShaderProgram mainVertexShaderSrc (Just mainFragmentShaderSrc)
+  -- depthProgram <- createShaderProgram depthVertexShaderSrc Nothing
+  -- mainProgram  <- createShaderProgram mainVertexShaderSrc (Just mainFragmentShaderSrc)
   
   let (Descriptor triangles numIndices program) = descriptor dr
   -- Define matrices
@@ -212,47 +227,40 @@ renderWithShadows gs obj dr = do
   bindVertexArrayObject $= Just triangles
   drawElements Triangles numIndices UnsignedInt nullPtr
 
-  objectTypeLoc <- uniformLocation mainProgram "objectType"
-
   bindFramebuffer Framebuffer $= defaultFramebufferObject
   viewport $= (Position 0 0, Size 800 600)
   GL.clear [ColorBuffer, DepthBuffer]
  
   -- | Debug Shadowmap Projection pass
 
-  depthMask $= Disabled -- TODO: enable
-  currentProgram $= Just mainProgram
-  mvpLoc <- SV.get (uniformLocation mainProgram "modelViewProjection")
-  modelViewProjection' <- m44GLfloatToGLmatrixGLfloat modelViewProjection
-  uniform mvpLoc $= (modelViewProjection')
+  -- depthMask $= Disabled -- TODO: enable
+  -- currentProgram $= Just mainProgram
+  -- mvpLoc <- SV.get (uniformLocation mainProgram "modelViewProjection")
+  -- modelViewProjection' <- m44GLfloatToGLmatrixGLfloat modelViewProjection
+  -- uniform mvpLoc $= modelViewProjection'
 
-  lightVPLoc' <- SV.get (uniformLocation mainProgram "lightViewProjection")
-  lightViewProjection' <- m44GLfloatToGLmatrixGLfloat lightViewProjection
-  uniform lightVPLoc' $= lightViewProjection'
+  -- lightVPLoc' <- SV.get (uniformLocation mainProgram "lightViewProjection")
+  -- lightViewProjection' <- m44GLfloatToGLmatrixGLfloat lightViewProjection
+  -- uniform lightVPLoc' $= lightViewProjection'
 
-  lightDirLoc <- get (uniformLocation mainProgram "lightDir")
-  uniform lightDirLoc $= v3GLfloatToVertex3GLfloat lightDir
+  -- lightDirLoc <- get (uniformLocation mainProgram "lightDir")
+  -- uniform lightDirLoc $= v3GLfloatToVertex3GLfloat lightDir
   
-  activeTexture $= TextureUnit 0
-  textureBinding Texture2D $= Just depthTexture
-  shadowMapLoc <- uniformLocation mainProgram "shadowMap" -- not here
-  uniform shadowMapLoc  $= (0 :: GLint)
+  -- activeTexture $= TextureUnit 0
+  -- textureBinding Texture2D $= Just depthTexture
+  -- shadowMapLoc <- uniformLocation mainProgram "shadowMap" -- not here
+  -- uniform shadowMapLoc  $= (0 :: GLint)
 
-  uniform objectTypeLoc $= (0 :: GLint)  -- Plane: use shading
-  bindVertexArrayObject $= Just planeVAO
-  drawArrays Triangles 0 6  -- Draw plane
+  -- bindVertexArrayObject $= Just planeVAO
+  -- drawArrays Triangles 0 6  -- Draw plane
 
-  print "mainProgram"
-  get (activeUniforms mainProgram) >>= print 
-  
-  -- | End of Debug pass --
+  -- | End of Debug pass
 
-  -- | Main Pass --
-  print "Secondary Pass:"
+  -- | Main Pass
   currentProgram $= Just program
-  let depthTexture' = T.Texture "shadowMap" "" (encodeStringUUID "shadowMap")
+  let depthTexture' = T.Texture "shadowMap" "shadowMap" (encodeStringUUID "shadowMap")
       maxTexId = fromMaybe 0 . listToMaybe . sortBy (comparing Down) $ fst <$> dtxs dr
-  mapM_ (allocateTextures program) $ dtxs dr ++ [(maxTexId+1, (depthTexture', depthTexture))] -- add shadow map (depthMap) texture to the binding call
+  mapM_ (bindTextures program) $ dtxs dr ++ [(maxTexId+1, (depthTexture', depthTexture))] -- add shadow map (depthMap) texture to the binding call
   currentProgram $= Just program
 
   bindFramebuffer Framebuffer $= defaultFramebufferObject
@@ -261,17 +269,12 @@ renderWithShadows gs obj dr = do
   drawElements Triangles numIndices UnsignedInt nullPtr
   -- | End of Main Pass
 
-renderObject :: GameSettings -> Camera -> Uniforms -> Object -> IO ()
-renderObject gs cam unis' obj = do
+renderObject :: Maybe Program -> Maybe (Int, (Texture, TextureObject)) -> GameSettings -> Camera -> Uniforms -> Object -> IO ()
+renderObject depthProgram dtx gs cam unis' obj = do
   mapM_ (\dr -> do
             GL.blendFunc $= (BO.blendFunc . backend . renderable $ obj)
             bindUniforms cam unis' dr {u_xform = xform . transformable $ obj} 
-            renderWithShadows gs obj dr  -- render object with shadows
-
-            -- let (Descriptor triangles numIndices _) = descriptor dr
-            -- bindVertexArrayObject $= Just triangles
-            -- drawElements (primitiveMode . backend . renderable $ obj) numIndices UnsignedInt nullPtr
-
+            renderDrawable depthProgram dtx gs obj dr  -- render object with shadows
         ) (drws . renderable $ obj)
 
 openWindow :: Text -> (CInt, CInt) -> IO SDL.Window
@@ -396,10 +399,10 @@ createShaderProgram vsSrc fsSrcM = do
     linkProgram program
     return program
 
-  -- TODO: I need separate pipelines for this
-renderOutput :: Window -> GameSettings -> (Game, Maybe Bool) -> IO Bool
-renderOutput _ _ ( _,Nothing) = SDL.quit >> return True
-renderOutput window gs (game0, Just skipSwap) = do -- Just skipSwap window swap
+  -- TODO: I need separate pipelines for this for objects and widgets?
+renderOutput :: Window -> Maybe Program -> Maybe (Int, (Texture, TextureObject)) -> GameSettings -> (Game, Maybe Bool) -> IO Bool
+renderOutput _ _ _ _ ( _,Nothing) = SDL.quit >> return True
+renderOutput window depthProgram dtx gs (game0, Just skipSwap) = do -- Just skipSwap window swap
   let
   clearColor   $= Color4 0.0 0.0 0.0 1.0
   GL.clear [ColorBuffer, DepthBuffer]
@@ -410,7 +413,7 @@ renderOutput window gs (game0, Just skipSwap) = do -- Just skipSwap window swap
   depthFunc    $= Just Less
   cullFace     $= Just Back
 
-  mapM_ (renderObject gs (head $ cams game0) (unis game0)) (objs game0)
+  mapM_ (renderObject depthProgram dtx gs (head $ cams game0) (unis game0)) (objs game0)
   mapM_ (renderWidget (head $ cams game0) (unis game0)) (wgts game0)
 
   if skipSwap then return False else glSwapWindow window >> return False

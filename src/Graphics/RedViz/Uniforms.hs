@@ -194,8 +194,8 @@ bindUniforms cam' unis' dr =
     location13        <- SV.get (uniformLocation u_prog' "u_scale")
     uniform location13 $= ( u_scale' :: GLfloat)
 
-    -- | Allocate Textures
-    mapM_ (allocateTextures program') (dtxs dr)
+    -- | Bind Textures
+    mapM_ (bindTextures program') (dtxs dr)
 
     -- || Debug Shaders Texture Allocations:
     -- program <- loadShaders [

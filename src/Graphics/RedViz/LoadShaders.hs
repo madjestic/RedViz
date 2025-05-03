@@ -15,7 +15,7 @@
 
 
 module Graphics.RedViz.LoadShaders (
-   ShaderSource(..), ShaderInfo(..), loadShaders
+   ShaderSource(..), ShaderInfo(..), loadShaders, createShaderProgram
 ) where
 
 import Control.Exception
@@ -120,3 +120,23 @@ checked action getStatus getInfoLog message object = do
    unless ok $ do
       infoLog <- get (getInfoLog object)
       fail (message ++ " log: " ++ infoLog)
+
+-- Create shader program
+createShaderProgram :: String -> Maybe String -> IO Program
+createShaderProgram vsSrc fsSrcM = do
+    program <- createProgram
+    vs <- createShader VertexShader
+    shaderSourceBS vs $= BS.pack vsSrc
+    compileShader vs
+    attachShader program vs
+    
+    case fsSrcM of
+        Just fsSrc -> do
+            fs <- createShader FragmentShader
+            shaderSourceBS fs $= BS.pack fsSrc
+            compileShader fs
+            attachShader program fs
+        Nothing -> return ()
+    
+    linkProgram program
+    return program  

@@ -1,7 +1,7 @@
 --------------------------------------------------------------------------------
 -- |
 -- Module      :  Texture
--- Copyright   :  (c) Vladimir Lopatin 2024
+-- Copyright   :  (c) Vladimir Lopatin 2025
 -- License     :  BSD3
 --
 -- Maintainer  :  Vladimir Lopatin <madjestic13@gmail.com>
@@ -17,7 +17,7 @@
 
 module Graphics.RedViz.Texture 
   ( Texture (..)
-  , allocateTextures
+  , bindTextures
   , bindTexture
   , defaultTexture
   , loadTexture
@@ -106,8 +106,8 @@ bindTexture hmap tx =
         txid = fromMaybe 0 (lookup (uuid tx) hmap)
     
 
-allocateTextures :: Program -> (Int, (Texture, TextureObject)) -> IO ()
-allocateTextures program' (txid, (tex, txo)) =
+bindTextures :: Program -> (Int, (Texture, TextureObject)) -> IO ()
+bindTextures program' (txid, (tex, txo)) =
   do
     activeTexture $= TextureUnit (intToWord32 txid)
     textureBinding Texture2D $= Just txo
