@@ -24,7 +24,8 @@ import Linear.Matrix
 import Lens.Micro
 import Data.Binary
 import GHC.Generics
---import Data.ByteString as BS 
+import Data.Maybe (listToMaybe, fromMaybe)
+import Data.Hashable
 
 import Graphics.RedViz.Component as C
 import Graphics.RedViz.Descriptor
@@ -32,10 +33,7 @@ import Graphics.RedViz.Drawable
 import Graphics.RedViz.Material as R
 import Graphics.RedViz.Texture hiding (uuid)
 import Graphics.Rendering.OpenGL.GL.Texturing
-import Data.Maybe (listToMaybe, fromMaybe)
-import Data.Hashable
-
-import Debug.Trace as DT
+--import Debug.Trace as DT
 
 type Object = Entity
 type Camera = Entity
@@ -54,12 +52,6 @@ mergeEntity e0 eS@entitySave =
     True  -> e0 { lable = lable eS
                 , cmps  = zipWith mergeComponents (cmps e0) (cmps eS)}
     False -> error "mismatching Entity IDs found"
--- instance Show Entity where
---   show :: Entity -> String
---   show (Entity l u c) =    "\n" ++
---     "lable :" ++ show l ++ "\n" ++
---     "UUID  :" ++ show u ++
---     "\n\n"
 
 defaultEntity :: Entity -- TODO: move local properties to Components
 defaultEntity =
@@ -73,8 +65,10 @@ defaultEntity =
 -- Object and Camera, both are just Entity type-synonyms.  Distinction is arbitrary.
 fromSchema :: [(Texture, TextureObject)] -> [[(Descriptor, R.Material)]]-> Schema -> IO Entity
 fromSchema txTuples' dms' sch = do
-  let
-    obj =
+  (shadowProgram, dtx) <- genObscurable
+  return $ genEntity (shadowProgram, dtx)
+  where
+    genEntity (shadowProgram, dtx) =
       defaultEntity
       { lable = slable sch
       , uuid  = suuid  sch
@@ -145,19 +139,19 @@ fromSchema txTuples' dms' sch = do
                 _ -> identity
         updateComponent r0@(Renderable {}) =
           r0 { drws =
-               toDrawable
-               (identity :: M44 Double)
-               (backend r0)
-               txTuples
-               <$> concat dms :: [Drawable] }
+                 toDrawable
+                 (identity :: M44 Double)
+                 (backend r0)
+                 txTuples
+                 <$> concat dms :: [Drawable] }
           where          
-            dms      = (dms'!!) <$> modelIDXs r0
+            dms      = (dms'!!) <$> modelIDXs r0 :: [[(Descriptor, Material)]]
             txs      = concatMap (\(_,m) -> R.textures m) $ concat dms :: [Texture]
             txTuples = filter (\(tx,_) -> tx `elem` txs) txTuples'     :: [(Texture, TextureObject)]
-
+        updateComponent r0@(Obscurable {}) = 
+          r0 { program = Just shadowProgram
+             , dtx     = Just dtx }
         updateComponent cmp = cmp
-
-  return obj
 
 -- Schema is a convenience step that fascilitates describing and generating hierarchic Entities.
 -- A nested schema gets flattened to a list of entities with Parentable component,
@@ -201,6 +195,12 @@ renderable s = fromMaybe defaultRenderable (listToMaybe . renderables $ s)
 
 renderables :: Entity -> [Component]
 renderables t = [ x | x@(Renderable {} ) <- cmps t ]
+
+obscurable :: Entity -> Component
+obscurable s = fromMaybe defaultObscurable (listToMaybe . obscurables $ s)
+
+obscurables :: Entity -> [Component]
+obscurables t = [ x | x@(Obscurable {} ) <- cmps t ]
 
 transformable :: Entity -> Component
 transformable s = fromMaybe defaultTransformable (listToMaybe . transformables $ s)

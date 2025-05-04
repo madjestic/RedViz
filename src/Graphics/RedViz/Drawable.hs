@@ -15,8 +15,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 module Graphics.RedViz.Drawable where
 
-import Graphics.Rendering.OpenGL (TextureObject (..))
-import Graphics.RedViz.Backend (Options)
+import Graphics.Rendering.OpenGL (TextureObject (..), Program (..), genObjectName)
 import Linear.Matrix (M44, M33, _m33, mkTransformationMat, identity, translation, (*!!), (*!))
 import Linear.Vector ((*^))  
 import Linear.V3
@@ -24,11 +23,16 @@ import Lens.Micro
 import GHC.Generics
 import Data.Binary
 import Data.Hashable
+import Data.Maybe
+import Data.List (sortBy)
+import Data.Ord (comparing, Down (..))
 
+import Graphics.RedViz.LoadShaders (createShaderProgram)
 import Graphics.RedViz.Descriptor
+import Graphics.RedViz.Backend (Options)
 import Graphics.RedViz.Material as R
 import Graphics.RedViz.Texture
-
+import Graphics.RedViz.Utils (encodeStringUUID)
 --import Debug.Trace as DT
 
 instance Hashable TextureObject where
@@ -89,6 +93,29 @@ toDrawable xform' opts txos (d, mat') = dr
       , dtxs       = txos'
       , doptions   = opts
       }
+
+-- Shader sources
+depthVertexShaderSrc :: String
+depthVertexShaderSrc = unlines [
+    "#version 330 core",
+    "uniform mat4 lightViewProjection;",
+    "in vec3 position;",
+    "void main() {",
+    "    gl_Position = lightViewProjection * vec4(position, 1.0);",
+    "}"
+    ]
+
+genDepthTexture :: IO (Int, (Texture, TextureObject))
+genDepthTexture = do
+  let depthTexture = Texture "shadowMap" "shadowMap" (encodeStringUUID "shadowMap")
+  depthTextureObject <- genObjectName
+  return (0, (depthTexture, depthTextureObject))
+
+genObscurable :: IO (Program, (Int, (Texture, TextureObject)))
+genObscurable = do 
+  depthProgram <- createShaderProgram depthVertexShaderSrc Nothing
+  dtx          <- genDepthTexture
+  return (depthProgram, dtx)
 
 data Alignment =
    TL |TC |TR

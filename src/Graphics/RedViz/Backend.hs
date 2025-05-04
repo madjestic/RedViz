@@ -137,26 +137,6 @@ instance Hashable BlendingFactor where
     hashWithSalt salt OneMinusConstantAlpha = hashWithSalt salt (13:: Int) 
     hashWithSalt salt SrcAlphaSaturate      = hashWithSalt salt (14:: Int) 
 
--- instance Hashable BlendingFactor where
---     hash _ = hash (0 :: Int)
-    -- hash One = hash 1
-    -- hash SrcColor = hash 2
-    -- hash OneMinusSrcColor = hash 3
-    -- hash DstColor = hash 4
-    -- hash OneMinusDstColor = hash 5
-    -- hash SrcAlpha = hash 6
-    -- hash OneMinusSrcAlpha = hash 7
-    -- hash DstAlpha = hash 8
-    -- hash OneMinusDstAlpha = hash 9
-    -- hash ConstantColor = hash 10
-    -- hash OneMinusConstantColor = hash 11
-    -- hash ConstantAlpha = hash 12
-    -- hash OneMinusConstantAlpha = hash 13
-    -- hash SrcAlphaSaturate = hash 14
-
--- instance Hashable BlendingFactor where
---   hashWithSalt = hashWithSalt
-
 data Options
   =  Options
      {

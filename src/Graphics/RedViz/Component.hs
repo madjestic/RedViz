@@ -10,9 +10,11 @@ import Data.UUID
 import Data.Binary  
 import GHC.Generics
 import Data.Hashable
+import Graphics.Rendering.OpenGL (TextureObject (..), Program (..))
 
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.Backend (Options, defaultOptions)
+import Graphics.RedViz.Texture (Texture)
 
 data CoordSys =
     WorldSpace
@@ -245,7 +247,13 @@ data Component = -- TODO: rename Component to Component
     , drws       :: [Drawable]
     , active     :: Bool
     , backend    :: Options
-    } deriving (Eq, Generic, Hashable)
+    }
+  | Obscurable
+    { program :: Maybe Program
+    , dtx     :: Maybe (Int, (Texture, TextureObject))
+    }
+  deriving (Eq, Generic, Hashable)
+
 
 data Physics =
     Static
@@ -292,6 +300,8 @@ instance Show Component where
     = "Attractable : " ++ show m ++ " " ++ show a ++ " " ++ "\n"
   show (Renderable ms ds _ _) =
     "Renderable :" ++ show ms ++ "\n"  ++ show ds ++ "\n"   
+  show (Obscurable p d) =
+    "Obscurable :" ++ show p ++ "\n" ++ show d ++ "\n"
   show (Camerable{})
     = "Camerable" ++ "\n"
   show (Transformable xform' tslvrs)
@@ -325,6 +335,12 @@ defaultRenderable = Renderable
   , drws      = []
   , active    = False
   , backend   = defaultOptions
+  }
+
+defaultObscurable :: Component
+defaultObscurable = Obscurable
+  { program = Nothing
+  , dtx     = Nothing
   }
 
 defaultTransformable :: Component
