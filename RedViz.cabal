@@ -41,6 +41,7 @@ library
                      , Graphics.RedViz.GLUtil.Textures
                      , Graphics.RedViz.GLUtil.TypeMapping
                      , Graphics.RedViz.Game
+                     , Graphics.RedViz.AppInput
                      , Graphics.RedViz.Input.Keyboard
                      , Graphics.RedViz.Input.Mouse
                      , Graphics.RedViz.LoadShaders
@@ -55,6 +56,7 @@ library
                      , Graphics.RedViz.Utils
                      , Graphics.RedViz.VAO
                      , Graphics.RedViz.Widget
+                     , Graphics.RedViz.GLUtil
                      -- OpenGL stuff
                      , Graphics.Rendering.OpenGL
                      , Graphics.Rendering.OpenGL.GL
@@ -217,6 +219,7 @@ library
                   , hashable
                   , cryptohash
                   , uuid-types
+                  , stm
 
   other-extensions:
     CPP

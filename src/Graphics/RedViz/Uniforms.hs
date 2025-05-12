@@ -21,6 +21,7 @@ import Data.Foldable as DF
 import Data.StateVar as SV
 import Data.Maybe
 import Graphics.Rendering.OpenGL hiding (get)
+--import Graphics.Rendering.OpenGL (TextureObject(TextureObject))
 import Lens.Micro
 import Linear.Matrix
 import Linear.Projection as LP        (infinitePerspective)
@@ -41,8 +42,6 @@ import Graphics.RedViz.Utils (intToWord32)
 import Graphics.RedViz.GLUtil (readTexture, texture2DWrap) 
 import Data.Maybe (listToMaybe)
 import Graphics.RedViz.Texture (defaultTexture, loadTexture)
-import Graphics.Rendering.OpenGL (TextureObject(TextureObject))
-
 
 debug :: Bool
 #ifdef DEBUGSHADERS
@@ -63,6 +62,7 @@ data Uniforms
      , u_cam_vel   :: (Double, Double, Double)
      , u_cam_accel :: (Double, Double, Double)
      , u_scale :: Float
+     --, u_
      } deriving (Show, Generic, Binary)
 
 defaultUniforms :: Uniforms
@@ -196,26 +196,6 @@ bindUniforms cam' unis' dr =
 
     -- | Bind Textures
     mapM_ (bindTextures program') (dtxs dr)
-
-    -- || Debug Shaders Texture Allocations:
-    -- program <- loadShaders [
-    --     ShaderInfo VertexShader   (FileSource "mat/checkerboard/src/shader.vert"),
-    --     ShaderInfo FragmentShader (FileSource "mat/checkerboard/src/shader.frag")]
-    -- currentProgram $= Just program
-    -- defTO <- loadTexture (path defaultTexture :: FilePath)
-    -- --print $ (\(_,(tex,_)) -> T.name tex) <$> dtxs dr
-    -- let dtx0 = fromMaybe (0,(defaultTexture, defTO)) (listToMaybe $ dtxs dr)
-    --     dtx1 = fromMaybe dtx0 (listToMaybe . drop 1 $ dtxs dr)
-
-    -- activeTexture            $= TextureUnit ((\(txid,(_,_)) -> intToWord32 txid) dtx0)
-    -- textureBinding Texture2D $= Just ((\(_,(_,to)) -> to) dtx0)
-    -- location <- SV.get (uniformLocation program' $ (\(_,(tex,_)) -> T.name tex) dtx0)
-    -- uniform location $= TextureUnit ((\(txid,(_,_)) -> intToWord32 txid) dtx0)
-    
-    -- activeTexture            $= TextureUnit ((\(txid,(_,_)) -> intToWord32 txid) dtx1)
-    -- textureBinding Texture2D $= Just ((\(_,(_,to)) -> to) dtx1)
-    -- location <- SV.get (uniformLocation program' $ (\(_,(tex,_)) -> T.name tex) dtx1)
-    -- uniform location $= TextureUnit ((\(txid,(_,_)) -> intToWord32 txid) dtx1)
 
     -- | Unload buffers
     bindVertexArrayObject         $= Nothing

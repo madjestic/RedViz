@@ -28,6 +28,10 @@ import Data.Text (Text)
 import Foreign.C.Types
 import Foreign.Ptr
 import Graphics.Rendering.OpenGL as GL
+--import Graphics.Rendering.OpenGL (TextureObject)
+--import Data.List (sortBy)
+import Data.Ord (comparing, Down (..))
+import Graphics.GL (glDeleteTextures)
 import Graphics.GL.Functions
 import Linear.V2
 import Linear.V4
@@ -39,8 +43,9 @@ import Linear as L
 import Data.List
 import Foreign.Marshal.Array (withArray)
 import Foreign.Storable
-import Graphics.RedViz.Utils (encodeStringUUID, word32ToInt, intToWord32)
+import Data.IORef (readIORef, IORef, writeIORef)
 
+import Graphics.RedViz.Utils (encodeStringUUID, word32ToInt, intToWord32)
 import Graphics.RedViz.Descriptor
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.Entity hiding (uuid)
@@ -48,15 +53,12 @@ import Graphics.RedViz.Component
 import Graphics.RedViz.Uniforms
 import Graphics.RedViz.Widget
 import Graphics.RedViz.Game
+import Graphics.RedViz.AppInput
 import Graphics.RedViz.Backend as BO (Options(primitiveMode), ptSize, blendFunc)
 import Graphics.RedViz.Texture as T
-import Data.List (sortBy)
-import Data.Ord (comparing, Down (..))
-import Graphics.GL (glDeleteTextures)
 import Graphics.RedViz.Component (Component(Obscurable))
 import Graphics.RedViz.Entity (obscurable)
 import Graphics.RedViz.LoadShaders
-import Graphics.Rendering.OpenGL (TextureObject)
 
 --import Debug.Trace as DT
 
@@ -143,8 +145,9 @@ renderNoShadows gs obj dr = do
   bindVertexArrayObject $= Just triangles
   drawElements Triangles numIndices UnsignedInt nullPtr
 
-debugView :: TextureObject -> IO ()
-debugView depthTextureObject = do
+debugView :: TextureObject -> AppInput -> IO ()
+debugView depthTextureObject input0 = do
+  (x0,y0,z0) <- readIORef (sliderLightRayDirectionRef input0)
   let planeVertices = [
           Vector3 (-10) (-10) 0, Vector3 10 (-10) 0, Vector3 10 10 0,
           Vector3 (-10) (-10) 0, Vector3 10 10 0, Vector3 (-10) 10 0 :: Vector3 GLfloat ]
@@ -163,7 +166,14 @@ debugView depthTextureObject = do
   vertexAttribArray (AttribLocation 0) $= Enabled
 
   let
-    lightRayDirection = L.normalize $ V3 (-1) (-1) (-1 :: GLfloat)
+    (x,y,z) =
+      (--
+        -1+x0 
+      , -1+y0 
+      , -1+z0 
+      )
+
+    lightRayDirection = L.normalize $ V3 x y z --V3 (-1) (-1) (-1 :: GLfloat)
     lightDir = negate lightRayDirection -- Towards the light
     lightView = L.lookAt (V3 0 0 10) (V3 (-2) (0.3) 0) (V3 0 1 0) :: M44 GLfloat
     lightProjection = L.ortho (-20) 20 (-20) 20 5 15
@@ -234,8 +244,10 @@ debugView depthTextureObject = do
           "}"
           ]
        
-renderWithShadows :: GameSettings -> Object -> Drawable -> IO ()
-renderWithShadows gs obj dr = do
+renderWithShadows :: GameSettings -> Object -> Drawable -> AppInput -> IO ()
+renderWithShadows gs obj dr input0 = do
+  --(x,y,z) <- readIORef (sliderLightRayDirectionRef input0)
+
   -- | Manage depth texture and FBO
 
   let shadowMapSize = Size 1024 1024
@@ -249,7 +261,7 @@ renderWithShadows gs obj dr = do
 
       (Descriptor triangles numIndices program) = descriptor dr
       -- Define matrices
-      lightRayDirection = L.normalize $ V3 (-1) (-1) (-1 :: GLfloat)
+      lightRayDirection = V3 (-1) (-1) (-1 :: GLfloat)
       lightDir = negate lightRayDirection -- Towards the light
       lightView = L.lookAt (V3 0 0 10) (V3 (-2) (0.3) 0) (V3 0 1 0) :: M44 GLfloat
       lightProjection = L.ortho (-20) 20 (-20) 20 5 15
@@ -298,7 +310,7 @@ renderWithShadows gs obj dr = do
   GL.clear [ColorBuffer, DepthBuffer]
   -- | End of DepthMap pass
 
-  debugView depthTextureObject
+  debugView depthTextureObject input0
  
   -- | Main Pass
   currentProgram $= Just program
@@ -313,18 +325,18 @@ renderWithShadows gs obj dr = do
   drawElements Triangles numIndices UnsignedInt nullPtr
   -- | End of Main Pass
 
-render :: GameSettings -> Object -> Drawable -> IO ()
-render gs obj dr = do
+render :: GameSettings -> Object -> Drawable -> AppInput -> IO ()
+render gs obj dr input0 = do
   case not . null $ obscurables obj of
     False -> renderNoShadows gs obj dr
-    True  -> renderWithShadows gs obj dr
+    True  -> renderWithShadows gs obj dr input0
 
-renderObject :: GameSettings -> Camera -> Uniforms -> Object -> IO ()
-renderObject gs cam unis' obj = do
+renderObject :: GameSettings -> Camera -> Uniforms -> AppInput -> Object -> IO ()
+renderObject gs cam unis' input0 obj = do
   mapM_ (\dr -> do
             GL.blendFunc $= (BO.blendFunc . backend . renderable $ obj)
-            bindUniforms cam unis' dr {u_xform = xform . transformable $ obj} 
-            render gs obj dr 
+            bindUniforms cam unis' (dr {u_xform = xform . transformable $ obj})
+            render gs obj dr input0
         ) (drws . renderable $ obj)
 
 openWindow :: Text -> (CInt, CInt) -> IO SDL.Window
@@ -366,9 +378,9 @@ m44GLfloatToGLmatrixGLfloat mtx0 = do
   xform1 <- newMatrix ColumnMajor $ m44GLfloatToGLfloat mtx0
   return xform1
 
-renderOutput :: Window -> GameSettings -> (Game, Maybe Bool) -> IO Bool
+renderOutput :: Window -> GameSettings -> ((Game, AppInput), Maybe Bool) -> IO Bool
 renderOutput _ _ ( _,Nothing) = SDL.quit >> return True
-renderOutput window gs (game0, Just skipSwap) = do -- Just skipSwap window swap
+renderOutput window gs ((game0, input0), Just skipSwap) = do -- Just skipSwap window swap
   let
   clearColor   $= Color4 0.0 0.0 0.0 1.0
   GL.clear [ColorBuffer, DepthBuffer]
@@ -379,7 +391,7 @@ renderOutput window gs (game0, Just skipSwap) = do -- Just skipSwap window swap
   depthFunc    $= Just Less
   cullFace     $= Just Back
 
-  mapM_ (renderObject gs (head $ cams game0) (unis game0)) (objs game0)
+  mapM_ (renderObject gs (head $ cams game0) (unis game0) input0) (objs game0)
   mapM_ (renderWidget    (head $ cams game0) (unis game0)) (wgts game0)
 
   if skipSwap then return False else glSwapWindow window >> return False
