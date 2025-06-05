@@ -15,16 +15,6 @@ module Graphics.RedViz.Project
 
 import Data.UUID
 import Data.UUID.V4
-import Data.Binary (decode,encode,Binary)
-  
-import Data.Maybe
-import Data.ByteString.Lazy as BSL hiding (concat)
-import Data.ByteString as BS hiding (concat)
-import Data.Word (Word32, Word8)
-import Data.Array.ST (newArray, readArray, MArray, STUArray)
-import Data.Array.Base (castSTUArray)
-import GHC.ST (runST, ST)
-import Data.Hashable
 
 import Graphics.RedViz.Entity
 import Graphics.RedViz.Utils
@@ -43,6 +33,7 @@ data Project
      , pfonts     :: [Schema]
      , picons     :: [Schema]     
      , pcameras   :: [Schema]
+     , plights    :: [Schema]
      } deriving Show
 
 sharedFonts :: [FilePath]

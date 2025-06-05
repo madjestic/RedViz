@@ -242,15 +242,22 @@ data Component = -- TODO: rename Component to Component
     { apt        :: Double -- 50.0
     , foc        :: Double -- 100.0
     }
+  | Lightable
+    { position   :: V3 Double
+    , color      :: V3 Double
+    , intensity  :: Double
+    , exposure   :: Double
+    , kslvrs     :: [Component]
+    }
   | Renderable
     { modelIDXs  :: [Int]
     , drws       :: [Drawable]
     , active     :: Bool
     , backend    :: Options
     }
-  | Obscurable
-    { program :: Maybe Program
-    , dtx     :: Maybe (Int, (Texture, TextureObject))
+  | Obscurable 
+    { program :: Maybe Program -- TODO: do I need this?
+    , dtx     :: Maybe (Int, (Texture, TextureObject)) -- TODO: do I need this?
     }
   deriving (Eq, Generic, Hashable)
 
@@ -304,6 +311,8 @@ instance Show Component where
     "Obscurable :" ++ show p ++ "\n" ++ show d ++ "\n"
   show (Camerable{})
     = "Camerable" ++ "\n"
+  show (Lightable{})
+    = "Lightable" ++ "\n"
   show (Transformable xform' tslvrs)
     = "Transformable : " ++ show xform' ++ " " ++ show tslvrs ++ "\n"
   show (PreTransformable txyz' rord' rxyz')
@@ -366,6 +375,15 @@ defaultCamerable :: Component
 defaultCamerable = Camerable
   { apt        = 50.0
   , foc        = 100.0
+  }
+
+defaultLightable :: Component
+defaultLightable = Lightable
+  { position  = V3 0 0 10
+  , color     = V3 1 1 1
+  , intensity = 1.0
+  , exposure  = 1.0
+  , kslvrs    = []
   }
 
 defaultControllable :: Component

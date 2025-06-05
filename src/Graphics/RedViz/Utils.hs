@@ -43,6 +43,8 @@ module Graphics.RedViz.Utils
   , wordToDouble
   , doubleToWord32
   , intToWord8
+  , double2M44GLfloat
+  , double2V3Float
   ) where
 
 import GHC.ST (runST, ST)
@@ -106,6 +108,12 @@ instance VectorSpace (V4 (V4 Double)) Double where
           n' = view _m33 n
       tr = (view translation m) ^+^ (view translation n)
   dot    (m :: M44 Double) (n :: M44 Double) = DV.dot m n
+
+double2M44GLfloat :: V4 (V4 Double) -> M44 GLfloat
+double2M44GLfloat = fmap . fmap $ realToFrac
+
+double2V3Float :: V3 Double -> V3 Float
+double2V3Float = fmap realToFrac
 
 vectorizedCompose :: [[M44 Double]] -> [M44 Double]
 vectorizedCompose = fmap (foldr1 (^*^)) . DL.transpose

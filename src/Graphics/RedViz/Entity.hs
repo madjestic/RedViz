@@ -37,6 +37,7 @@ import Graphics.Rendering.OpenGL.GL.Texturing
 
 type Object = Entity
 type Camera = Entity
+type Light  = Entity
 
 data Entity
   =  Entity
@@ -183,6 +184,12 @@ camerable s = fromMaybe defaultCamerable (listToMaybe . camerables $ s)
 
 camerables :: Entity -> [Component]
 camerables t = [ x | x@(Camerable {} ) <- cmps t ]
+
+lightable :: Entity -> Component
+lightable s = fromMaybe defaultLightable (listToMaybe . lightables $ s)
+
+lightables :: Entity -> [Component]
+lightables t = [ x | x@(Lightable {} ) <- cmps t ]
 
 selectable :: Entity -> Component
 selectable s = fromMaybe (Selectable False) (listToMaybe . selectables $ s)

@@ -24,21 +24,23 @@ import Graphics.RedViz.Uniforms
 data Game = Game
   { tick  :: Integer
   --, mpos  :: Point V2 Int
-  , quit  :: Bool
-  , cams  :: [Camera]
-  , unis  :: Uniforms
-  , objs  :: [Object]
-  , wgts  :: [Widget]
+  , quit   :: Bool
+  , cams   :: [Camera]
+  , lgts   :: [Light]
+  , unis   :: Uniforms
+  , objs   :: [Object]
+  , wgts   :: [Widget]
   } deriving Show
   
 instance Binary Game where
-  put (Game t q c u o w) = do
+  put (Game t q c l u o w) = do
     put t
     --put m
     put q
     -- put me
     -- put p
     put c 
+    put l
     put u
     put o
     put w
@@ -47,10 +49,11 @@ instance Binary Game where
     --m  <- get 
     q  <- get 
     c  <- get 
+    l  <- get
     u  <- get 
     o  <- get 
     w  <- get
-    return $ Game t q c u o w
+    return $ Game t q c l u o w
 
 saveGame :: FilePath -> Game -> IO ()
 saveGame fp game0 = do
@@ -76,6 +79,7 @@ initGame =
   , unis  = defaultUniforms
   , objs  = []
   , wgts  = []
+  , lgts  = []
   }
 
 initSettings :: GameSettings
