@@ -28,6 +28,7 @@ import Linear.Projection as LP        (infinitePerspective)
 import Linear.V4
 import GHC.Float
 import Control.Concurrent
+import Control.Monad
 import Data.Binary as DB
 import GHC.Generics
 
@@ -79,22 +80,31 @@ defaultUniforms =
   , u_cam_accel = (0,0,0)
   , u_scale = 1.0 }
 
-bindUniforms :: Camera -> Uniforms -> Drawable -> IO ()  
-bindUniforms cam' unis' dr =  
+type ShadowCaster = Component -- | <~ Obscurable
+
+bindUniforms :: Camera -> Uniforms -> Drawable -> Maybe ShadowCaster -> IO ()  
+bindUniforms cam' unis' dr maybeShadowcaster =  
   do
     let
       u_xform'  = u_xform  dr
       d'        = descriptor dr :: Descriptor
       u_cam'    = xform . transformable $ cam'
-        -- where transformable = case transformables of [] -> defaultTransformable; _ -> head transformables
-        --         where transformables = filter (\c -> case c of (Transformable{}) -> True; _ -> False; ) (cmps cam')
       u_mouse'  = (0,0) :: (Int, Int)
       (Uniforms u_time' u_res' _ u_cam_a' u_cam_f' u_ypr' u_yprS' u_vel' u_accel' u_scale') = unis'
       (Descriptor _ _ u_prog') = d'
 
-    program' <- if debug then debugShaders dr else return u_prog'
+    program' <- case isJust maybeShadowcaster of
+      True -> do
+        let program' = fromMaybe (error "No Obscurable (shadow) program found") $ program
+                     $ fromMaybe (error "No Shadowcaster found")                  maybeShadowcaster
+        return program'
+      False -> do
+        program' <- if debug then debugShaders dr else return u_prog'
+        mapM_ (bindTextures program') (dtxs dr)
+        return program'
+
     currentProgram $= Just program'
-    
+
     let u_mouse0      = Vector2 (realToFrac $ fst u_mouse') (realToFrac $ snd u_mouse') :: Vector2 GLfloat
     location0         <- SV.get (uniformLocation u_prog' "u_mouse'")
     uniform location0 $= u_mouse0
@@ -193,9 +203,6 @@ bindUniforms cam' unis' dr =
 
     location13        <- SV.get (uniformLocation u_prog' "u_scale")
     uniform location13 $= ( u_scale' :: GLfloat)
-
-    -- | Bind Textures
-    mapM_ (bindTextures program') (dtxs dr)
 
     -- | Unload buffers
     bindVertexArrayObject         $= Nothing

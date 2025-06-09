@@ -62,7 +62,7 @@ renderWidget cam unis' wgt = case wgt of
   Cursor  _ _ _ fmt _ -> 
     (\dr -> do
         GL.blendFunc $= (OneMinusDstColor, OneMinusSrcAlpha) 
-        bindUniforms cam unis' (formatDrw (format wgt) dr) 
+        bindUniforms cam unis' (formatDrw (format wgt) dr) Nothing
         let (Descriptor triangles numIndices _) = descriptor dr
         bindVertexArrayObject $= Just triangles
         drawElements Triangles numIndices UnsignedInt nullPtr
@@ -74,7 +74,7 @@ renderWidget cam unis' wgt = case wgt of
   Gizmo  _ _ _ fmt _ -> 
     (\dr -> do
         GL.blendFunc $= (SrcColor, OneMinusSrcAlpha)
-        bindUniforms cam unis' (formatDrw (format wgt) dr) 
+        bindUniforms cam unis' (formatDrw (format wgt) dr) Nothing
         let (Descriptor triangles numIndices _) = descriptor dr
         bindVertexArrayObject $= Just triangles
         drawElements Triangles numIndices UnsignedInt nullPtr
@@ -86,7 +86,7 @@ renderWidget cam unis' wgt = case wgt of
   TextField _ s _ fmt _ ->
     mapM_
     (\dr -> do
-        bindUniforms cam unis' dr 
+        bindUniforms cam unis' dr Nothing
         let (Descriptor triangles numIndices _) = descriptor dr
         bindVertexArrayObject $= Just triangles
         drawElements Triangles numIndices UnsignedInt nullPtr
@@ -96,7 +96,7 @@ renderWidget cam unis' wgt = case wgt of
     (\obj -> do
         mapM_
           (\dr -> do
-              bindUniforms cam unis' dr { u_xform = u_xform dr & translation .~ (xform . transformable $ obj)^.translation } 
+              bindUniforms cam unis' dr { u_xform = u_xform dr & translation .~ (xform . transformable $ obj)^.translation } Nothing
               let (Descriptor triangles numIndices _) = descriptor dr
               bindVertexArrayObject $= Just triangles
               --drawElements (primitiveMode $ doptions dr) numIndices GL.UnsignedInt nullPtr
@@ -106,7 +106,7 @@ renderWidget cam unis' wgt = case wgt of
   InfoField _ s _ fmt _ ->
     mapM_
     (\dr -> do
-        bindUniforms cam unis' dr 
+        bindUniforms cam unis' dr Nothing
         let (Descriptor triangles numIndices _) = descriptor dr
         bindVertexArrayObject $= Just triangles
         drawElements Triangles numIndices UnsignedInt nullPtr
@@ -126,8 +126,8 @@ formatDrw :: Format -> Drawable -> Drawable
 --formatDrw fmt dr = dr
 formatDrw _ dr = dr
 
-renderNoShadows :: GameSettings -> Object -> Drawable -> IO ()
-renderNoShadows gs obj dr = do 
+renderNoShadows :: GameSettings -> Drawable -> IO ()
+renderNoShadows gs dr = do 
   let (Descriptor triangles numIndices program) = descriptor dr
   currentProgram $= Just program
   mapM_ (bindTextures program) $ dtxs dr
@@ -233,8 +233,8 @@ debugView depthTextureObject input0 cam light = do
           "}"
           ]
        
-renderWithShadows :: GameSettings -> Camera -> Light -> Object -> Drawable -> AppInput -> IO ()
-renderWithShadows gs cam light obj dr input0 = do
+renderWithShadows :: GameSettings -> AppInput -> Camera -> Light -> Uniforms -> Object -> Drawable -> IO ()
+renderWithShadows gs input0 cam light unis' obj dr = do
   -- | Manage depth texture and FBO
 
   let shadowMapSize = Size 1024 1024
@@ -247,15 +247,9 @@ renderWithShadows gs cam light obj dr input0 = do
                            ) $ obscurable obj
 
       (Descriptor triangles numIndices program) = descriptor dr
-      -- Define matrices
-      -- lightRayDirection = V3 (-1) (-1) (-1 :: GLfloat)
-      -- lightDir = negate lightRayDirection -- Towards the light
       lightView = L.lookAt (V3 0 0 10) (V3 (-2) (0.3) 0) (V3 0 1 0) :: M44 GLfloat
       lightProjection = L.ortho (-20) 20 (-20) 20 5 15
       lightViewProjection = lightProjection !*! lightView
-      -- cameraView = L.lookAt (V3 4 5 5) (V3 0 0 0) (V3 0 1 0) :: M44 GLfloat
-      -- cameraProjection = L.perspective (pi/4) (800/600) 0.1 100
-      -- modelViewProjection = cameraProjection !*! cameraView
 
   activeTexture $= TextureUnit 0
   textureBinding Texture2D $= Just depthTextureObject
@@ -275,19 +269,22 @@ renderWithShadows gs cam light obj dr input0 = do
   -- | DepthMap pass
   bindFramebuffer Framebuffer $= fbo
   viewport $= (Position 0 0, shadowMapSize)
-  GL.clear [DepthBuffer]
+  GL.clear [DepthBuffer, ColorBuffer]
 
   let depthProgram = ((\(Obscurable maybeProgram _)
                             -> case maybeProgram of
                               Just program -> program
                               Nothing -> error "Obscurable program is empty"
-                          ) $ obscurable obj)
+                      ) $ obscurable obj)
 
   currentProgram $= Just depthProgram
+
+  bindUniforms cam unis' (dr {u_xform = xform . transformable $ obj}) (Just (obscurable obj))
 
   lightVPLoc <- SV.get (uniformLocation depthProgram "lightViewProjection")
   lightViewProjection' <- m44GLfloatToGLmatrixGLfloat lightViewProjection
   uniform lightVPLoc $= lightViewProjection'
+
 
   bindVertexArrayObject $= Just triangles
   drawElements Triangles numIndices UnsignedInt nullPtr
@@ -301,6 +298,9 @@ renderWithShadows gs cam light obj dr input0 = do
  
   -- | Main Pass
   currentProgram $= Just program
+
+  bindUniforms cam unis' (dr {u_xform = xform . transformable $ obj}) Nothing
+
   let depthTexture = T.Texture "shadowMap" "shadowMap" (encodeStringUUID "shadowMap")
       maxTexId = fromMaybe 0 . listToMaybe . sortBy (comparing Down) $ fst <$> dtxs dr
   mapM_ (bindTextures program) $ dtxs dr ++ [(maxTexId+1, (depthTexture, depthTextureObject))] -- add shadow map (depthMap) texture to the binding call
@@ -312,18 +312,18 @@ renderWithShadows gs cam light obj dr input0 = do
   drawElements Triangles numIndices UnsignedInt nullPtr
   -- | End of Main Pass
 
-render :: GameSettings -> Camera -> Light -> Object -> Drawable -> AppInput -> IO ()
-render gs cam light obj dr input0 = do
+render :: GameSettings -> AppInput -> Camera -> Light -> Uniforms -> Object -> Drawable -> IO ()
+render gs input0 cam light unis' obj dr = do
   case not . null $ obscurables obj of
-    False -> renderNoShadows gs obj dr
-    True  -> renderWithShadows gs cam light obj dr input0
+    False -> renderNoShadows gs dr
+    True  -> renderWithShadows gs input0 cam light unis' obj dr 
 
-renderObject :: GameSettings -> Camera -> Light -> Uniforms -> AppInput -> Object -> IO ()
-renderObject gs cam light unis' input0 obj = do
+renderObject :: GameSettings -> AppInput -> Camera -> Light -> Uniforms -> Object -> IO ()
+renderObject gs input0 cam light unis' obj = do
   mapM_ (\dr -> do
             GL.blendFunc $= (BO.blendFunc . backend . renderable $ obj)
-            bindUniforms cam unis' (dr {u_xform = xform . transformable $ obj})
-            render gs cam light obj dr input0
+            bindUniforms cam unis' (dr {u_xform = xform . transformable $ obj}) Nothing
+            render gs input0 cam light unis' obj dr 
         ) (drws . renderable $ obj)
 
 openWindow :: Text -> (CInt, CInt) -> IO SDL.Window
@@ -378,7 +378,7 @@ renderOutput window gs ((game0, input0), Just skipSwap) = do -- Just skipSwap wi
   depthFunc    $= Just Less
   cullFace     $= Just Back
 
-  mapM_ (renderObject gs (head $ cams game0) (head $ lgts game0) (unis game0) input0) (objs game0)
-  mapM_ (renderWidget    (head $ cams game0) (unis game0)) (wgts game0)
+  mapM_ (renderObject gs input0 (head $ cams game0) (head $ lgts game0) (unis game0)) (objs game0)
+  mapM_ (renderWidget           (head $ cams game0) (unis game0)) (wgts game0)
 
   if skipSwap then return False else glSwapWindow window >> return False

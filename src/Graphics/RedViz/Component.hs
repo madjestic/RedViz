@@ -285,8 +285,14 @@ instance Show Component where
       ++ "\t" ++ show tvel'  ++ "\n"
       ++ "\t" ++ show kinslvs' ++ "\n"
       ++ "/////////////////////////" ++ "\n"
-  show Turnable{}
+  show (Turnable s ro c rx a k)
     = "Turnable" ++ "\n"
+      ++ "\t" ++ show s           ++ "\n"
+      ++ "\t" ++ show ro          ++ "\n"
+      ++ "\t" ++ show c           ++ "\n"
+      ++ "\t" ++ show rx          ++ "\n"
+      ++ "\t" ++ show a           ++ "\n"
+      ++ "\t" ++ show k           ++ "\n"
   show (Selectable s)
     = "Selectable, selected :" ++ show s ++ "\n"
   show (Parentable uid)
@@ -362,6 +368,17 @@ defaultTransformable =
         (V4 0 0 1 0)   -- <- . . . z-component of transform
         (V4 0 0 0 1))
   , tslvrs = [Identity]
+  }
+
+defaultTurnable :: Component
+defaultTurnable =
+  Turnable
+  { space  = WorldSpace
+  , rord   = XYZ
+  , cxyz   = V3 0 0 0
+  , rxyz   = V3 0 0 0
+  , avel   = V3 0 0 0
+  , kslvrs = []
   }
 
 defaultParentable :: Component

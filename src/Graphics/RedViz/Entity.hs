@@ -215,6 +215,12 @@ transformable s = fromMaybe defaultTransformable (listToMaybe . transformables $
 transformables :: Entity -> [Component]
 transformables t = [ x | x@(Transformable {} ) <- cmps t ]
 
+turnable :: Entity -> Component
+turnable s = fromMaybe defaultTurnable (listToMaybe . turnables $ s)
+
+turnables :: Entity -> [Component]
+turnables t = [ x | x@(Turnable {} ) <- cmps t ]
+
 parentable :: Entity -> Component
 parentable s = fromMaybe (Parentable nil) (listToMaybe . parentables $ s)
 
