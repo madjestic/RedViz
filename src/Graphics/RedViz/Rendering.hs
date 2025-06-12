@@ -294,7 +294,7 @@ renderWithShadows gs input0 cam light unis' obj dr = do
   GL.clear [ColorBuffer, DepthBuffer]
   -- | End of DepthMap pass
 
-  debugView depthTextureObject input0 cam light
+  when (menuApp input0) $ debugView depthTextureObject input0 cam light
  
   -- | Main Pass
   currentProgram $= Just program
