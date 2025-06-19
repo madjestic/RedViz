@@ -66,10 +66,11 @@ defaultEntity =
 -- Object and Camera, both are just Entity type-synonyms.  Distinction is arbitrary.
 fromSchema :: [(Texture, TextureObject)] -> [[(Descriptor, R.Material)]]-> Schema -> IO Entity
 fromSchema txTuples' dms' sch = do
-  (shadowProgram, dtx) <- genObscurable
-  return $ genEntity (shadowProgram, dtx)
+  obscurable' <- genObscurable
+  --print $ obscurable'
+  return $ genEntity obscurable'
   where
-    genEntity (shadowProgram, dtx) =
+    genEntity obscurable' =
       defaultEntity
       { lable = slable sch
       , uuid  = suuid  sch
@@ -149,9 +150,7 @@ fromSchema txTuples' dms' sch = do
             dms      = (dms'!!) <$> modelIDXs r0 :: [[(Descriptor, Material)]]
             txs      = concatMap (\(_,m) -> R.textures m) $ concat dms :: [Texture]
             txTuples = filter (\(tx,_) -> tx `elem` txs) txTuples'     :: [(Texture, TextureObject)]
-        updateComponent r0@(Obscurable {}) = 
-          r0 { program = Just shadowProgram
-             , dtx     = Just dtx }
+        updateComponent r0@(Obscurable {}) = obscurable'
         updateComponent cmp = cmp
 
 -- Schema is a convenience step that fascilitates describing and generating hierarchic Entities.

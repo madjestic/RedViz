@@ -15,7 +15,7 @@
 {-# LANGUAGE DeriveAnyClass #-}
 module Graphics.RedViz.Drawable where
 
-import Graphics.Rendering.OpenGL (TextureObject (..), Program (..), genObjectName, ShaderType (..))
+import Graphics.Rendering.OpenGL (TextureObject (..), genObjectName)
 import Linear.Matrix (M44, M33, _m33, mkTransformationMat, identity, translation, (*!!), (*!))
 import Linear.Vector ((*^))  
 import Linear.V3
@@ -27,7 +27,7 @@ import Data.Hashable
 -- import Data.List (sortBy)
 -- import Data.Ord (comparing, Down (..))
 
-import Graphics.RedViz.LoadShaders --(createShaderProgram, loadShaders)
+--import Graphics.RedViz.LoadShaders --(createShaderProgram, loadShaders)
 import Graphics.RedViz.Descriptor
 import Graphics.RedViz.Backend (Options)
 import Graphics.RedViz.Material as R
@@ -112,16 +112,16 @@ genDepthTexture = do
   depthTextureObject <- genObjectName
   return (0, (depthTexture, depthTextureObject))
 
-depthMapShaderInfo :: ShaderInfo
-depthMapShaderInfo = ShaderInfo
-  VertexShader (FileSource "mat/depthmap/src/shader.vert")
+-- depthMapShaderInfo :: ShaderInfo
+-- depthMapShaderInfo = ShaderInfo
+--   VertexShader (FileSource "mat/depthmap/src/shader.vert")
 
-genObscurable :: IO (Program, (Int, (Texture, TextureObject)))
-genObscurable = do 
-  --depthProgram <- createShaderProgram depthVertexShaderSrc Nothing
-  depthProgram <- loadShaders [depthMapShaderInfo]
-  dtx          <- genDepthTexture
-  return (depthProgram, dtx)
+-- genObscurable :: IO (Program, (Int, (Texture, TextureObject))) -- it's 
+-- genObscurable = do 
+--   --depthProgram <- createShaderProgram depthVertexShaderSrc Nothing
+--   depthProgram <- loadShaders [depthMapShaderInfo]
+--   dtx          <- genDepthTexture
+--   return (depthProgram, dtx)
 
 data Alignment =
    TL |TC |TR

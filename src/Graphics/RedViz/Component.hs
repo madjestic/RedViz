@@ -10,11 +10,12 @@ import Data.UUID
 import Data.Binary  
 import GHC.Generics
 import Data.Hashable
-import Graphics.Rendering.OpenGL (TextureObject (..), Program (..))
+import Graphics.Rendering.OpenGL (TextureObject (..), Program (..), ShaderType (..))
 
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.Backend (Options, defaultOptions)
 import Graphics.RedViz.Texture (Texture)
+import Graphics.RedViz.LoadShaders
 
 data CoordSys =
     WorldSpace
@@ -247,6 +248,7 @@ data Component = -- TODO: rename Component to Component
     , color      :: V3 Double
     , intensity  :: Double
     , exposure   :: Double
+    --, projection :: V4 (V4 Double)
     , kslvrs     :: [Component]
     }
   | Renderable
@@ -256,8 +258,9 @@ data Component = -- TODO: rename Component to Component
     , backend    :: Options
     }
   | Obscurable 
-    { program :: Maybe Program -- TODO: do I need this?
-    , dtx     :: Maybe (Int, (Texture, TextureObject)) -- TODO: do I need this?
+    { program    :: Maybe Program -- TODO: do I need this?
+    , projection :: Maybe (V4 (V4 Double))
+    , dtx        :: Maybe (Int, (Texture, TextureObject)) -- TODO: do I need this?
     }
   deriving (Eq, Generic, Hashable)
 
@@ -313,8 +316,10 @@ instance Show Component where
     = "Attractable : " ++ show m ++ " " ++ show a ++ " " ++ "\n"
   show (Renderable ms ds _ _) =
     "Renderable :" ++ show ms ++ "\n"  ++ show ds ++ "\n"   
-  show (Obscurable p d) =
-    "Obscurable :" ++ show p ++ "\n" ++ show d ++ "\n"
+  show (Obscurable p pr d) =
+    "Obscurable :" ++ show p ++ "\n"
+    ++ show pr ++ "\n"
+    ++ show d  ++ "\n"
   show (Camerable{})
     = "Camerable" ++ "\n"
   show (Lightable{})
@@ -331,6 +336,31 @@ instance Show Component where
 data RotationOrder =
   XYZ
   deriving (Show, Generic, Binary, Eq, Hashable)
+
+depthMapShaderInfo :: ShaderInfo
+depthMapShaderInfo = ShaderInfo
+  VertexShader (FileSource "mat/depthmap/src/shader.vert")
+
+genObscurable :: IO Component-- (Program, (Int, (Texture, TextureObject))) -- it's 
+genObscurable = do 
+  --depthProgram <- createShaderProgram depthVertexShaderSrc Nothing
+  depthProgram <- loadShaders [depthMapShaderInfo]
+  dtx          <- genDepthTexture
+  let projection' = identity :: V4 (V4 Double)
+  return $
+    Obscurable 
+    { program    = Just depthProgram
+    , projection = Just mtx --projection'
+    , dtx        = Just dtx }
+    where
+      mtx = 
+        (V4
+         (V4 0.25 0 0 0)    -- <- . . . x ...
+         (V4 0 1 0 0)    -- <- . . . y ...
+         (V4 0 0 1 0)   -- <- . . . z-component of transform
+         (V4 0 0 0 1))
+         -- !*! identity
+
 
 defaultCamTransformable :: Component
 defaultCamTransformable =
@@ -354,19 +384,20 @@ defaultRenderable = Renderable
 
 defaultObscurable :: Component
 defaultObscurable = Obscurable
-  { program = Nothing
-  , dtx     = Nothing
+  { program    = Nothing
+  , projection = Just identity
+  , dtx        = Nothing
   }
 
 defaultTransformable :: Component
 defaultTransformable =
   Transformable
-  { xform =  
-      (V4
-        (V4 1 0 0 0)   -- <- . . . x ...
-        (V4 0 1 0 0)   -- <- . . . y ...
-        (V4 0 0 1 0)   -- <- . . . z-component of transform
-        (V4 0 0 0 1))
+  { xform = identity :: V4 (V4 Double)
+      -- (V4
+      --   (V4 1 0 0 0)   -- <- . . . x ...
+      --   (V4 0 1 0 0)   -- <- . . . y ...
+      --   (V4 0 0 1 0)   -- <- . . . z-component of transform
+      --   (V4 0 0 0 1))
   , tslvrs = [Identity]
   }
 

@@ -62,7 +62,7 @@ renderWidget cam unis' wgt = case wgt of
   Cursor  _ _ _ fmt _ -> 
     (\dr -> do
         GL.blendFunc $= (OneMinusDstColor, OneMinusSrcAlpha) 
-        bindUniforms cam unis' (formatDrw (format wgt) dr) Nothing
+        bindUniforms cam unis' (formatDrw (format wgt) dr) Nothing Nothing
         let (Descriptor triangles numIndices _) = descriptor dr
         bindVertexArrayObject $= Just triangles
         drawElements Triangles numIndices UnsignedInt nullPtr
@@ -74,7 +74,7 @@ renderWidget cam unis' wgt = case wgt of
   Gizmo  _ _ _ fmt _ -> 
     (\dr -> do
         GL.blendFunc $= (SrcColor, OneMinusSrcAlpha)
-        bindUniforms cam unis' (formatDrw (format wgt) dr) Nothing
+        bindUniforms cam unis' (formatDrw (format wgt) dr) Nothing Nothing
         let (Descriptor triangles numIndices _) = descriptor dr
         bindVertexArrayObject $= Just triangles
         drawElements Triangles numIndices UnsignedInt nullPtr
@@ -86,7 +86,7 @@ renderWidget cam unis' wgt = case wgt of
   TextField _ s _ fmt _ ->
     mapM_
     (\dr -> do
-        bindUniforms cam unis' dr Nothing
+        bindUniforms cam unis' dr Nothing Nothing
         let (Descriptor triangles numIndices _) = descriptor dr
         bindVertexArrayObject $= Just triangles
         drawElements Triangles numIndices UnsignedInt nullPtr
@@ -96,7 +96,7 @@ renderWidget cam unis' wgt = case wgt of
     (\obj -> do
         mapM_
           (\dr -> do
-              bindUniforms cam unis' dr { u_xform = u_xform dr & translation .~ (xform . transformable $ obj)^.translation } Nothing
+              bindUniforms cam unis' dr { u_xform = u_xform dr & translation .~ (xform . transformable $ obj)^.translation } Nothing Nothing
               let (Descriptor triangles numIndices _) = descriptor dr
               bindVertexArrayObject $= Just triangles
               --drawElements (primitiveMode $ doptions dr) numIndices GL.UnsignedInt nullPtr
@@ -106,7 +106,7 @@ renderWidget cam unis' wgt = case wgt of
   InfoField _ s _ fmt _ ->
     mapM_
     (\dr -> do
-        bindUniforms cam unis' dr Nothing
+        bindUniforms cam unis' dr Nothing Nothing
         let (Descriptor triangles numIndices _) = descriptor dr
         bindVertexArrayObject $= Just triangles
         drawElements Triangles numIndices UnsignedInt nullPtr
@@ -226,10 +226,8 @@ debugView depthTextureObject input0 cam light = do
           "void main() {",
           "  vec3 projCoords = lightSpacePos.xyz / lightSpacePos.w;",
           "  projCoords = projCoords * 0.5 + 0.5;",
-          --"  float shadowMapDepth = texture(shadowMap, projCoords.xy).r;",
           "  vec3  shadow         = texture(shadowMap, projCoords.xy).rgb;",
           "  color = vec4(shadow, 1);",
-          --"  color = vec4(1, 0, 0, 1);",
           "}"
           ]
        
@@ -240,7 +238,7 @@ renderWithShadows gs input0 cam light unis' obj dr = do
   let shadowMapSize = Size 1024 1024
       shadowMapSize'= TextureSize2D 1024 1024
 
-      depthTextureObject = (\(Obscurable _ maybedtx)
+      depthTextureObject = (\(Obscurable _ _ maybedtx)
                              -> case maybedtx of
                                   Just dtx -> (\(_,(_,txo)) -> txo) dtx
                                   Nothing -> error "Obscurable txo value is invalid :" -- ++ show maybedtx
@@ -271,7 +269,7 @@ renderWithShadows gs input0 cam light unis' obj dr = do
   viewport $= (Position 0 0, shadowMapSize)
   GL.clear [DepthBuffer, ColorBuffer]
 
-  let depthProgram = ((\(Obscurable maybeProgram _)
+  let depthProgram = ((\(Obscurable maybeProgram _ _)
                             -> case maybeProgram of
                               Just program -> program
                               Nothing -> error "Obscurable program is empty"
@@ -279,9 +277,9 @@ renderWithShadows gs input0 cam light unis' obj dr = do
 
   currentProgram $= Just depthProgram
 
-  bindUniforms cam unis' (dr {u_xform = xform . transformable $ obj}) (Just (obscurable obj))
+  bindUniforms cam unis' (dr {u_xform = xform . transformable $ obj}) (Just (obscurable obj)) Nothing
 
-  lightVPLoc <- SV.get (uniformLocation depthProgram "lightViewProjection")
+  lightVPLoc <- SV.get (uniformLocation depthProgram "lightViewProjection") -- TODO: Move to Main pass uniform binding
   lightViewProjection' <- m44GLfloatToGLmatrixGLfloat lightViewProjection
   uniform lightVPLoc $= lightViewProjection'
 
@@ -299,7 +297,7 @@ renderWithShadows gs input0 cam light unis' obj dr = do
   -- | Main Pass
   currentProgram $= Just program
 
-  bindUniforms cam unis' (dr {u_xform = xform . transformable $ obj}) Nothing
+  bindUniforms cam unis' (dr {u_xform = xform . transformable $ obj}) Nothing (Just (obscurable obj))
 
   let depthTexture = T.Texture "shadowMap" "shadowMap" (encodeStringUUID "shadowMap")
       maxTexId = fromMaybe 0 . listToMaybe . sortBy (comparing Down) $ fst <$> dtxs dr
@@ -322,7 +320,7 @@ renderObject :: GameSettings -> AppInput -> Camera -> Light -> Uniforms -> Objec
 renderObject gs input0 cam light unis' obj = do
   mapM_ (\dr -> do
             GL.blendFunc $= (BO.blendFunc . backend . renderable $ obj)
-            bindUniforms cam unis' (dr {u_xform = xform . transformable $ obj}) Nothing
+            bindUniforms cam unis' (dr {u_xform = xform . transformable $ obj}) Nothing Nothing
             render gs input0 cam light unis' obj dr 
         ) (drws . renderable $ obj)
 
