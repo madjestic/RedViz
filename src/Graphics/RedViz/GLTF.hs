@@ -58,7 +58,6 @@ fromGltfMat mat =
 
 loadGltf :: FilePath -> IO ([[([GLenum], [Float])]], [GltfM.Material])
 loadGltf fp = do
-  --(root, meshPrimitives) <- loadMeshPrimitives False False fp
   (_, meshPrimitives) <- loadMeshPrimitives False False fp
   let
     mgrs = V.toList <$> V.toList meshPrimitives :: [[Model.MeshPrimitive]]

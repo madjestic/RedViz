@@ -260,7 +260,7 @@ doubleToWord32 :: Double -> Word32
 doubleToWord32 x = runST (cast x)
 
 intToWord8 :: Int -> Word8
-intToWord8 x = 0 -- runST (cast x)
+intToWord8 x = runST (cast x)
 
 {-# INLINE cast #-}
 cast :: (MArray (STUArray s) a (ST s),

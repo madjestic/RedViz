@@ -52,8 +52,8 @@ import Graphics.RedViz.AppInput
 import Graphics.RedViz.Backend as BO (Options(primitiveMode), ptSize, blendFunc)
 import Graphics.RedViz.Texture as T
 import Graphics.RedViz.LoadShaders
-
---import Debug.Trace as DT
+import System.Directory (doesFileExist)
+import Debug.Trace as DT
 
 renderWidget :: Camera -> Uniforms -> Widget -> IO ()
 renderWidget cam unis' wgt = case wgt of
@@ -130,7 +130,7 @@ renderNoShadows :: GameSettings -> Drawable -> IO ()
 renderNoShadows gs dr = do 
   let (Descriptor triangles numIndices program) = descriptor dr
   currentProgram $= Just program
-  mapM_ (bindTextures program) $ dtxs dr
+  mapM_ (bindTextureUniform program) $ dtxs dr
   currentProgram $= Just program
 
   bindFramebuffer Framebuffer $= defaultFramebufferObject
@@ -142,7 +142,7 @@ debugView :: TextureObject -> AppInput -> Camera -> Light -> IO ()
 debugView depthTextureObject input0 cam light = do
   (x0,y0,z0) <- readIORef (sliderLightRayDirectionRef input0)
   (x1,y1,z1) <- readIORef (eyeRef    input0)
-  (x2,y2,z2) <- readIORef (centerRef input0)
+  (cx,cy,cz) <- readIORef (centerRef input0)
   (x3,y3,z3) <- readIORef (upRef     input0)
   (l, r, b)  <- readIORef (lrbRef    input0)
   (t, n, f)  <- readIORef (tnfRef    input0)
@@ -167,14 +167,11 @@ debugView depthTextureObject input0 cam light = do
   let
     lightRayDirection = L.normalize $ V3 (x0) (y0) (z0 :: GLfloat)
     lightDir = negate lightRayDirection -- Towards the light
-    --lightView = L.lookAt (V3 0 0 10) (V3 (-2) (0.3) 0) (V3 0 1 0) :: M44 GLfloat
-    --lightView = L.lookAt (V3 x1 y1 z1) (V3 x2 y2 z2) (V3 x3 y3 z3) :: M44 GLfloat
-    lightView = L.lookAt (realToFrac <$> position (lightable light)) (V3 x2 y2 z2) (V3 x3 y3 z3) :: M44 GLfloat
-    --lightProjection = L.ortho (-20) 20 (-20) 20 5 15
-    --lightProjection = L.ortho l r b t n f
-    lightProjection = L.ortho (l*s) (r*s) (b*s) (t*s) (n*s) (f*s)
-    lightViewProjection = lightProjection !*! lightView
-    --cameraView = L.lookAt (V3 4 5 5) (V3 0 0 0) (V3 0 1 0) :: M44 GLfloat
+    lightView = L.lookAt (realToFrac <$> position (lightable light)) (V3 cx cy cz) (V3 x3 y3 z3) :: M44 GLfloat
+    lightProjection = L.ortho (-1.5) 1.5 (-1.5) 1.5 5 15
+    --lightProjection = L.ortho (l*s) (r*s) (b*s) (t*s) (n*s) (f*s)
+    lightViewProjection = (lightProjection !*! lightView) ^* V4 s s s 1 --  (undefined :: GLfloat)
+    --lightViewProjection = lightViewProjection
     cameraView = xform  . transformable $ cam -- TODO: Double -> Float
     cameraProjection = L.perspective (pi/4) (800/600) 0.1 100
     modelViewProjection = cameraProjection !*! cameraView
@@ -186,6 +183,8 @@ debugView depthTextureObject input0 cam light = do
   --modelViewProjection' <- m44GLfloatToGLmatrixGLfloat (double2M44GLfloat modelViewProjection)
   modelViewProjection' <- m44GLfloatToGLmatrixGLfloat (double2M44GLfloat modelViewProjection)
   uniform mvpLoc $= modelViewProjection'
+
+  -- do print $ lightViewProjection
 
   lightVPLoc' <- SV.get (uniformLocation mainProgram "lightViewProjection")
   lightViewProjection' <- m44GLfloatToGLmatrixGLfloat lightViewProjection
@@ -206,7 +205,7 @@ debugView depthTextureObject input0 cam light = do
       debugVertexShaderSrc :: String
       debugVertexShaderSrc = unlines [
           "#version 330 core",
-          "uniform mat4 modelViewProjection;",
+          --"uniform mat4 modelViewProjection;",
           "uniform mat4 lightViewProjection;",
           "in vec3 position;",
           "out vec4 lightSpacePos;",
@@ -225,18 +224,29 @@ debugView depthTextureObject input0 cam light = do
           "out vec4 color;",
           "void main() {",
           "  vec3 projCoords = lightSpacePos.xyz / lightSpacePos.w;",
-          "  projCoords = projCoords * 0.5 + 0.5;",
-          "  vec3  shadow         = texture(shadowMap, projCoords.xy).rgb;",
+          "  projCoords      = lightSpacePos.xyz * 0.5 + 0.5;",
+          "  vec3  shadow    = texture(shadowMap, projCoords.xy).rgb;",
           "  color = vec4(shadow, 1);",
           "}"
           ]
+
+-- | Shadow Depth Map Texture Size x, y ebobo
+dmx = 512
+dmy = dmx
        
 renderWithShadows :: GameSettings -> AppInput -> Camera -> Light -> Uniforms -> Object -> Drawable -> IO ()
 renderWithShadows gs input0 cam light unis' obj dr = do
+  (x0,y0,z0) <- readIORef (sliderLightRayDirectionRef input0)
+  (x1,y1,z1) <- readIORef (eyeRef    input0)
+  (cx,cy,cz) <- readIORef (centerRef input0)
+  (x3,y3,z3) <- readIORef (upRef     input0)
+  (l, r, b)  <- readIORef (lrbRef    input0)
+  (t, n, f)  <- readIORef (tnfRef    input0)
+  (s)        <- readIORef (scalarRef input0)
   -- | Manage depth texture and FBO
 
-  let shadowMapSize = Size 1024 1024
-      shadowMapSize'= TextureSize2D 1024 1024
+  let shadowMapSize = Size dmx dmy
+      shadowMapSize'= TextureSize2D dmx dmy
 
       depthTextureObject = (\(Obscurable _ _ maybedtx)
                              -> case maybedtx of
@@ -245,9 +255,18 @@ renderWithShadows gs input0 cam light unis' obj dr = do
                            ) $ obscurable obj
 
       (Descriptor triangles numIndices program) = descriptor dr
-      lightView = L.lookAt (V3 0 0 10) (V3 (-2) (0.3) 0) (V3 0 1 0) :: M44 GLfloat
-      lightProjection = L.ortho (-20) 20 (-20) 20 5 15
-      lightViewProjection = lightProjection !*! lightView
+      --lightView = L.lookAt (V3 0 0 10) (V3 (-2) (0.3) 0) (V3 0 1 0) :: M44 GLfloat
+      --lightView = L.lookAt (realToFrac <$> position (lightable light)) (V3 cx cy cz) (V3 x3 y3 z3) :: M44 GLfloat
+      --lightView = L.lookAt (realToFrac <$> position (lightable light)) (V3 cx cy cz) (V3 0 1 0) :: M44 GLfloat
+      lightView = L.lookAt (realToFrac <$> position (lightable light)) (V3 0 0 0) (V3 0 1 0) :: M44 GLfloat
+
+      lightProjection = L.ortho (-1.5) 1.5 (-1.5) 1.5 5 15
+      --lightProjection = L.transpose (identity)
+      --lightProjection = L.ortho (l) (r) (b) (t) 5 15
+      --lightProjection = L.ortho (l*s) (r*s) (b*s) (t*s) 5 15
+      --lightProjection = L.ortho (l*s) (r*s) (b*s) (t*s) (n*s) (f*s)
+      --lightViewProjection = lightProjection !*! lightView
+      lightViewProjection = (lightProjection !*! lightView) -- ^* V4 s s s 1 --  (undefined :: GLfloat)
 
   activeTexture $= TextureUnit 0
   textureBinding Texture2D $= Just depthTextureObject
@@ -283,7 +302,6 @@ renderWithShadows gs input0 cam light unis' obj dr = do
   lightViewProjection' <- m44GLfloatToGLmatrixGLfloat lightViewProjection
   uniform lightVPLoc $= lightViewProjection'
 
-
   bindVertexArrayObject $= Just triangles
   drawElements Triangles numIndices UnsignedInt nullPtr
 
@@ -297,11 +315,16 @@ renderWithShadows gs input0 cam light unis' obj dr = do
   -- | Main Pass
   currentProgram $= Just program
 
-  bindUniforms cam unis' (dr {u_xform = xform . transformable $ obj}) Nothing (Just (obscurable obj))
+  bindUniforms cam unis' (dr {u_xform = xform . transformable $ obj}) Nothing (Just ((\obj' -> (obscurable obj'){ projection = Just (fmap (fmap realToFrac ) lightViewProjection)}) obj))
 
-  let depthTexture = T.Texture "shadowMap" "shadowMap" (encodeStringUUID "shadowMap")
+  let depthTexture = T.Texture "shadowMap" "shadowMap" (fromIntegral dmx) (fromIntegral dmy) (encodeStringUUID "shadowMap")
       maxTexId = fromMaybe 0 . listToMaybe . sortBy (comparing Down) $ fst <$> dtxs dr
-  mapM_ (bindTextures program) $ dtxs dr ++ [(maxTexId+1, (depthTexture, depthTextureObject))] -- add shadow map (depthMap) texture to the binding call
+  mapM_ (bindTextureUniform program) $ dtxs dr ++ [(maxTexId+1, (depthTexture, depthTextureObject))] -- add shadow map (depthMap) texture to the binding call
+  -- TODO: writeTexture should be moved to the Main pass, not here!
+  -- Check if the file "sukanah.bmp" already exists before writing
+  fileExists <- doesFileExist "sukanah.bmp"
+  unless fileExists $ do
+    writeTexture (maxTexId+1, (depthTexture, depthTextureObject)) "sukanah.bmp"
   currentProgram $= Just program
 
   bindFramebuffer Framebuffer $= defaultFramebufferObject

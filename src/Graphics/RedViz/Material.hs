@@ -94,7 +94,7 @@ read jsonFile =
       print $ "Loading Material :"
         ++ case d of
              Right m -> name m
-             _ -> "error"
+             Left e -> error ("error: " ++ show e)
 
     let name'       = (name       . fromEitherDecode) d
         vertShader' = (vertShader . fromEitherDecode) d

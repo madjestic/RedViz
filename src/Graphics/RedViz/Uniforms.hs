@@ -102,7 +102,7 @@ bindUniforms cam' unis' dr maybeShadowCaster maybeShadowCatcher =
       else
         do
           program' <- if debug then debugShaders dr else return u_prog'
-          mapM_ (bindTextures program') (dtxs dr)
+          mapM_ (bindTextureUniform program') (dtxs dr)
           return program'
 
     currentProgram $= Just program'

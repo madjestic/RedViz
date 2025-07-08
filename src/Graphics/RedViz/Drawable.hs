@@ -108,7 +108,7 @@ depthVertexShaderSrc = unlines [
 
 genDepthTexture :: IO (Int, (Texture, TextureObject))
 genDepthTexture = do
-  let depthTexture = Texture "shadowMap" "shadowMap" (encodeStringUUID "shadowMap")
+  let depthTexture = Texture "shadowMap" "shadowMap" 1024 1024 (encodeStringUUID "shadowMap")
   depthTextureObject <- genObjectName
   return (0, (depthTexture, depthTextureObject))
 
