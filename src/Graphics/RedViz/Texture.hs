@@ -138,56 +138,21 @@ bindTextureUniform program' (txid, (tex, txo)) =
     location <- SV.get (uniformLocation program' $ name tex)
     uniform location $= TextureUnit (intToWord32 txid)
 
-linearizeDepth :: Float -> Float -> Float -> Float
-linearizeDepth z near far = let z_n = 2.0 * z - 1.0  -- Convert [0,1] to [-1,1]
-                                z_e = (2.0 * near * far) / (far + near - z_n * (far - near))
-                            in z_e  -- Linear depth in view space (negative in OpenGL convention)
+-- linearize :: Float -> Float -> Float -> Float
+-- linearize z near far = depth'
+--   where
+--     ndc    = z * 2.0 - 1.0
+--     depth' = (2.0 * near * far) / (far + near - ndc * (far - near))
 
--- writeTexture :: (Int, (Texture, TextureObject))
---              -> FilePath -> IO ()
--- writeTexture (txid, (tex, txo)) filepath =
---   do
---     activeTexture $= TextureUnit (intToWord32 txid)
---     textureBinding Texture2D $= Just txo
---     let pixelCount = width tex * height tex
---         nearPlane  = 0.1
---         farPlane   = 15
-
---     depthData <- mallocArray pixelCount :: IO (Ptr Float)
---     glReadPixels 0 0 (fromIntegral (width tex)) (fromIntegral (height tex)) GL_DEPTH_COMPONENT GL_FLOAT depthData
---     depthsList <- peekArray pixelCount depthData
---     let depths = fromList depthsList :: Vector Float
---     free depthData
---     let image = generateImage (\x y ->
---           let idx = (height tex - 1 - y) * (width tex) + x  -- Flip vertically to match BMP top-left origin
---               depth = depths ! idx
---               -- Linearize and scale to 0-255 for 8-bit grayscale
---               linearDepth = linearizeDepth depth nearPlane farPlane
---               -- Clamp and convert to Word8
---               pixelValue = if linearDepth < 0 then 0
---                            else floor (min 255 (max 0 (abs linearDepth / farPlane * 255.0))) :: Word8
---               alpha = 255 :: Word8
---           in PixelYA8 pixelValue alpha) (width tex) (height tex)
---         dynamicImage = ImageYA8 image
-
---     print depths
---     print $ (\depth -> linearizeDepth depth nearPlane farPlane) <$> depths
-
---     result <- try (saveBmpImage filepath dynamicImage) :: IO (Either IOException ())
---     case result of
---       Right () -> putStrLn $ "Depth map saved to " ++ filepath
---       Left err -> putStrLn $ "Failed to save depth map: " ++ show err
-
-writeTexture :: (Int, (Texture, TextureObject))
-             -> FilePath -> IO ()
+writeTexture :: (Int, (Texture, TextureObject)) -> FilePath -> IO ()
 writeTexture (txid, (tex, txo)) filepath =
   do
     activeTexture $= TextureUnit (intToWord32 txid)
     textureBinding Texture2D $= Just txo
     let pixelCount = width tex * height tex
         byteCount = pixelCount
-        nearPlane  = 0.1
-        farPlane   = 15
+        -- nearPlane  = 1
+        -- farPlane   = 100
 
     pixelData <- mallocArray byteCount :: IO (Ptr Float)
     getTexImage Texture2D 0 (PixelData DepthComponent Float pixelData)
@@ -200,48 +165,12 @@ writeTexture (txid, (tex, txo)) filepath =
           (\y x ->
             let 
               idx = y * width tex + x
-              r = (pixels ! idx)
-            in PixelRGBF r r r)
+              r = (pixels ! idx) --linearize nearPlane farPlane (pixels ! idx)
+            in (r :: PixelF))
           (width tex) (height tex)
-      dynamicImage = ImageRGBF image
+      dynamicImage = ImageYF image
 
-    -- print pixels
-    -- print $ (\pixel -> linearizeDepth pixel nearPlane farPlane) <$> pixels
-
-    saveBmpImage filepath dynamicImage
-
-
--- writeTexture :: (Int, (Texture, TextureObject))
---              -> FilePath -> IO ()
--- writeTexture (txid, (tex, txo)) filepath =
---   do
---     activeTexture $= TextureUnit (intToWord32 txid)
---     textureBinding Texture2D $= Just txo
---     let pixelCount = width tex * height tex
---         byteCount = pixelCount
---         nearPlane  = 0.1
---         farPlane   = 15
-
---     pixelData <- mallocArray byteCount :: IO (Ptr Word32)
---     getTexImage Texture2D 0 (PixelData DepthComponent Float pixelData)
---     pixelsList <- peekArray byteCount pixelData
---     let pixels = fromList pixelsList :: Vector Word32
---     --print pixels
---     free pixelData
---     let
---       image = generateImage
---           (\y x ->
---             let 
---               idx = y * width tex + x
---               r = fromIntegral $ word32ToInt (pixels ! idx)
---             in PixelRGB16 r r r)
---           (width tex) (height tex)
---       dynamicImage = ImageRGB16 image
-
---     print pixels
---     print $ (\pixel -> linearizeDepth (fromIntegral pixel) nearPlane farPlane) <$> pixels
-
---     saveBmpImage filepath dynamicImage
-  
-
-
+    result <- try (savePngImage filepath dynamicImage) :: IO (Either IOException ())
+    case result of
+      Right () -> putStrLn $ "Depth map saved to " ++ filepath
+      Left err -> putStrLn $ "Failed to save depth map: " ++ show err

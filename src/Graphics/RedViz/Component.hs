@@ -10,7 +10,7 @@ import Data.UUID
 import Data.Binary  
 import GHC.Generics
 import Data.Hashable
-import Graphics.Rendering.OpenGL (TextureObject (..), Program (..), ShaderType (..))
+import Graphics.Rendering.OpenGL (TextureObject (..), Program, ShaderType (..))
 
 import Graphics.RedViz.Drawable
 import Graphics.RedViz.Backend (Options, defaultOptions)
@@ -105,6 +105,18 @@ instance Binary Component where
     put d
     put a
     put b
+  put (Lightable p c i e kslvrs) = do
+    put (14 :: Word8)
+    put p
+    put c
+    put i
+    put e
+    put kslvrs
+  put (Obscurable p pr d) = do
+    put (15 :: Word8)
+    put p
+    put pr
+    put d
 
   get = do
     t <- get :: Get Word8
@@ -175,6 +187,18 @@ instance Binary Component where
         a <- get 
         b <- get
         return $ Renderable m d a b
+      14 -> do
+        p <- get
+        c <- get
+        i <- get
+        e <- get
+        kslvrs <- get
+        return $ Lightable p c i e kslvrs
+      15 -> do
+        p <- get
+        pr <- get
+        d <- get
+        return $ Obscurable p pr d
 
 instance Hashable (Double -> Double) where
   hashWithSalt = hashWithSalt
