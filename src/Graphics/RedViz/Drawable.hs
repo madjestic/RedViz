@@ -95,33 +95,11 @@ toDrawable xform' opts txos (d, mat') = dr
       , doptions   = opts
       }
 
--- Shader sources
-depthVertexShaderSrc :: String
-depthVertexShaderSrc = unlines [
-    "#version 330 core",
-    "uniform mat4 lightViewProjection;",
-    "in vec3 position;",
-    "void main() {",
-    "    gl_Position = lightViewProjection * vec4(position, 1.0);",
-    "}"
-    ]
-
 genDepthTexture :: IO (Int, (Texture, TextureObject))
 genDepthTexture = do
-  let depthTexture = Texture "shadowMap" "shadowMap" 1024 1024 (encodeStringUUID "shadowMap")
+  let depthTexture = Texture "shadowMap" "shadowMap" 1024 1024 (encodeStringUUID "shadowMap") -- TODO: texure resolution should be specified in some standard location (Obscurable?)
   depthTextureObject <- genObjectName
   return (0, (depthTexture, depthTextureObject))
-
--- depthMapShaderInfo :: ShaderInfo
--- depthMapShaderInfo = ShaderInfo
---   VertexShader (FileSource "mat/depthmap/src/shader.vert")
-
--- genObscurable :: IO (Program, (Int, (Texture, TextureObject))) -- it's 
--- genObscurable = do 
---   --depthProgram <- createShaderProgram depthVertexShaderSrc Nothing
---   depthProgram <- loadShaders [depthMapShaderInfo]
---   dtx          <- genDepthTexture
---   return (depthProgram, dtx)
 
 data Alignment =
    TL |TC |TR

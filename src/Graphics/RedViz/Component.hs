@@ -367,24 +367,13 @@ depthMapShaderInfo = ShaderInfo
 
 genObscurable :: IO Component-- (Program, (Int, (Texture, TextureObject))) -- it's 
 genObscurable = do 
-  --depthProgram <- createShaderProgram depthVertexShaderSrc Nothing
   depthProgram <- loadShaders [depthMapShaderInfo]
   dtx          <- genDepthTexture
-  let projection' = identity :: V4 (V4 Double)
   return $
     Obscurable 
     { program    = Just depthProgram
-    , projection = Just mtx --projection'
+    , projection = Just identity
     , dtx        = Just dtx }
-    where
-      mtx = 
-        (V4
-         (V4 0.25 0 0 0)    -- <- . . . x ...
-         (V4 0 1 0 0)    -- <- . . . y ...
-         (V4 0 0 1 0)   -- <- . . . z-component of transform
-         (V4 0 0 0 1))
-         -- !*! identity
-
 
 defaultCamTransformable :: Component
 defaultCamTransformable =
