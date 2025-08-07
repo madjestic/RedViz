@@ -31,14 +31,6 @@ data AppInput = AppInput
   , saveMenuRef :: IORef Int
   , slider    :: Float
   , sliderRef :: IORef Float
-  --- debugging shadowMap
-  --, sliderLightRayDirection    :: V3 GLfloat
-  , sliderLightRayDirectionRef :: IORef (Float, Float, Float)
-  , eyeRef    :: IORef (Float, Float, Float)
-  , centerRef :: IORef (Float, Float, Float)
-  , upRef     :: IORef (Float, Float, Float)
-  , lrbRef    :: IORef (Float, Float, Float)
-  , tnfRef    :: IORef (Float, Float, Float)
   , scalarRef :: IORef Float
   } deriving Show
 

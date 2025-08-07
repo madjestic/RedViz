@@ -138,15 +138,9 @@ renderNoShadows gs dr = do
   bindVertexArrayObject $= Just triangles
   drawElements Triangles numIndices UnsignedInt nullPtr
 
-debugView :: TextureObject -> AppInput -> Camera -> Light -> IO ()
-debugView depthTextureObject input0 cam light = do
-  (x0,y0,z0) <- readIORef (sliderLightRayDirectionRef input0)
-  (x1,y1,z1) <- readIORef (eyeRef    input0)
-  (cx,cy,cz) <- readIORef (centerRef input0)
-  (x3,y3,z3) <- readIORef (upRef     input0)
-  (l, r, b)  <- readIORef (lrbRef    input0)
-  (t, n, f)  <- readIORef (tnfRef    input0)
-  (s)        <- readIORef (scalarRef input0)
+debugView :: TextureObject -> AppInput -> Camera -> Light -> Shadow -> IO ()
+debugView depthTextureObject input0 cam light shd = do
+  s <- readIORef (scalarRef input0)
   let planeVertices = [
           Vector3 (-1) (-1) 0, Vector3 1 (-1) 0, Vector3 1 1 0,
           Vector3 (-1) (-1) 0, Vector3 1 1 0, Vector3 (-1) 1 0 :: Vector3 GLfloat ]
@@ -165,32 +159,18 @@ debugView depthTextureObject input0 cam light = do
   vertexAttribArray (AttribLocation 0) $= Enabled
 
   let
-    lightRayDirection = L.normalize $ V3 (x0) (y0) (z0 :: GLfloat)
-    lightDir = negate lightRayDirection -- Towards the light
-    lightView = L.lookAt (realToFrac <$> position (lightable light)) (V3 cx cy cz) (V3 x3 y3 z3) :: M44 GLfloat
-    lightProjection = L.ortho (-1.5) 1.5 (-1.5) 1.5 9 11
+    lightView = L.lookAt (realToFrac <$> position (lightable light)) (center' shd) (up' shd) :: M44 GLfloat
+    lightProjection = L.ortho (l' shd) (r' shd) (b' shd) (t' shd) (n' shd) (f' shd)
     lightViewProjection = (lightProjection !*! lightView) ^* V4 s s s 1 --  (undefined :: GLfloat)
-    cameraView = xform  . transformable $ cam -- TODO: Double -> Float
-    cameraProjection = L.perspective (pi/4) (800/600) 0.1 10
-    modelViewProjection = cameraProjection !*! cameraView
 
   mainProgram  <- createShaderProgram debugVertexShaderSrc (Just debugFragmentShaderSrc)
   depthMask $= Disabled -- TODO: enable
   currentProgram $= Just mainProgram
-  mvpLoc <- SV.get (uniformLocation mainProgram "modelViewProjection")
-  --modelViewProjection' <- m44GLfloatToGLmatrixGLfloat (double2M44GLfloat modelViewProjection)
-  modelViewProjection' <- m44GLfloatToGLmatrixGLfloat (double2M44GLfloat modelViewProjection)
-  uniform mvpLoc $= modelViewProjection'
-
-  -- do print $ lightViewProjection
 
   lightVPLoc' <- SV.get (uniformLocation mainProgram "lightViewProjection")
   lightViewProjection' <- m44GLfloatToGLmatrixGLfloat lightViewProjection
   uniform lightVPLoc' $= lightViewProjection'
 
-  lightDirLoc <- get (uniformLocation mainProgram "lightDir")
-  uniform lightDirLoc $= v3GLfloatToVertex3GLfloat lightDir
-  
   activeTexture $= TextureUnit 0
   textureBinding Texture2D $= Just depthTextureObject
   shadowMapLoc <- uniformLocation mainProgram "shadowMap" -- not here
@@ -203,13 +183,12 @@ debugView depthTextureObject input0 cam light = do
       debugVertexShaderSrc :: String
       debugVertexShaderSrc = unlines [
           "#version 330 core",
-          --"uniform mat4 modelViewProjection;",
           "uniform mat4 lightViewProjection;",
           "in vec3 position;",
-          "out vec4 lightSpacePos;",
+          "out vec3 pos;",
           "void main() {",
+          "    pos = position * 0.5f + 0.5f;",
           "    gl_Position   = vec4(position, 1.0);",
-          "    lightSpacePos = lightViewProjection * vec4(position, 1.0);",
           "}"
           ]
        
@@ -217,14 +196,13 @@ debugView depthTextureObject input0 cam light = do
       debugFragmentShaderSrc = unlines [
           "#version 330 core",
           "uniform sampler2D shadowMap;",
-          "uniform vec3 lightDir;",
-          "in vec4 lightSpacePos;",
+          "in vec3 pos;",
           "out vec4 color;",
           "void main() {",
-          "  vec3 projCoords = lightSpacePos.xyz / lightSpacePos.w;",
-          "  projCoords      = lightSpacePos.xyz * 0.5 + 0.5;",
-          "  vec3  shadow    = texture(shadowMap, projCoords.xy).rgb;",
+          "  vec2 projCoords      = vec2(pos.x, pos.y);",
+          "  vec3  shadow    = texture(shadowMap, projCoords).rgb;",
           "  color = vec4(shadow, 1);",
+          --"  color = vec4(1,1,1,1);",
           "}"
           ]
 
@@ -232,15 +210,22 @@ debugView depthTextureObject input0 cam light = do
 dmx = 512
 dmy = dmx
        
-renderWithShadows :: GameSettings -> AppInput -> Camera -> Light -> Uniforms -> Object -> Drawable -> IO ()
-renderWithShadows gs input0 cam light unis' obj dr = do
-  (x0,y0,z0) <- readIORef (sliderLightRayDirectionRef input0)
-  (x1,y1,z1) <- readIORef (eyeRef    input0)
-  (cx,cy,cz) <- readIORef (centerRef input0)
-  (x3,y3,z3) <- readIORef (upRef     input0)
-  (l, r, b)  <- readIORef (lrbRef    input0)
-  (t, n, f)  <- readIORef (tnfRef    input0)
-  (s)        <- readIORef (scalarRef input0)
+data Shadow =
+     Shadow
+     { center' :: V3 GLfloat
+     , up'     :: V3 GLfloat
+     , l' :: GLfloat
+     , r' :: GLfloat
+     , b' :: GLfloat
+     , t' :: GLfloat
+     , n' :: GLfloat
+     , f' :: GLfloat
+     }
+
+renderWithShadows :: AppInput -> Camera -> Light -> Uniforms -> Object -> Drawable -> IO ()
+renderWithShadows input0 cam light unis' obj dr = do
+  let gs = settings input0
+  s <- readIORef (scalarRef input0)
   -- | Manage depth texture and FBO
 
   let shadowMapSize = Size dmx dmy
@@ -251,12 +236,25 @@ renderWithShadows gs input0 cam light unis' obj dr = do
                                   Just dtx -> (\(_,(_,txo)) -> txo) dtx
                                   Nothing -> error "Obscurable txo value is invalid :" -- ++ show maybedtx
                            ) $ obscurable obj
+      shd =
+        Shadow 
+        { center' = V3 0 0 0
+        , up'     = V3 (0) (1) (0)
+        , l'      = -1.5
+        , r'      =  1.5
+        , b'      = -1.5
+        , t'      =  1.5
+        , n'      =  9
+        , f'      =  11
+        }
 
       (Descriptor triangles numIndices program) = descriptor dr
-      lightView = L.lookAt (realToFrac <$> position (lightable light)) (V3 0 0 0) (V3 0 1 0) :: M44 GLfloat
+      lightView = L.lookAt (realToFrac <$> position (lightable light)) (center' shd) (up' shd) :: M44 GLfloat
 
-      lightProjection = L.ortho (-1.5) 1.5 (-1.5) 1.5 9 11
+      lightProjection = L.ortho (l' shd) (r' shd) (b' shd) (t' shd) (n' shd) (f' shd) --(-1.5) 1.5 (-1.5) 1.5 9 11
       lightViewProjection = (lightProjection !*! lightView) -- ^* V4 s s s 1 --  (undefined :: GLfloat)
+
+  -- print $ position (lightable light)
 
   activeTexture $= TextureUnit 0
   textureBinding Texture2D $= Just depthTextureObject
@@ -296,11 +294,11 @@ renderWithShadows gs input0 cam light unis' obj dr = do
   drawElements Triangles numIndices UnsignedInt nullPtr
 
   bindFramebuffer Framebuffer $= defaultFramebufferObject
-  viewport $= (Position 0 0, Size 800 600)
+  viewport $= (Position 0 0, Size (fromIntegral $ resX gs) (fromIntegral $ resY gs))
   GL.clear [ColorBuffer, DepthBuffer]
   -- | End of DepthMap pass
 
-  when (menuApp input0) $ debugView depthTextureObject input0 cam light
+  when (menuApp input0) $ debugView depthTextureObject input0 cam light shd
  
   -- | Main Pass
   currentProgram $= Just program
@@ -324,18 +322,18 @@ renderWithShadows gs input0 cam light unis' obj dr = do
   drawElements Triangles numIndices UnsignedInt nullPtr
   -- | End of Main Pass
 
-render :: GameSettings -> AppInput -> Camera -> Light -> Uniforms -> Object -> Drawable -> IO ()
-render gs input0 cam light unis' obj dr = do
+render ::  AppInput -> Camera -> Light -> Uniforms -> Object -> Drawable -> IO ()
+render input0 cam light unis' obj dr = do
   case not . null $ obscurables obj of
-    False -> renderNoShadows gs dr
-    True  -> renderWithShadows gs input0 cam light unis' obj dr 
+    False -> renderNoShadows   (settings input0) dr
+    True  -> renderWithShadows input0 cam light unis' obj dr 
 
-renderObject :: GameSettings -> AppInput -> Camera -> Light -> Uniforms -> Object -> IO ()
-renderObject gs input0 cam light unis' obj = do
+renderObject :: AppInput -> Camera -> Light -> Uniforms -> Object -> IO ()
+renderObject input0 cam light unis' obj = do
   mapM_ (\dr -> do
             GL.blendFunc $= (BO.blendFunc . backend . renderable $ obj)
             bindUniforms cam unis' (dr {u_xform = xform . transformable $ obj}) Nothing Nothing
-            render gs input0 cam light unis' obj dr 
+            render input0 cam light unis' obj dr 
         ) (drws . renderable $ obj)
 
 openWindow :: Text -> (CInt, CInt) -> IO SDL.Window
@@ -377,10 +375,9 @@ m44GLfloatToGLmatrixGLfloat mtx0 = do
   xform1 <- newMatrix ColumnMajor $ m44GLfloatToGLfloat mtx0
   return xform1
 
-renderOutput :: Window -> GameSettings -> ((Game, AppInput), Maybe Bool) -> IO Bool
-renderOutput _ _ ( _,Nothing) = SDL.quit >> return True
-renderOutput window gs ((game0, input0), Just skipSwap) = do -- Just skipSwap window swap
-  let
+renderOutput :: Window -> ((Game, AppInput), Maybe Bool) -> IO Bool
+renderOutput _ ( _,Nothing) = SDL.quit >> return True
+renderOutput window ((game0, input0), Just skipSwap) = do -- Just skipSwap window swap
   clearColor   $= Color4 0.0 0.0 0.0 1.0
   GL.clear [ColorBuffer, DepthBuffer]
 
@@ -390,7 +387,7 @@ renderOutput window gs ((game0, input0), Just skipSwap) = do -- Just skipSwap wi
   depthFunc    $= Just Less
   cullFace     $= Just Back
 
-  mapM_ (renderObject gs input0 (head $ cams game0) (head $ lgts game0) (unis game0)) (objs game0)
-  mapM_ (renderWidget           (head $ cams game0) (unis game0)) (wgts game0)
+  mapM_ (renderObject input0 (head $ cams game0) (head $ lgts game0) (unis game0)) (objs game0)
+  mapM_ (renderWidget        (head $ cams game0) (unis game0)) (wgts game0)
 
   if skipSwap then return False else glSwapWindow window >> return False
